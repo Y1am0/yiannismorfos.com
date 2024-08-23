@@ -1,7 +1,7 @@
 "use client";
 
 import WindowHeader from "@/components/window/windowHeader";
-import { Rnd, DraggableData } from "react-rnd";
+import { Rnd, DraggableData, DraggableEvent } from "react-rnd";
 import { useState, useEffect } from "react";
 
 const WindowContainer = () => {
@@ -13,12 +13,15 @@ const WindowContainer = () => {
   const [previousPosition, setPreviousPosition] = useState(windowPosition);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const initialX = (viewportWidth - windowSize.width) / 2;
     const initialY = (viewportHeight - windowSize.height) / 2;
     setWindowPosition({ x: initialX, y: initialY });
+    setIsReady(true); // Only show the window after the position is calculated
   }, []);
 
   const handleClose = () => {
@@ -49,6 +52,12 @@ const WindowContainer = () => {
     handleMaximize();
   };
 
+  const handleDrag = (_e: DraggableEvent, d: DraggableData) => {
+    // Prevent dragging over the top of the screen
+    const newY = d.y < 0 ? 0 : d.y;
+    setWindowPosition({ x: d.x, y: newY });
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -57,33 +66,34 @@ const WindowContainer = () => {
         isAnimating ? "transition-all duration-300 ease-in-out" : ""
       }`}
     >
-      <Rnd
-        size={windowSize}
-        position={windowPosition}
-        minWidth={200}
-        minHeight={150}
-        dragHandleClassName="draggable-handle"
-        onResizeStop={(_e, _direction, ref, _delta, position) => {
-          setWindowSize({
-            width: ref.offsetWidth,
-            height: ref.offsetHeight,
-          });
-          setWindowPosition(position);
-        }}
-        onDragStop={(_e: React.SyntheticEvent, d: DraggableData) => {
-          const newY = d.y < 0 ? 0 : d.y;
-          setWindowPosition({ x: d.x, y: newY });
-        }}
-        enableResizing={!isMaximized}
-        className={`bg-gray-50/75 shadow-xl ${isMaximized ? "" : "rounded-lg"}`}
-        style={{
-          transition: isAnimating ? "all 0.3s ease-in-out" : "none",
-        }}
-      >
-        <div className="draggable-handle" onDoubleClick={handleDoubleClick}>
-          <WindowHeader onClose={handleClose} onMaximize={handleMaximize} />
-        </div>
-      </Rnd>
+      {isReady && (
+        <Rnd
+          size={windowSize}
+          position={windowPosition}
+          minWidth={200}
+          minHeight={150}
+          dragHandleClassName="draggable-handle"
+          onDrag={handleDrag} // Handle drag event
+          onResizeStop={(_e, _direction, ref, _delta, position) => {
+            setWindowSize({
+              width: ref.offsetWidth,
+              height: ref.offsetHeight,
+            });
+            setWindowPosition(position);
+          }}
+          enableResizing={!isMaximized}
+          className={`bg-gray-50/75 shadow-xl ${
+            isMaximized ? "" : "rounded-lg"
+          }`}
+          style={{
+            transition: isAnimating ? "all 0.3s ease-in-out" : "none",
+          }}
+        >
+          <div className="draggable-handle" onDoubleClick={handleDoubleClick}>
+            <WindowHeader onClose={handleClose} onMaximize={handleMaximize} />
+          </div>
+        </Rnd>
+      )}
     </div>
   );
 };
