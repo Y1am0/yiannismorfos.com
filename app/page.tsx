@@ -6,7 +6,7 @@ import lotusBackground from '@/public/backgrounds/lotus.jpg'
 
 export default function Home() {
   return (
-    <main className="relative flex min-h-screen flex-col items-center p-24">
+    <main className="relative flex min-h-screen flex-col">
       <div className="absolute inset-0 z-0">
         <Image
           src={lotusBackground}
@@ -18,7 +18,7 @@ export default function Home() {
         />
       </div>
         <WindowContainer />
-      <TaskBar />
+        <TaskBar />
     </main>
   );
 }
