@@ -1,31 +1,68 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import WindowHeader from "@/components/window/windowHeader";
-import { Rnd, DraggableData, DraggableEvent } from "react-rnd";
-import { useState, useEffect } from "react";
+import { Rnd } from "react-rnd";
 
-const WindowContainer = () => {
-  const [isVisible, setIsVisible] = useState(true);
+const ANIMATION_DURATION = 300;
+
+interface WindowContainerProps {
+  onClose: () => void;
+  onPositionChange: (position: { x: number; y: number }) => void;
+  onSizeChange: (size: { width: number; height: number }) => void;
+  initialPosition: { x: number; y: number };
+  initialSize: { width: number; height: number };
+  isActive: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
+const WindowContainer: React.FC<WindowContainerProps> = ({
+  onClose,
+  onPositionChange,
+  onSizeChange,
+  initialPosition,
+  initialSize,
+  isActive,
+  onClick,
+  children,
+}) => {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [windowSize, setWindowSize] = useState({ width: 1020, height: 640 });
-  const [windowPosition, setWindowPosition] = useState({ x: 0, y: 0 });
+  const [windowSize, setWindowSize] = useState(initialSize);
+  const [windowPosition, setWindowPosition] = useState(initialPosition);
   const [previousSize, setPreviousSize] = useState(windowSize);
   const [previousPosition, setPreviousPosition] = useState(windowPosition);
   const [isAnimating, setIsAnimating] = useState(false);
-
-  const [isReady, setIsReady] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const initialX = (viewportWidth - windowSize.width) / 2;
-    const initialY = (viewportHeight - windowSize.height) / 2;
-    setWindowPosition({ x: initialX, y: initialY });
-    setIsReady(true); // Only show the window after the position is calculated
-  }, []);
+    if (isMaximized) {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+      setWindowPosition({ x: 0, y: 0 });
+    } else {
+      setWindowSize(initialSize);
+      setWindowPosition(initialPosition);
+    }
+  }, [isMaximized, initialPosition, initialSize]);
 
   const handleClose = () => {
-    setIsVisible(false);
+    setIsAnimating(true);
+    setIsClosing(true);
+
+    setWindowSize((prevSize) => ({
+      width: prevSize.width * 0.8,
+      height: prevSize.height * 0.8,
+    }));
+    setWindowPosition((prevPosition) => ({
+      x: prevPosition.x + windowSize.width * 0.1,
+      y: prevPosition.y + windowSize.height * 0.1,
+    }));
+
+    setTimeout(() => {
+      onClose();
+      setIsAnimating(false);
+      setIsClosing(false);
+    }, ANIMATION_DURATION);
   };
 
   const handleMaximize = () => {
@@ -45,56 +82,63 @@ const WindowContainer = () => {
 
     setTimeout(() => {
       setIsAnimating(false);
-    }, 300);
+    }, ANIMATION_DURATION);
   };
 
-  const handleDoubleClick = () => {
-    handleMaximize();
+  const handleDragStop = (_e: any, d: any) => {
+    if (!isMaximized) {
+      const newPosition = { x: d.x, y: d.y < 0 ? 0 : d.y };
+      setWindowPosition(newPosition);
+      onPositionChange(newPosition);
+    }
   };
 
-  const handleDrag = (_e: DraggableEvent, d: DraggableData) => {
-    // Prevent dragging over the top of the screen
-    const newY = d.y < 0 ? 0 : d.y;
-    setWindowPosition({ x: d.x, y: newY });
+  const handleResizeStop = (
+    _e: any,
+    _direction: any,
+    ref: any,
+    _delta: any,
+    position: any
+  ) => {
+    if (!isMaximized) {
+      const newSize = { width: ref.offsetWidth, height: ref.offsetHeight };
+      setWindowSize(newSize);
+      setWindowPosition(position);
+      onSizeChange(newSize);
+      onPositionChange(position);
+    }
   };
-
-  if (!isVisible) return null;
 
   return (
-    <div
-      className={`absolute z-10 ${isMaximized ? "inset-0" : ""} ${
-        isAnimating ? "transition-all duration-300 ease-in-out" : ""
-      }`}
-    >
-      {isReady && (
-        <Rnd
-          size={windowSize}
-          position={windowPosition}
-          minWidth={200}
-          minHeight={150}
-          dragHandleClassName="draggable-handle"
-          onDrag={handleDrag} // Handle drag event
-          onResizeStop={(_e, _direction, ref, _delta, position) => {
-            setWindowSize({
-              width: ref.offsetWidth,
-              height: ref.offsetHeight,
-            });
-            setWindowPosition(position);
-          }}
-          enableResizing={!isMaximized}
-          className={`bg-gray-50/75 shadow-xl ${
-            isMaximized ? "" : "rounded-lg"
-          }`}
-          style={{
-            transition: isAnimating ? "all 0.3s ease-in-out" : "none",
-          }}
-        >
-          <div className="draggable-handle" onDoubleClick={handleDoubleClick}>
-            <WindowHeader onClose={handleClose} onMaximize={handleMaximize} />
-          </div>
-        </Rnd>
-      )}
-    </div>
+    <>
+      <Rnd
+        size={windowSize}
+        position={windowPosition}
+        minWidth={200}
+        minHeight={150}
+        dragHandleClassName="draggable-handle"
+        onDragStop={handleDragStop}
+        onResizeStop={handleResizeStop}
+        enableResizing={!isMaximized}
+        className={`bg-gray-50/75 shadow-xl ${
+          isMaximized ? "" : "rounded-lg"
+        } ${isActive ? "z-50" : "z-10"}`}
+        style={{
+          transition: isAnimating ? "all 0.3s ease-in-out" : "none",
+          opacity: isClosing ? 0 : 1,
+        }}
+        onClick={onClick}
+      >
+        <div className="draggable-handle">
+          <WindowHeader
+            onClose={handleClose}
+            onDoubleClick={handleMaximize}
+            onMaximize={handleMaximize}
+          />
+        </div>
+        <div className="p-4">{children}</div>
+      </Rnd>
+    </>
   );
 };
 

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import TaskBar from "@/components/navigation/taskbar";
+import { WindowManagerProvider } from "@/components/windowManager";
+import Dock from "@/components/navigation/dock";
+import Desktop from "@/components/desktop";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,7 +19,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}
+      <body className={inter.className}>
+        <WindowManagerProvider>
+          <div className="os-container">
+            <Desktop />
+            {children}
+            <Dock />
+          </div>
+        </WindowManagerProvider>
       </body>
     </html>
   );
