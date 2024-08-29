@@ -14,11 +14,11 @@ export const apps = [
   {
     key: "app1",
     name: "App 1",
-    icon: "/path/to/app1-icon.png", // Replace with actual path to the icon
+    icon: "/path/to/app1-icon.png", //TODO Replace with actual path to the icon
   },
   {
     key: "app2",
     name: "App 2",
-    icon: "/path/to/app2-icon.png", // Replace with actual path to the icon
+    icon: "/path/to/app2-icon.png", //TODO Replace with actual path to the icon
   },
 ];
