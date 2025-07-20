@@ -25,9 +25,6 @@ export const useNavigationActions = () => {
 
   // Shared timeout management from store
   const setExitTimeout = useNavigationState((state) => state.setExitTimeout);
-  const setClearHoverTimeout = useNavigationState(
-    (state) => state.setClearHoverTimeout
-  );
   const clearAllTimeouts = useNavigationState(
     (state) => state.clearAllTimeouts
   );
