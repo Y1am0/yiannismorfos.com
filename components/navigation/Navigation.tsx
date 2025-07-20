@@ -16,7 +16,6 @@ import { NavigationItem } from "./NavigationItem";
 import { useElementRegistryState } from "./stores/elementRegistryState";
 import { useNavigationActions, useNavigationSelectors } from "./stores/index";
 import { useMobileMenuState } from "./stores/mobileMenuState";
-import { useNavigationState } from "./stores/navigationState";
 
 const NavigationComponent = () => {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -29,7 +28,7 @@ const NavigationComponent = () => {
     activeItem,
     isMobileMenuOpen,
     hoveredItem,
-    justOpened,
+    animationsComplete,
   } = useNavigationSelectors();
 
   const setIsMobile = useMobileMenuState((state) => state.setIsMobile);
@@ -144,8 +143,11 @@ const NavigationComponent = () => {
           }
         } else if ((isNavigationItem || isBlogItem) && isMobileMenuOpen) {
           // Navigation items and blog are ONLY visible when mobile menu is open - use mobile elements
-          if (hoveredItem) {
-            // User is actively hovering - respect that
+          // If user is actively hovering, position immediately. If it's just active item, wait for animations to complete
+          const shouldPosition =
+            hoveredItem === currentDisplayedItem || animationsComplete;
+
+          if (shouldPosition) {
             const displayedMobileElement =
               getMobileElement(currentDisplayedItem);
             if (displayedMobileElement) {
@@ -153,53 +155,8 @@ const NavigationComponent = () => {
             } else {
               setGlassPillVisible(false);
             }
-          } else if (currentDisplayedItem === activeItem && !justOpened) {
-            // No hover, and we're dealing with active item, and menu didn't just open
-            // Use delayed positioning to avoid race conditions when mobile menu opens
-            const checkMobileElement = () => {
-              // Re-check hover state when timeout executes - don't override active hover
-              const currentHoverState =
-                useNavigationState.getState().hoveredItem;
-              if (currentHoverState) {
-                // User started hovering something while we were waiting - abort positioning on active item
-                return;
-              }
-
-              const displayedMobileElement =
-                getMobileElement(currentDisplayedItem);
-              if (displayedMobileElement) {
-                updateGlassPillPosition(displayedMobileElement, parentElement);
-              } else {
-                // Retry after a short delay if element not found
-                setTimeout(checkMobileElement, 50);
-              }
-            };
-
-            // Add delay to allow mobile menu to finish opening animation
-            setTimeout(checkMobileElement, 400);
-          } else if (currentDisplayedItem === activeItem && justOpened) {
-            // Menu just opened and we're dealing with active item - use longer delay to allow hover state to stabilize
-            const checkMobileElement = () => {
-              // Re-check hover state when timeout executes - don't override active hover
-              const currentHoverState =
-                useNavigationState.getState().hoveredItem;
-              if (currentHoverState) {
-                // User started hovering something while we were waiting - abort positioning on active item
-                return;
-              }
-
-              const displayedMobileElement =
-                getMobileElement(currentDisplayedItem);
-              if (displayedMobileElement) {
-                updateGlassPillPosition(displayedMobileElement, parentElement);
-              } else {
-                // Retry after a short delay if element not found
-                setTimeout(checkMobileElement, 50);
-              }
-            };
-
-            // Longer delay when menu just opened to allow click event and hover state to stabilize
-            setTimeout(checkMobileElement, 600);
+          } else {
+            setGlassPillVisible(false);
           }
         } else {
           // Mobile menu is closed and item is a navigation item, or unknown item - hide pill
@@ -215,11 +172,11 @@ const NavigationComponent = () => {
     parentElement,
     isMobile,
     isMobileMenuOpen,
+    animationsComplete,
     getDesktopElement,
     getMobileElement,
     updateGlassPillPosition,
     setGlassPillVisible,
-    justOpened,
   ]);
 
   // Handle window resize - reposition glass pill if visible
@@ -248,8 +205,12 @@ const NavigationComponent = () => {
             if (activeElement) {
               updateGlassPillPosition(activeElement, parentElement);
             }
-          } else if ((isNavigationItem || isBlogItem) && isMobileMenuOpen) {
-            // Navigation items only work when mobile menu is open (use mobile elements)
+          } else if (
+            (isNavigationItem || isBlogItem) &&
+            isMobileMenuOpen &&
+            animationsComplete
+          ) {
+            // Navigation items only work when mobile menu is open and animations are complete (use mobile elements)
             const activeElement = getMobileElement(activeItem);
             if (activeElement) {
               updateGlassPillPosition(activeElement, parentElement);
@@ -267,6 +228,7 @@ const NavigationComponent = () => {
     parentElement,
     isMobile,
     isMobileMenuOpen,
+    animationsComplete,
     getMobileElement,
     getDesktopElement,
     updateGlassPillPosition,

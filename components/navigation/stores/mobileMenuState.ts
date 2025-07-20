@@ -5,7 +5,7 @@ interface MobileMenuState {
   // State
   isOpen: boolean;
   isMobile: boolean;
-  justOpened: boolean; // Track when menu just opened to prevent immediate positioning
+  animationsComplete: boolean; // Track when mobile menu stagger animations are done
 
   // Actions
   setIsOpen: (isOpen: boolean) => void;
@@ -13,7 +13,7 @@ interface MobileMenuState {
   closeMenu: () => void;
   openMenu: () => void;
   setIsMobile: (isMobile: boolean) => void;
-  setJustOpened: (justOpened: boolean) => void;
+  setAnimationsComplete: (complete: boolean) => void;
 
   // Computed values
   shouldShowMobileMenu: () => boolean;
@@ -25,41 +25,52 @@ export const useMobileMenuState = create<MobileMenuState>()(
       // Initial state
       isOpen: false,
       isMobile: false,
-      justOpened: false,
+      animationsComplete: false,
 
       // Actions
-      setIsOpen: (isOpen) => set({ isOpen }, false, "setIsOpen"),
+      setIsOpen: (isOpen) =>
+        set(
+          { isOpen, animationsComplete: isOpen ? false : true },
+          false,
+          "setIsOpen"
+        ),
       toggleMenu: () => {
         const currentState = get();
         const newIsOpen = !currentState.isOpen;
         set(
-          {
-            isOpen: newIsOpen,
-            justOpened: newIsOpen, // Set justOpened when opening
-          },
+          { isOpen: newIsOpen, animationsComplete: newIsOpen ? false : true },
           false,
           "toggleMenu"
         );
 
-        // Clear justOpened flag after brief delay
+        // Set animations complete after stagger animation finishes
         if (newIsOpen) {
+          // Wait for the last item's animation (0.2 + 4 * 0.1 = 0.6s) plus a small buffer
           setTimeout(() => {
-            set({ justOpened: false }, false, "clearJustOpened");
-          }, 150);
+            const currentState = get();
+            if (currentState.isOpen) {
+              // Only set if menu is still open
+              set({ animationsComplete: true }, false, "setAnimationsComplete");
+            }
+          }, 700);
         }
       },
       closeMenu: () =>
-        set({ isOpen: false, justOpened: false }, false, "closeMenu"),
+        set({ isOpen: false, animationsComplete: true }, false, "closeMenu"),
       openMenu: () => {
-        set({ isOpen: true, justOpened: true }, false, "openMenu");
-        // Clear justOpened flag after brief delay
+        set({ isOpen: true, animationsComplete: false }, false, "openMenu");
+        // Set animations complete after stagger animation finishes
         setTimeout(() => {
-          set({ justOpened: false }, false, "clearJustOpened");
-        }, 150);
+          const currentState = get();
+          if (currentState.isOpen) {
+            // Only set if menu is still open
+            set({ animationsComplete: true }, false, "setAnimationsComplete");
+          }
+        }, 700);
       },
       setIsMobile: (isMobile) => set({ isMobile }, false, "setIsMobile"),
-      setJustOpened: (justOpened) =>
-        set({ justOpened }, false, "setJustOpened"),
+      setAnimationsComplete: (complete) =>
+        set({ animationsComplete: complete }, false, "setAnimationsComplete"),
 
       // Computed values
       shouldShowMobileMenu: () => {
@@ -76,6 +87,7 @@ export const useMobileMenuState = create<MobileMenuState>()(
 // Selectors for performance optimization
 export const selectIsOpen = (state: MobileMenuState) => state.isOpen;
 export const selectIsMobile = (state: MobileMenuState) => state.isMobile;
-export const selectJustOpened = (state: MobileMenuState) => state.justOpened;
+export const selectAnimationsComplete = (state: MobileMenuState) =>
+  state.animationsComplete;
 export const selectShouldShowMobileMenu = (state: MobileMenuState) =>
   state.shouldShowMobileMenu();

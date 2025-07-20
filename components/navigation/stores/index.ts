@@ -99,6 +99,8 @@ export const useNavigationActions = () => {
       getMobileElement,
     } = getCurrentState();
 
+    const animationsComplete = useMobileMenuState.getState().animationsComplete;
+
     // Clear any existing timeouts
     clearAllTimeouts();
 
@@ -126,8 +128,12 @@ export const useNavigationActions = () => {
           if (isLogoOrHamburger) {
             // Logo/hamburger are always visible on mobile - use desktop elements
             activeElement = getDesktopElement(activeItem);
-          } else if ((isNavigationItem || isBlogItem) && isMobileMenuOpen) {
-            // Navigation items only work when mobile menu is open - use mobile elements
+          } else if (
+            (isNavigationItem || isBlogItem) &&
+            isMobileMenuOpen &&
+            animationsComplete
+          ) {
+            // Navigation items only work when mobile menu is open AND animations are complete - use mobile elements
             activeElement = getMobileElement(activeItem);
           }
           // If mobile menu is closed and it's a navigation item, activeElement stays null
@@ -187,12 +193,16 @@ export const useNavigationActions = () => {
 
       registerMobileElement(item, element);
 
-      // If this is the active item and mobile menu is open, update glass pill position
+      // Only auto-position on active item if user is not currently hovering something else
+      const currentHoveredItem = useNavigationState.getState().hoveredItem;
+
+      // If this is the active item and mobile menu is open, and user isn't hovering anything else
       if (
         item === activeItem &&
         isMobile &&
         isMobileMenuOpen &&
-        parentElement
+        parentElement &&
+        !currentHoveredItem
       ) {
         updateGlassPillPosition(element, parentElement);
       }
@@ -247,7 +257,9 @@ export const useNavigationSelectors = () => {
 
   const isMobileMenuOpen = useMobileMenuState((state) => state.isOpen);
   const isMobile = useMobileMenuState((state) => state.isMobile);
-  const justOpened = useMobileMenuState((state) => state.justOpened);
+  const animationsComplete = useMobileMenuState(
+    (state) => state.animationsComplete
+  );
 
   const glassPillStyle = useGlassPillState((state) => state.backgroundStyle);
   const glassPillVisible = useGlassPillState((state) => state.isVisible);
@@ -259,7 +271,7 @@ export const useNavigationSelectors = () => {
     displayedItem,
     isMobileMenuOpen,
     isMobile,
-    justOpened,
+    animationsComplete,
     glassPillStyle,
     glassPillVisible,
   };
