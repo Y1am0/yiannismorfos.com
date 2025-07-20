@@ -1,5 +1,8 @@
+import { MeshGradientComponent } from "@/components/MeshGradient";
+import { settings } from "@/lib/settings";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Navigation } from "../components/navigation/Navigation";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,9 +28,29 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black min-h-screen relative`}
       >
-        {children}
+        <MeshGradientComponent
+          colors={[
+            settings.background.color1.hex,
+            settings.background.color2.hex,
+            settings.background.color3.hex,
+            settings.background.color4.hex,
+          ]}
+          speed={settings.background.speed}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            zIndex: 0,
+            width: "100%",
+            height: "100%",
+          }}
+        />
+        <div className="relative z-20">
+          <Navigation />
+          {children}
+        </div>
       </body>
     </html>
   );
