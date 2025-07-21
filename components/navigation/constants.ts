@@ -41,6 +41,7 @@ export const ANIMATION_CONFIG = {
 
 export const LAYOUT_CONSTANTS = {
   circularPillSize: 80,
+  externalLinkPillSize: 68,
   itemPadding: "px-6 py-2",
   absolutePositioning: "absolute top-1/2 -translate-y-1/2",
   responsiveDesktopPadding: "left-4 lg:left-12",
@@ -51,6 +52,14 @@ export const Z_INDEX = {
   mobileMenu: 30,
   navigationOverlay: 40,
   glassPill: 10,
+} as const;
+
+// Navigation item categories for glass pill logic
+export const NAVIGATION_CATEGORIES = {
+  alwaysVisible: ["logo", "menu"],
+  externalLinks: ["github", "linkedin"],
+  navigationItems: ["hello", "who", "what", "connect"],
+  blogItem: ["blog"],
 } as const;
 
 // Animation timing constants

@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { memo, useEffect, useMemo, useRef } from "react";
 import { AbsoluteItem } from "./AbsoluteItem";
 import { Z_INDEX } from "./constants";
-
 import { GlassPill } from "./GlassPill";
 import { Logo } from "./Logo";
 import { getBlogItem, getLogoItem, getNavigationItems } from "./menu-items";
@@ -131,9 +130,12 @@ const NavigationComponent = () => {
           currentDisplayedItem
         );
         const isBlogItem = currentDisplayedItem === "blog";
+        const isExternalLink = ["github", "linkedin"].includes(
+          currentDisplayedItem
+        );
 
-        if (isLogoOrHamburger) {
-          // Logo and hamburger are always visible on mobile - use desktop elements
+        if (isLogoOrHamburger || isExternalLink) {
+          // Logo, hamburger, and external links are always visible on mobile - use desktop elements
           const displayedDesktopElement =
             getDesktopElement(currentDisplayedItem);
           if (displayedDesktopElement) {
@@ -190,6 +192,7 @@ const NavigationComponent = () => {
           activeItem
         );
         const isBlogItem = activeItem === "blog";
+        const isExternalLink = ["github", "linkedin"].includes(activeItem);
 
         if (!isMobile) {
           // Desktop: reposition on desktop element
@@ -199,8 +202,8 @@ const NavigationComponent = () => {
           }
         } else {
           // Mobile: different logic based on item type
-          if (isLogoOrHamburger) {
-            // Logo/hamburger always use desktop elements (always visible)
+          if (isLogoOrHamburger || isExternalLink) {
+            // Logo/hamburger/external links always use desktop elements (always visible)
             const activeElement = getDesktopElement(activeItem);
             if (activeElement) {
               updateGlassPillPosition(activeElement, parentElement);

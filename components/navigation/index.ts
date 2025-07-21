@@ -1,5 +1,6 @@
 // Main components
 export { AbsoluteItem } from "./AbsoluteItem";
+export { ExternalLinks } from "./ExternalLinks";
 export { GlassPill } from "./GlassPill";
 export { Logo } from "./Logo";
 export { MenuToggle } from "./MenuToggle";
@@ -20,10 +21,11 @@ export {
 
 // Menu items and helpers
 export {
-  MENU_ITEMS,
   getBlogItem,
+  getExternalLinks,
   getLogoItem,
   getNavigationItems,
+  MENU_ITEMS,
 } from "./menu-items";
 
 // Types

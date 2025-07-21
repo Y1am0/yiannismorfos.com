@@ -19,15 +19,15 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
     useNavigationSelectors();
 
   // Define which items should have circular glass pills
-  const circularItems = useMemo(() => new Set(["logo", "menu", "blog"]), []);
+  const circularItems = useMemo(
+    () => new Set(["logo", "menu", "blog", "github", "linkedin"]),
+    []
+  );
 
   // Memoized calculations for pill styling
   const pillConfiguration = useMemo(() => {
     // Only check glassPillVisible for rendering - displayedItem can be null during exit animation
     if (!glassPillVisible) return null;
-
-    // Use displayedItem for configuration, but allow it to be null during exit
-    const itemForConfig = displayedItem || "default";
 
     const isCircular = displayedItem ? circularItems.has(displayedItem) : false;
     const isMobileMenuItem = glassPillStyle.top > 100;
@@ -35,8 +35,13 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
     const shouldBeCircular = isCircular && !isBlogInMobileMenu;
     const isPressed = pressedItem === displayedItem;
 
+    // Use smaller size for external links, regular size for other circular items
+    const isExternalLink =
+      displayedItem === "github" || displayedItem === "linkedin";
     const circularSize = shouldBeCircular
-      ? LAYOUT_CONSTANTS.circularPillSize
+      ? isExternalLink
+        ? LAYOUT_CONSTANTS.externalLinkPillSize
+        : LAYOUT_CONSTANTS.circularPillSize
       : Math.max(glassPillStyle.width, glassPillStyle.height);
 
     const adjustedLeft = shouldBeCircular

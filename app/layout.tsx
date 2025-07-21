@@ -2,7 +2,7 @@ import { MeshGradientComponent } from "@/components/MeshGradient";
 import { settings } from "@/lib/settings";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Navigation } from "../components/navigation/Navigation";
+import { ExternalLinks, Navigation } from "../components/navigation";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black min-h-screen relative`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black h-dvh relative`}
       >
         <MeshGradientComponent
           colors={[
@@ -47,9 +47,14 @@ export default function RootLayout({
             height: "100%",
           }}
         />
-        <div className="relative z-20">
+
+        {/* Main content container with max-width constraint */}
+        <div className="relative z-20 max-w-screen-2xl mx-auto min-h-dvh">
           <Navigation />
           {children}
+
+          {/* External Links - Positioned absolutely within the max-width container */}
+          <ExternalLinks />
         </div>
       </body>
     </html>
