@@ -69,24 +69,40 @@ const NavigationComponent = () => {
     setActiveItem(currentItem?.id || null);
   }, [pathname, setActiveItem, menuItems.navigation]);
 
-  // Set up mobile detection
+  // ---- Responsive breakpoint detection -------------------------------------------------
+  // Guards against SSR and debounces the expensive resize handler.
   useEffect(() => {
+    if (typeof window === "undefined") return; // SSR guard
+
+    // Detect <768px viewport as mobile
     const checkMobile = () => {
       const wasMobile = useMobileMenuState.getState().isMobile;
       const isNowMobile = window.innerWidth < 768;
 
       setIsMobile(isNowMobile);
 
-      // Auto-close mobile menu when transitioning from mobile to desktop
+      // Auto-close mobile menu when moving from mobile → desktop
       if (wasMobile && !isNowMobile && isMobileMenuOpen) {
         const { closeMenu } = useMobileMenuState.getState();
         closeMenu();
       }
     };
 
+    // Debounce via setTimeout (50 ms) to avoid firing on every pixel change
+    let resizeTimer: NodeJS.Timeout | null = null;
+    const debounced = () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(checkMobile, 50);
+    };
+
+    // Initial run
     checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    window.addEventListener("resize", debounced);
+
+    return () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      window.removeEventListener("resize", debounced);
+    };
   }, [setIsMobile, isMobileMenuOpen]);
 
   // Clear mobile registry when mobile menu closes
@@ -181,9 +197,11 @@ const NavigationComponent = () => {
     setGlassPillVisible,
   ]);
 
-  // Handle window resize - reposition glass pill if visible
+  // ---- Re-position glass pill on viewport resize ---------------------------------------
   useEffect(() => {
-    const handleResize = () => {
+    if (typeof window === "undefined") return; // SSR guard
+
+    const reposition = () => {
       // Only reposition if pill should be visible
       if (activeItem && parentElement) {
         const isLogoOrHamburger =
@@ -224,8 +242,21 @@ const NavigationComponent = () => {
       }
     };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    // rAF throttle – keeps updates in sync with paint
+    let frameId: number | null = null;
+    const onResize = () => {
+      if (frameId !== null) return; // already queued
+      frameId = window.requestAnimationFrame(() => {
+        reposition();
+        frameId = null;
+      });
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => {
+      if (frameId !== null) cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", onResize);
+    };
   }, [
     activeItem,
     parentElement,

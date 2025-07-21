@@ -1,5 +1,6 @@
 "use client";
 
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useMemo } from "react";
 import {
@@ -17,6 +18,9 @@ interface GlassPillProps {
 const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
   const { glassPillStyle, glassPillVisible, pressedItem } =
     useNavigationSelectors();
+
+  // Respect OS-level Reduce Motion preference
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Define which items should have circular glass pills
   const circularItems = useMemo(
@@ -95,18 +99,32 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
           style={pillConfiguration.positionStyle}
           animate={{
             opacity: 1,
-            scale: pillConfiguration.isPressed ? 1.1 : 1,
+            ...(prefersReducedMotion
+              ? {}
+              : { scale: pillConfiguration.isPressed ? 1.1 : 1 }),
           }}
-          initial={ANIMATION_CONFIG.glassPill.initial}
-          exit={ANIMATION_CONFIG.glassPill.exit}
+          initial={
+            prefersReducedMotion
+              ? { opacity: 0 }
+              : ANIMATION_CONFIG.glassPill.initial
+          }
+          exit={
+            prefersReducedMotion
+              ? { opacity: 0 }
+              : ANIMATION_CONFIG.glassPill.exit
+          }
           transition={{
             opacity: ANIMATION_CONFIG.glassPill.transition,
-            scale: {
-              type: "spring",
-              stiffness: pillConfiguration.isPressed ? 400 : 300,
-              damping: pillConfiguration.isPressed ? 25 : 20,
-              bounce: pillConfiguration.isPressed ? 0.3 : 0.8,
-            },
+            ...(prefersReducedMotion
+              ? {}
+              : {
+                  scale: {
+                    type: "spring",
+                    stiffness: pillConfiguration.isPressed ? 400 : 300,
+                    damping: pillConfiguration.isPressed ? 25 : 20,
+                    bounce: pillConfiguration.isPressed ? 0.3 : 0.8,
+                  },
+                }),
             layout: ANIMATION_CONFIG.glassPill.transition.layout,
           }}
           layout

@@ -11,31 +11,39 @@ export const GLASS_EFFECT_STYLES = {
   `,
 } as const;
 
+// -------------------------------------------------------------------------------------
+// Global animation presets – keeps tuning variables in one place
+// -------------------------------------------------------------------------------------
+
+export const SPRING_PRESETS = {
+  default: {
+    type: "spring" as const,
+    stiffness: 300,
+    damping: 30,
+  },
+  glass: {
+    type: "spring" as const,
+    stiffness: 120,
+    damping: 15,
+    bounce: 0.4,
+  },
+} as const;
+
 export const ANIMATION_CONFIG = {
   glassPill: {
     initial: { opacity: 0, scale: 0.6 },
     animate: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.6 },
     transition: {
-      type: "spring" as const,
-      stiffness: 120,
-      damping: 15,
-      bounce: 0.4,
+      ...SPRING_PRESETS.glass,
       layout: {
-        type: "spring" as const,
-        stiffness: 100,
-        damping: 12,
-        bounce: 0.5,
+        ...SPRING_PRESETS.glass,
         duration: 1.2,
       },
     },
   },
   navigationItem: {
-    transition: {
-      type: "spring" as const,
-      stiffness: 300,
-      damping: 30,
-    },
+    transition: SPRING_PRESETS.default,
   },
 } as const;
 

@@ -62,14 +62,17 @@ const NavigationItemComponent = ({
   const content = (
     <motion.div
       ref={itemRef}
-      className={`text-2xl font-thin ${LAYOUT_CONSTANTS.itemPadding} cursor-pointer relative`}
+      className={`text-2xl font-thin ${LAYOUT_CONSTANTS.itemPadding} cursor-pointer relative focus-visible:outline-none`}
       onHoverStart={handleHoverStartCallback}
       onHoverEnd={handleHoverEnd}
       onTouchStart={handleHoverStartCallback}
       onMouseDown={handleMouseDownCallback}
       onMouseUp={handleMouseUp}
       onClick={handleClickCallback}
+      onFocus={handleHoverStartCallback}
+      onBlur={handleHoverEnd}
       {...ANIMATION_CONFIG.navigationItem}
+      tabIndex={href ? undefined : 0}
     >
       {children}
     </motion.div>

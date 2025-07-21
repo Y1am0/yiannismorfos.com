@@ -121,7 +121,7 @@ const ExternalLinksComponent = () => {
   const externalLinks = getExternalLinks();
 
   return (
-    <div className="absolute right-4 bottom-8 lg:right-8 z-20 flex flex-col items-center space-y-2">
+    <div className="absolute right-4 bottom-8 lg:right-12 z-20 flex flex-col items-center space-y-2">
       {/* Vertical line */}
       <div className="w-px h-24 bg-white/70" />
 
