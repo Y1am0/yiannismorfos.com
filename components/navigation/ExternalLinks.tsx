@@ -168,15 +168,7 @@ const ExternalLinksComponent = () => {
           <motion.div
             key={`line-${setIndex}`}
             className="w-px h-24 bg-white/70 absolute top-0 left-1/2 -translate-x-1/2 origin-top"
-            initial={{ scaleY: 1 }}
-            animate={{
-              scaleY: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 0.8,
-              times: [0, 0.5, 1], // Extend during first half, retract during second half
-              ease: "easeInOut",
-            }}
+            {...ANIMATION_CONFIG.stretchingLine}
           />
         </AnimatePresence>
       </div>

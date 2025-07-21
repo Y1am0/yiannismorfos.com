@@ -54,6 +54,17 @@ export const ANIMATION_CONFIG = {
       opacity: { duration: 0.2 },
     },
   },
+  stretchingLine: {
+    initial: { scaleY: 1 },
+    animate: {
+      scaleY: [1, 1.2, 1] as number[],
+    },
+    transition: {
+      duration: 0.8,
+      times: [0, 0.5, 1] as number[], // Extend during first half, retract during second half
+      ease: "easeInOut" as const,
+    },
+  },
 } as const;
 
 export const LAYOUT_CONSTANTS = {
