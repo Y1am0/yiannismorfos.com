@@ -65,6 +65,33 @@ export const ANIMATION_CONFIG = {
       ease: "easeInOut" as const,
     },
   },
+  indicatorLine: {
+    initial: {
+      y: 0,
+      scaleY: 1,
+    },
+    transition: {
+      y: {
+        duration: 0.4,
+        ease: "easeInOut" as const,
+        delay: 0.2, // Slight delay to sync with icon transitions
+      },
+      scaleY: {
+        duration: 0.8,
+        times: [0, 0.5, 1] as number[],
+        ease: "easeInOut" as const,
+      },
+    },
+  },
+  externalLinksContainer: {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: {
+      duration: 0.4,
+      staggerChildren: 0.1,
+    },
+  },
 } as const;
 
 export const LAYOUT_CONSTANTS = {
@@ -74,6 +101,11 @@ export const LAYOUT_CONSTANTS = {
   absolutePositioning: "absolute top-1/2 -translate-y-1/2",
   responsiveDesktopPadding: "left-4 lg:left-12",
   responsiveMobilePadding: "right-4 lg:right-12",
+  // External links specific constants
+  externalLinksLineHeight: "h-24", // Main line height
+  externalLinksIndicatorHeight: "h-12", // Indicator line height (50% of main)
+  externalLinksContainerHeight: "h-[92px]", // Fixed container height
+  externalLinksLineContainer: "h-26", // Line container height
 } as const;
 
 export const Z_INDEX = {
@@ -102,4 +134,17 @@ export const TIMING = {
   glassPillExitDuration: 400, // Duration to wait for glass pill exit animation
 } as const;
 
-export const EXTERNAL_LINK_ROTATION_INTERVAL = 10000; // ms, 10 seconds
+// External links constants
+export const EXTERNAL_LINKS = {
+  rotationInterval: 2000, // ms, rotation interval
+  indicatorPositions: {
+    top: 0, // Top half position (pixels)
+    bottom: 48, // Bottom half position (pixels) - half of main line height
+  },
+  stretchScale: {
+    main: 1.2, // Main line stretch scale
+    indicator: 1.4, // Indicator line stretch scale (more pronounced for visibility)
+  },
+} as const;
+
+export const EXTERNAL_LINK_ROTATION_INTERVAL = EXTERNAL_LINKS.rotationInterval;

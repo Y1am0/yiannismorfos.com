@@ -105,13 +105,23 @@ const NavigationItemComponent = ({
     </motion.div>
   );
 
-  // For mobile navigation items, we handle navigation manually to allow animations
-  if (href && isMobile && isMobileMenuOpen) {
-    return content;
-  }
-
-  // For desktop or non-mobile menu items, use Link normally
-  return href ? <Link href={href}>{content}</Link> : content;
+  // Always wrap in Link for consistent DOM structure, but handle navigation manually when needed
+  return href ? (
+    <Link
+      href={href}
+      onClick={(e) => {
+        // Only prevent default for mobile menu scenarios
+        if (isMobile && isMobileMenuOpen) {
+          e.preventDefault();
+          handleClickCallback(e);
+        }
+      }}
+    >
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 };
 
 // Memoize the component to prevent unnecessary re-renders

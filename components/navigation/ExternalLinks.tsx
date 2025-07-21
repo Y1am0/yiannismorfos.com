@@ -10,30 +10,33 @@ import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ANIMATION_CONFIG,
+  EXTERNAL_LINKS,
   EXTERNAL_LINK_ROTATION_INTERVAL,
   LAYOUT_CONSTANTS,
 } from "./constants";
 import { getExternalLinks } from "./menu-items";
 import { useNavigationActions } from "./stores";
-
-import { ExternalLinkId } from "./types";
-
-import { NavigationItemId } from "./types";
+import { ExternalLinkId, NavigationItemId } from "./types";
 
 interface ExternalLinkItemProps {
   id: NavigationItemId;
   href: string;
   iconType: ExternalLinkId;
   label: string;
+  onHoverChange?: (hovered: boolean) => void;
 }
 
+/**
+ * Individual external link item with hover states and icon rendering
+ * Registers itself with the navigation system for glass pill positioning
+ */
 const ExternalLinkItem = ({
   id,
   href,
   iconType,
   label,
   onHoverChange,
-}: ExternalLinkItemProps & { onHoverChange?: (hovered: boolean) => void }) => {
+}: ExternalLinkItemProps) => {
   const itemRef = useRef<HTMLAnchorElement>(null);
   const {
     handleHoverStart,
@@ -69,31 +72,26 @@ const ExternalLinkItem = ({
     handleMouseDown(id);
   }, [handleMouseDown, id]);
 
-  const renderIcon = () => {
+  // Memoized icon renderer based on iconType
+  const renderIcon = useCallback(() => {
+    const iconProps = {
+      size: 20,
+      className: "text-white/70 transition-colors",
+    };
+
     switch (iconType) {
       case "github":
-        return (
-          <GitHubIcon size={20} className="text-white/70 transition-colors" />
-        );
+        return <GitHubIcon {...iconProps} />;
       case "linkedin":
-        return (
-          <LinkedInIcon size={20} className="text-white/70 transition-colors" />
-        );
+        return <LinkedInIcon {...iconProps} />;
       case "instagram":
-        return (
-          <InstagramIcon
-            size={20}
-            className="text-white/70 transition-colors"
-          />
-        );
+        return <InstagramIcon {...iconProps} />;
       case "tiktok":
-        return (
-          <TikTokIcon size={20} className="text-white/70 transition-colors" />
-        );
+        return <TikTokIcon {...iconProps} />;
       default:
         return null;
     }
-  };
+  }, [iconType]);
 
   return (
     <motion.a
@@ -115,6 +113,14 @@ const ExternalLinkItem = ({
   );
 };
 
+/**
+ * External links component with rotating social media icons
+ * Features:
+ * - Rotates between two sets of social icons (GitHub/LinkedIn & Instagram/TikTok)
+ * - Visual indicator line shows which set is currently active
+ * - Pauses rotation on hover (both icons and line)
+ * - Synchronized animations with stretching effects
+ */
 const ExternalLinksComponent = () => {
   const allLinks = getExternalLinks();
   // Define rotating sets by id order
@@ -154,34 +160,62 @@ const ExternalLinksComponent = () => {
     setIsPaused(hovered);
   }, []);
 
+  // Handle line hover to pause timer
+  const handleLineHover = useCallback((hovered: boolean) => {
+    setIsPaused(hovered);
+  }, []);
+
   const visibleLinks = allLinks.filter((l) =>
     linkSets[setIndex].includes(l.id as ExternalLinkId)
   );
 
   return (
     <div className="absolute right-4 bottom-8 lg:right-12 z-20 flex flex-col items-center space-y-2">
-      {/* Animated vertical line - animates in sync with links */}
-      <div className="relative h-26">
-        {" "}
-        {/* Fixed container height */}
+      {/* Animated vertical line with inner indicator */}
+      <div
+        className={`relative ${LAYOUT_CONSTANTS.externalLinksLineContainer}`}
+      >
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={`line-${setIndex}`}
-            className="w-px h-24 bg-white/70 absolute top-0 left-1/2 -translate-x-1/2 origin-top"
+            className={`w-px ${LAYOUT_CONSTANTS.externalLinksLineHeight} bg-white/40 absolute top-0 left-1/2 -translate-x-1/2 origin-top cursor-pointer`}
+            onMouseEnter={() => handleLineHover(true)}
+            onMouseLeave={() => handleLineHover(false)}
             {...ANIMATION_CONFIG.stretchingLine}
           />
         </AnimatePresence>
+        {/* Inner indicator line that slides between top and bottom half - outside AnimatePresence */}
+        <motion.div
+          key={`indicator-${setIndex}`} // Force recreation to ensure stretch animation plays
+          className={`w-px ${LAYOUT_CONSTANTS.externalLinksIndicatorHeight} bg-white/70 absolute top-0 left-1/2 -translate-x-1/2 origin-top cursor-pointer`}
+          onMouseEnter={() => handleLineHover(true)}
+          onMouseLeave={() => handleLineHover(false)}
+          initial={{
+            y:
+              setIndex === 0
+                ? EXTERNAL_LINKS.indicatorPositions.bottom
+                : EXTERNAL_LINKS.indicatorPositions.top, // Start from opposite position to slide
+            scaleY: 1,
+          }}
+          animate={{
+            y:
+              setIndex === 0
+                ? EXTERNAL_LINKS.indicatorPositions.top
+                : EXTERNAL_LINKS.indicatorPositions.bottom, // Slide to target position
+            scaleY: [1, EXTERNAL_LINKS.stretchScale.indicator, 1], // More pronounced stretch to match proportional scaling
+          }}
+          transition={ANIMATION_CONFIG.indicatorLine.transition}
+        />
       </div>
       {/* External links with fixed height to prevent line movement */}
-      <div className="flex flex-col h-[92px]">
+      <div
+        className={`flex flex-col ${LAYOUT_CONSTANTS.externalLinksContainerHeight}`}
+      >
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={setIndex}
             className="flex flex-col space-y-1"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4, staggerChildren: 0.1 }}
+            {...ANIMATION_CONFIG.externalLinksContainer}
           >
             {visibleLinks.map((link) => (
               <ExternalLinkItem

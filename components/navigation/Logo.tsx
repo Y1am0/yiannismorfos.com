@@ -92,13 +92,23 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
     </div>
   );
 
-  // If mobile menu is open and we have a href, handle navigation manually to allow animations
-  if (href && isMobileMenuOpen) {
-    return content;
-  }
-
-  // For when mobile menu is closed or no href, use Link normally
-  return href ? <Link href={href}>{content}</Link> : content;
+  // Always wrap in Link for consistent DOM structure, but handle navigation manually when needed
+  return href ? (
+    <Link
+      href={href}
+      onClick={(e) => {
+        // Only prevent default for mobile menu scenarios
+        if (isMobileMenuOpen) {
+          e.preventDefault();
+          handleLogoClickCallback(e);
+        }
+      }}
+    >
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 };
 
 // Memoize the component to prevent unnecessary re-renders
