@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { LAYOUT_CONSTANTS } from "./constants";
-import { useNavigationActions } from "./stores";
+import { useNavigationActions, useNavigationSelectors } from "./stores";
 
 interface LogoProps {
   className?: string;
@@ -12,13 +13,16 @@ interface LogoProps {
 
 const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
   const logoRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { isMobileMenuOpen } = useNavigationSelectors();
+
   const {
     handleHoverStart,
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    handleLogoClick,
     handleElementMount,
+    closeMenu,
   } = useNavigationActions();
 
   // Register element on mount
@@ -40,6 +44,26 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
     handleMouseDown("logo");
   }, [handleMouseDown]);
 
+  // Memoized click handler with mobile menu animation support
+  const handleLogoClickCallback = useCallback(
+    (e?: React.MouseEvent) => {
+      // If mobile menu is open and we have a href, delay navigation for animation
+      if (href && isMobileMenuOpen) {
+        e?.preventDefault();
+
+        // Start the close menu animation
+        closeMenu();
+
+        // Wait for the mobile menu exit animation to complete before navigating
+        setTimeout(() => {
+          router.push(href);
+        }, 300); // Match the exit animation duration from MobileMenu.tsx
+      }
+      // For when mobile menu is closed, Link handles navigation normally
+    },
+    [href, isMobileMenuOpen, closeMenu, router]
+  );
+
   const content = (
     <div
       ref={logoRef}
@@ -49,7 +73,7 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
       onTouchStart={handleHoverStartCallback}
       onMouseDown={handleMouseDownCallback}
       onMouseUp={handleMouseUp}
-      onClick={handleLogoClick}
+      onClick={handleLogoClickCallback}
     >
       <svg
         className={className}
@@ -68,6 +92,12 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
     </div>
   );
 
+  // If mobile menu is open and we have a href, handle navigation manually to allow animations
+  if (href && isMobileMenuOpen) {
+    return content;
+  }
+
+  // For when mobile menu is closed or no href, use Link normally
   return href ? <Link href={href}>{content}</Link> : content;
 };
 
