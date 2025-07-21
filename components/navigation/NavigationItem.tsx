@@ -5,10 +5,11 @@ import Link from "next/link";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { ANIMATION_CONFIG, LAYOUT_CONSTANTS } from "./constants";
 import { useNavigationActions } from "./stores";
+import { NavigationItemId } from "./types";
 
 interface NavigationItemProps {
   children: React.ReactNode;
-  itemId: string;
+  itemId: NavigationItemId;
   href?: string;
   onClick?: () => void;
   isMobile?: boolean;
