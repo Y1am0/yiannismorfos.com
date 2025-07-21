@@ -9,6 +9,7 @@ export * from "./zustandMiddleware";
 
 // Convenience hooks that combine multiple stores
 import { useCallback } from "react";
+import { NavigationItemId } from "../types";
 import { useElementRegistryState } from "./elementRegistryState";
 import { useGlassPillState } from "./glassPillState";
 import { useMobileMenuState } from "./mobileMenuState";
@@ -59,7 +60,7 @@ export const useNavigationActions = () => {
 
   // Combined handlers that coordinate multiple stores
   const handleHoverStart = useCallback(
-    (item: string, element: Element) => {
+    (item: NavigationItemId, element: Element) => {
       if (process.env.NODE_ENV === "development") {
         console.log(
           `[Navigation] Hover START: ${item}, mobile: ${
@@ -159,7 +160,7 @@ export const useNavigationActions = () => {
   ]);
 
   const handleMouseDown = useCallback(
-    (item: string) => {
+    (item: NavigationItemId) => {
       setPressedItem(item);
     },
     [setPressedItem]
@@ -170,7 +171,7 @@ export const useNavigationActions = () => {
   }, [setPressedItem]);
 
   const handleElementMount = useCallback(
-    (item: string, element: Element) => {
+    (item: NavigationItemId, element: Element) => {
       const { parentElement, activeItem, isMobile } = getCurrentState();
 
       registerDesktopElement(item, element);
@@ -184,7 +185,7 @@ export const useNavigationActions = () => {
   );
 
   const handleMobileElementMount = useCallback(
-    (item: string, element: Element) => {
+    (item: NavigationItemId, element: Element) => {
       const { parentElement, activeItem, isMobile, isMobileMenuOpen } =
         getCurrentState();
 

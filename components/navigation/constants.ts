@@ -45,6 +45,15 @@ export const ANIMATION_CONFIG = {
   navigationItem: {
     transition: SPRING_PRESETS.default,
   },
+  externalLink: {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 20 },
+    transition: {
+      ...SPRING_PRESETS.default,
+      opacity: { duration: 0.2 },
+    },
+  },
 } as const;
 
 export const LAYOUT_CONSTANTS = {
@@ -62,10 +71,17 @@ export const Z_INDEX = {
   glassPill: 10,
 } as const;
 
+import { ExternalLinkId, NavigationItemId } from "./types";
+
 // Navigation item categories for glass pill logic
-export const NAVIGATION_CATEGORIES = {
+export const NAVIGATION_CATEGORIES: {
+  alwaysVisible: ReadonlyArray<NavigationItemId>;
+  externalLinks: ReadonlyArray<ExternalLinkId>;
+  navigationItems: ReadonlyArray<NavigationItemId>;
+  blogItem: ReadonlyArray<NavigationItemId>;
+} = {
   alwaysVisible: ["logo", "menu"],
-  externalLinks: ["github", "linkedin"],
+  externalLinks: ["github", "linkedin", "instagram", "tiktok"],
   navigationItems: ["hello", "who", "what", "connect"],
   blogItem: ["blog"],
 } as const;
@@ -74,3 +90,5 @@ export const NAVIGATION_CATEGORIES = {
 export const TIMING = {
   glassPillExitDuration: 400, // Duration to wait for glass pill exit animation
 } as const;
+
+export const EXTERNAL_LINK_ROTATION_INTERVAL = 10000; // ms, 10 seconds

@@ -4,12 +4,13 @@ import { Quote } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { memo, useEffect, useMemo, useRef } from "react";
 import { AbsoluteItem } from "./AbsoluteItem";
-import { Z_INDEX } from "./constants";
+import { NAVIGATION_CATEGORIES, Z_INDEX } from "./constants";
 import { GlassPill } from "./GlassPill";
 import { Logo } from "./Logo";
 import { getBlogItem, getLogoItem, getNavigationItems } from "./menu-items";
 import { MenuToggle } from "./MenuToggle";
 import { MobileMenu } from "./MobileMenu";
+import { ExternalLinkId, NavigationItemId } from "./types";
 
 import { NavigationItem } from "./NavigationItem";
 import { useElementRegistryState } from "./stores/elementRegistryState";
@@ -63,11 +64,14 @@ const NavigationComponent = () => {
 
   // Set up active item based on pathname
   useEffect(() => {
-    const currentItem = menuItems.navigation.find(
-      (item) => pathname === item.href
-    );
-    setActiveItem(currentItem?.id || null);
-  }, [pathname, setActiveItem, menuItems.navigation]);
+    // Check both navigation items and blog item for pathname match
+    const currentItem =
+      menuItems.navigation.find((item) => pathname === item.href) ||
+      (menuItems.blog && pathname === menuItems.blog.href
+        ? menuItems.blog
+        : null);
+    setActiveItem((currentItem?.id as NavigationItemId) || null);
+  }, [pathname, setActiveItem, menuItems.navigation, menuItems.blog]);
 
   // ---- Responsive breakpoint detection -------------------------------------------------
   // Guards against SSR and debounces the expensive resize handler.
@@ -142,14 +146,13 @@ const NavigationComponent = () => {
       if (isMobile) {
         const isLogoOrHamburger =
           currentDisplayedItem === "logo" || currentDisplayedItem === "menu";
-        const isNavigationItem = ["hello", "who", "what", "connect"].includes(
-          currentDisplayedItem
+        const isNavigationItem = NAVIGATION_CATEGORIES.navigationItems.includes(
+          currentDisplayedItem as NavigationItemId
         );
         const isBlogItem = currentDisplayedItem === "blog";
-        const isExternalLink = ["github", "linkedin"].includes(
-          currentDisplayedItem
+        const isExternalLink = NAVIGATION_CATEGORIES.externalLinks.includes(
+          currentDisplayedItem as ExternalLinkId
         );
-
         if (isLogoOrHamburger || isExternalLink) {
           // Logo, hamburger, and external links are always visible on mobile - use desktop elements
           const displayedDesktopElement =
@@ -210,7 +213,9 @@ const NavigationComponent = () => {
           activeItem
         );
         const isBlogItem = activeItem === "blog";
-        const isExternalLink = ["github", "linkedin"].includes(activeItem);
+        const isExternalLink = NAVIGATION_CATEGORIES.externalLinks.includes(
+          activeItem as ExternalLinkId
+        );
 
         if (!isMobile) {
           // Desktop: reposition on desktop element

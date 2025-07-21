@@ -15,7 +15,7 @@ Its goals:
 ```
 components/navigation/
 ├─ AbsoluteItem.tsx        // Utility wrapper for absolute-positioned children
-├─ ExternalLinks.tsx       // Vertical social links (GitHub / LinkedIn)
+├─ ExternalLinks.tsx       // Rotating vertical social links (GitHub/LinkedIn & Instagram/TikTok)
 ├─ GlassPill.tsx           // Shared animated background highlight
 ├─ Logo.tsx                // SVG/site logo with hover/press behaviour
 ├─ MenuToggle.tsx          // Mobile hamburger ↔︎ cross toggle
@@ -124,17 +124,26 @@ components/navigation/
   const active = useNavigationState((s) => s.activeItem);
   ```
 
+### Type Safety
+
+The navigation system is fully type-safe with TypeScript:
+
+- `NavigationItemId` type in `types.ts` defines all valid navigation item IDs
+- `ExternalLinkId` type defines the subset of IDs valid for social links
+- State management uses these types to ensure type safety across component boundaries
+- `NAVIGATION_CATEGORIES` in `constants.ts` provides runtime grouping of these typed IDs
+
 ---
 
 ## 🗂️ Glossary of Item IDs
 
-| ID                                   | Type       | Notes                                |
-| ------------------------------------ | ---------- | ------------------------------------ |
-| `logo`                               | logo       | Home page link, always shown         |
-| `menu`                               | control    | Mobile hamburger / close icon        |
-| `hello` / `who` / `what` / `connect` | navigation | Middle text links                    |
-| `blog`                               | blog       | Renders as a `Quote` icon on desktop |
-| `github` / `linkedin`                | external   | Vertical social bar                  |
+| ID                                             | Type       | Notes                                |
+| ---------------------------------------------- | ---------- | ------------------------------------ |
+| `logo`                                         | logo       | Home page link, always shown         |
+| `menu`                                         | control    | Mobile hamburger / close icon        |
+| `hello` / `who` / `what` / `connect`           | navigation | Middle text links                    |
+| `blog`                                         | blog       | Renders as a `Quote` icon on desktop |
+| `github` / `linkedin` / `instagram` / `tiktok` | external   | Rotating vertical social bar         |
 
 These strings are centralised in `types.ts → NavigationItemId` so refactor tools will catch rename errors.
 

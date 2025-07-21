@@ -1,15 +1,17 @@
+import { ExternalLinkId, NavigationItemId } from "./types";
+
 export interface MenuItem {
-  id: string;
+  id: NavigationItemId;
   label: string;
   href: string;
   type: "logo" | "navigation" | "blog" | "external";
 }
 
 export interface ExternalLink {
-  id: string;
+  id: NavigationItemId;
   label: string;
   href: string;
-  iconType: "github" | "linkedin";
+  iconType: ExternalLinkId;
 }
 
 export const MENU_ITEMS: MenuItem[] = [
@@ -64,6 +66,18 @@ export const EXTERNAL_LINKS: ExternalLink[] = [
     label: "LinkedIn",
     href: "https://linkedin.com/in/yiannismorfos",
     iconType: "linkedin",
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    href: "https://instagram.com/yiannismorfos",
+    iconType: "instagram",
+  },
+  {
+    id: "tiktok",
+    label: "TikTok",
+    href: "https://tiktok.com/@yiannismorfos",
+    iconType: "tiktok",
   },
 ];
 

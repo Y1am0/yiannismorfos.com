@@ -7,12 +7,15 @@ import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES,
   LAYOUT_CONSTANTS,
+  NAVIGATION_CATEGORIES,
   Z_INDEX,
 } from "./constants";
 import { useNavigationSelectors } from "./stores";
 
+import { ExternalLinkId, NavigationItemId } from "./types";
+
 interface GlassPillProps {
-  displayedItem?: string | null;
+  displayedItem?: NavigationItemId | null;
 }
 
 const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
@@ -24,7 +27,12 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
 
   // Define which items should have circular glass pills
   const circularItems = useMemo(
-    () => new Set(["logo", "menu", "blog", "github", "linkedin"]),
+    () =>
+      new Set<NavigationItemId>([
+        ...NAVIGATION_CATEGORIES.alwaysVisible,
+        ...NAVIGATION_CATEGORIES.blogItem,
+        ...NAVIGATION_CATEGORIES.externalLinks,
+      ]),
     []
   );
 
@@ -40,8 +48,11 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
     const isPressed = pressedItem === displayedItem;
 
     // Use smaller size for external links, regular size for other circular items
-    const isExternalLink =
-      displayedItem === "github" || displayedItem === "linkedin";
+    const isExternalLink = displayedItem
+      ? NAVIGATION_CATEGORIES.externalLinks.includes(
+          displayedItem as ExternalLinkId
+        )
+      : false;
     const circularSize = shouldBeCircular
       ? isExternalLink
         ? LAYOUT_CONSTANTS.externalLinkPillSize

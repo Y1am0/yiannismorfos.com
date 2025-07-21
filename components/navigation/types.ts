@@ -16,10 +16,12 @@ export type NavigationItemId =
   | "connect"
   | "blog"
   | "github"
-  | "linkedin";
+  | "linkedin"
+  | "instagram"
+  | "tiktok";
 
 // Utility literal union for external links
-export type ExternalLinkId = "github" | "linkedin";
+export type ExternalLinkId = "github" | "linkedin" | "instagram" | "tiktok";
 
 // Re-export MenuItem from menu-items for convenience
 export type { MenuItem } from "./menu-items";

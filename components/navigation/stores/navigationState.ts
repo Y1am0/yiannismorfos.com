@@ -2,20 +2,22 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { MENU_ITEMS } from "../menu-items";
 
+import { NavigationItemId } from "../types";
+
 interface NavigationState {
   // State
-  hoveredItem: string | null;
-  pressedItem: string | null;
-  activeItem: string | null;
+  hoveredItem: NavigationItemId | null;
+  pressedItem: NavigationItemId | null;
+  activeItem: NavigationItemId | null;
 
   // Timeout management for hover exit delays
   exitTimeoutId: NodeJS.Timeout | null;
   clearHoverTimeoutId: NodeJS.Timeout | null;
 
   // Actions
-  setHoveredItem: (item: string | null) => void;
-  setPressedItem: (item: string | null) => void;
-  setActiveItem: (item: string | null) => void;
+  setHoveredItem: (item: NavigationItemId | null) => void;
+  setPressedItem: (item: NavigationItemId | null) => void;
+  setActiveItem: (item: NavigationItemId | null) => void;
 
   // Timeout management
   setExitTimeout: (timeoutId: NodeJS.Timeout) => void;
@@ -23,7 +25,7 @@ interface NavigationState {
   clearAllTimeouts: () => void;
 
   // Computed values with selectors
-  getDisplayedItem: () => string | null;
+  getDisplayedItem: () => NavigationItemId | null;
 }
 
 export const useNavigationState = create<NavigationState>()(
@@ -96,5 +98,5 @@ export const useActiveItemFromPathname = (pathname: string) => {
     return pathname === item.href;
   });
 
-  setActiveItem(currentItem?.id || null);
+  setActiveItem((currentItem?.id as NavigationItemId) || null);
 };
