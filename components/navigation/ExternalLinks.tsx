@@ -133,6 +133,7 @@ const ExternalLinksComponent = () => {
   );
   const [setIndex, setSetIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isLineHovered, setIsLineHovered] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cycle through sets on interval, pause if hovered
@@ -160,10 +161,32 @@ const ExternalLinksComponent = () => {
     setIsPaused(hovered);
   }, []);
 
-  // Handle line hover to pause timer
+  // Handle line hover to pause timer and animate width
   const handleLineHover = useCallback((hovered: boolean) => {
     setIsPaused(hovered);
+    setIsLineHovered(hovered);
   }, []);
+
+  // Handle line click to manually change set and reset timer
+  const handleLineClick = useCallback(() => {
+    // Change to next set
+    setSetIndex((prev) => (prev + 1) % linkSets.length);
+
+    // Reset the timer by clearing current one and restarting
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // Restart timer after a brief delay to allow the transition to play
+    setTimeout(() => {
+      if (!isPaused) {
+        timerRef.current = setInterval(() => {
+          setSetIndex((prev) => (prev + 1) % linkSets.length);
+        }, EXTERNAL_LINK_ROTATION_INTERVAL);
+      }
+    }, 100);
+  }, [linkSets.length, isPaused]);
 
   const visibleLinks = allLinks.filter((l) =>
     linkSets[setIndex].includes(l.id as ExternalLinkId)
@@ -171,31 +194,67 @@ const ExternalLinksComponent = () => {
 
   return (
     <div className="absolute right-4 bottom-8 lg:right-12 z-20 flex flex-col items-center space-y-2">
-      {/* Animated vertical line with inner indicator */}
+      {/* Animated vertical line with inner indicator - wrapped with padding for easier hover */}
       <div
-        className={`relative ${LAYOUT_CONSTANTS.externalLinksLineContainer}`}
+        className={`relative ${LAYOUT_CONSTANTS.externalLinksLineContainer} cursor-pointer px-3 py-1`}
+        onMouseEnter={() => handleLineHover(true)}
+        onMouseLeave={() => handleLineHover(false)}
+        onClick={handleLineClick}
       >
+        {/* Hover tooltip with context-aware text */}
+        <AnimatePresence>
+          {isLineHovered && (
+            <motion.div
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-full pr-4 top-1/2 -translate-y-1/2 text-right text-xs text-white/70 whitespace-nowrap"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={setIndex}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 30 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  {setIndex === 0 ? (
+                    <>
+                      <div className="text-white">Development Socials</div>
+                      <div className="italic">
+                        Press to show Content Creation Socials
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-white">Content Creation Socials</div>
+                      <div className="italic">
+                        Press to show Development Socials
+                      </div>
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={`line-${setIndex}`}
-            className={`w-px ${LAYOUT_CONSTANTS.externalLinksLineHeight} bg-white/40 absolute top-0 left-1/2 -translate-x-1/2 origin-top cursor-pointer`}
-            onMouseEnter={() => handleLineHover(true)}
-            onMouseLeave={() => handleLineHover(false)}
+            className={`w-px ${LAYOUT_CONSTANTS.externalLinksLineHeight} bg-white/40 absolute top-1 left-1/2 -translate-x-1/2 origin-top`}
             {...ANIMATION_CONFIG.stretchingLine}
           />
         </AnimatePresence>
         {/* Inner indicator line that slides between top and bottom half - outside AnimatePresence */}
         <motion.div
           key={`indicator-${setIndex}`} // Force recreation to ensure stretch animation plays
-          className={`w-px ${LAYOUT_CONSTANTS.externalLinksIndicatorHeight} bg-white/70 absolute top-0 left-1/2 -translate-x-1/2 origin-top cursor-pointer`}
-          onMouseEnter={() => handleLineHover(true)}
-          onMouseLeave={() => handleLineHover(false)}
+          className={`${LAYOUT_CONSTANTS.externalLinksIndicatorHeight} bg-white/70 absolute top-1 left-1/2 -translate-x-1/2 origin-top`}
           initial={{
             y:
               setIndex === 0
                 ? EXTERNAL_LINKS.indicatorPositions.bottom
                 : EXTERNAL_LINKS.indicatorPositions.top, // Start from opposite position to slide
             scaleY: 1,
+            width: "1px",
           }}
           animate={{
             y:
@@ -203,8 +262,12 @@ const ExternalLinksComponent = () => {
                 ? EXTERNAL_LINKS.indicatorPositions.top
                 : EXTERNAL_LINKS.indicatorPositions.bottom, // Slide to target position
             scaleY: [1, EXTERNAL_LINKS.stretchScale.indicator, 1], // More pronounced stretch to match proportional scaling
+            width: isLineHovered ? "4px" : "1px",
           }}
-          transition={ANIMATION_CONFIG.indicatorLine.transition}
+          transition={{
+            ...ANIMATION_CONFIG.indicatorLine.transition,
+            width: { duration: 0.2, ease: "easeInOut" },
+          }}
         />
       </div>
       {/* External links with fixed height to prevent line movement */}
