@@ -1,9 +1,50 @@
 export const settings = {
   background: {
-    color1: { hex: "#000000" }, // Pure black
-    color2: { hex: "#000000" }, // Very dark gray
-    color3: { hex: "#000000" }, // Dark gray
-    color4: { hex: "#0000ff" }, // Medium gray
     speed: 5.5,
+    colorSchemes: {
+      "/": {
+        color1: { hex: "#000000" }, // Pure black
+        color2: { hex: "#000000" }, // Very dark gray
+        color3: { hex: "#000000" }, // Dark gray
+        color4: { hex: "#0000ff" }, // Medium gray
+      },
+      "/hello": {
+        color1: { hex: "#0000ff" },
+        color2: { hex: "#0000ff" },
+        color3: { hex: "#0000ff" },
+        color4: { hex: "#00c0ff" },
+      },
+      "/who": {
+        color1: { hex: "#00c0ff" },
+        color2: { hex: "#0000ff" },
+        color3: { hex: "#0000ff" },
+        color4: { hex: "#0000ff" },
+      },
+      "/what": {
+        color1: { hex: "#0000ff" },
+        color2: { hex: "#0000ff" },
+        color3: { hex: "#00c0ff" },
+        color4: { hex: "#0000ff" },
+      },
+      "/connect": {
+        color1: { hex: "#00c0ff" },
+        color2: { hex: "#0000ff" },
+        color3: { hex: "#00c0ff" },
+        color4: { hex: "#00c0ff" },
+      },
+      "/blog": {
+        color1: { hex: "#0000ff" },
+        color2: { hex: "#000060" },
+        color3: { hex: "#0000df" },
+        color4: { hex: "#000000" },
+      },
+    },
+    // Fallback colors for unknown routes
+    default: {
+      color1: { hex: "#000000" },
+      color2: { hex: "#000000" },
+      color3: { hex: "#000000" },
+      color4: { hex: "#0000ff" },
+    },
   },
 };

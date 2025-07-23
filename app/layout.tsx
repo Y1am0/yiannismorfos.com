@@ -32,12 +32,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black h-dvh relative`}
       >
         <MeshGradientComponent
-          colors={[
-            settings.background.color1.hex,
-            settings.background.color2.hex,
-            settings.background.color3.hex,
-            settings.background.color4.hex,
-          ]}
           speed={settings.background.speed}
           style={{
             position: "fixed",
