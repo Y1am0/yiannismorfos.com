@@ -20,7 +20,7 @@ export const CURRENT_SONG: SongConfig = {
 // Player configuration
 export const PLAYER_CONFIG = {
   defaultVolume: 50,
-  progressUpdateInterval: 16, // ms
+  progressUpdateInterval: 1000, // ms
   vinylRotationDuration: 200, // seconds for full rotation cycle
   vinylRotationDegrees: 3600, // degrees (10 full rotations)
   playerId: "youtube-player-music-player",
