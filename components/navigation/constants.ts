@@ -136,7 +136,7 @@ export const TIMING = {
 
 // External links constants
 export const EXTERNAL_LINKS = {
-  rotationInterval: 10000, // ms, rotation interval
+  rotationInterval: 7500, // ms, rotation interval
   indicatorPositions: {
     top: 0, // Top half position (pixels)
     bottom: 48, // Bottom half position (pixels) - half of main line height

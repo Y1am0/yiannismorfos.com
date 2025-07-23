@@ -1,4 +1,5 @@
 import { MeshGradientComponent } from "@/components/MeshGradient";
+import { MusicPlayer } from "@/components/MusicPlayer";
 import { settings } from "@/lib/settings";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -52,6 +53,9 @@ export default function RootLayout({
         <div className="relative z-20 max-w-screen-2xl mx-auto min-h-dvh">
           <Navigation />
           {children}
+
+          {/* Music Player - Positioned absolutely on bottom left */}
+          <MusicPlayer />
 
           {/* External Links - Positioned absolutely within the max-width container */}
           <ExternalLinks />
