@@ -122,11 +122,13 @@ export const NAVIGATION_CATEGORIES: {
   externalLinks: ReadonlyArray<ExternalLinkId>;
   navigationItems: ReadonlyArray<NavigationItemId>;
   blogItem: ReadonlyArray<NavigationItemId>;
+  musicPlayerButtons: ReadonlyArray<NavigationItemId>;
 } = {
   alwaysVisible: ["logo", "menu"],
   externalLinks: ["github", "linkedin", "instagram", "tiktok"],
   navigationItems: ["hello", "who", "what", "connect"],
   blogItem: ["blog"],
+  musicPlayerButtons: ["music-play-pause", "music-restart", "music-volume"],
 } as const;
 
 // Animation timing constants

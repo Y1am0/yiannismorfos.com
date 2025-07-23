@@ -1,30 +1,46 @@
 "use client";
 
-import React from "react";
+import { NavigationItemId } from "@/components/navigation/types";
+import React, { useRef } from "react";
 import { BUTTON_STYLES, ICONS } from "../constants";
+import { useMusicPlayerButton } from "../hooks";
 
 interface IconButtonProps {
   onClick: () => void;
   ariaLabel: string;
   children: React.ReactNode;
+  buttonId?: NavigationItemId;
 }
 
 /**
- * Reusable icon button component
+ * Reusable icon button component with optional glass pill integration
  */
 const IconButton: React.FC<IconButtonProps> = ({
   onClick,
   ariaLabel,
   children,
-}) => (
-  <button
-    className={BUTTON_STYLES.base}
-    onClick={onClick}
-    aria-label={ariaLabel}
-  >
-    {children}
-  </button>
-);
+  buttonId,
+}) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Always call the hook, but only use the result if buttonId is provided
+  const glassPillProps = useMusicPlayerButton(
+    buttonId || "music-play-pause", // fallback to prevent undefined
+    buttonRef
+  );
+
+  return (
+    <button
+      ref={buttonRef}
+      className={BUTTON_STYLES.base}
+      onClick={onClick}
+      aria-label={ariaLabel}
+      {...(buttonId ? glassPillProps : {})}
+    >
+      {children}
+    </button>
+  );
+};
 
 interface SVGIconProps {
   path: string;
@@ -52,7 +68,11 @@ export const PlayPauseButton: React.FC<PlayPauseButtonProps> = ({
   isPlaying,
   onTogglePlay,
 }) => (
-  <IconButton onClick={onTogglePlay} ariaLabel={isPlaying ? "Pause" : "Play"}>
+  <IconButton
+    onClick={onTogglePlay}
+    ariaLabel={isPlaying ? "Pause" : "Play"}
+    buttonId="music-play-pause"
+  >
     <SVGIcon path={isPlaying ? ICONS.pause : ICONS.play} />
   </IconButton>
 );
@@ -65,7 +85,11 @@ interface RestartButtonProps {
  * Restart button component
  */
 export const RestartButton: React.FC<RestartButtonProps> = ({ onRestart }) => (
-  <IconButton onClick={onRestart} ariaLabel="Restart song">
+  <IconButton
+    onClick={onRestart}
+    ariaLabel="Restart song"
+    buttonId="music-restart"
+  >
     <SVGIcon path={ICONS.restart} />
   </IconButton>
 );
@@ -92,7 +116,11 @@ export const VolumeButton: React.FC<VolumeButtonProps> = ({
   };
 
   return (
-    <IconButton onClick={onToggleMute} ariaLabel={isMuted ? "Unmute" : "Mute"}>
+    <IconButton
+      onClick={onToggleMute}
+      ariaLabel={isMuted ? "Unmute" : "Mute"}
+      buttonId="music-volume"
+    >
       <SVGIcon path={getVolumeIcon()} />
     </IconButton>
   );

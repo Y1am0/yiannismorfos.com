@@ -153,8 +153,12 @@ const NavigationComponent = () => {
         const isExternalLink = NAVIGATION_CATEGORIES.externalLinks.includes(
           currentDisplayedItem as ExternalLinkId
         );
-        if (isLogoOrHamburger || isExternalLink) {
-          // Logo, hamburger, and external links are always visible on mobile - use desktop elements
+        const isMusicPlayerButton =
+          NAVIGATION_CATEGORIES.musicPlayerButtons.includes(
+            currentDisplayedItem
+          );
+        if (isLogoOrHamburger || isExternalLink || isMusicPlayerButton) {
+          // Logo, hamburger, external links, and music player buttons are always visible on mobile - use desktop elements
           const displayedDesktopElement =
             getDesktopElement(currentDisplayedItem);
           if (displayedDesktopElement) {

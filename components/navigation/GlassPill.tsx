@@ -32,6 +32,7 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
         ...NAVIGATION_CATEGORIES.alwaysVisible,
         ...NAVIGATION_CATEGORIES.blogItem,
         ...NAVIGATION_CATEGORIES.externalLinks,
+        ...NAVIGATION_CATEGORIES.musicPlayerButtons,
       ]),
     []
   );
@@ -53,8 +54,11 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
           displayedItem as ExternalLinkId
         )
       : false;
+    const isMusicPlayerButton = displayedItem
+      ? NAVIGATION_CATEGORIES.musicPlayerButtons.includes(displayedItem)
+      : false;
     const circularSize = shouldBeCircular
-      ? isExternalLink
+      ? isExternalLink || isMusicPlayerButton
         ? LAYOUT_CONSTANTS.externalLinkPillSize
         : LAYOUT_CONSTANTS.circularPillSize
       : Math.max(glassPillStyle.width, glassPillStyle.height);

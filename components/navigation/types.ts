@@ -18,7 +18,10 @@ export type NavigationItemId =
   | "github"
   | "linkedin"
   | "instagram"
-  | "tiktok";
+  | "tiktok"
+  | "music-play-pause"
+  | "music-restart"
+  | "music-volume";
 
 // Utility literal union for external links
 export type ExternalLinkId = "github" | "linkedin" | "instagram" | "tiktok";

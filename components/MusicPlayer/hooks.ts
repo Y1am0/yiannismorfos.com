@@ -2,6 +2,8 @@
  * Custom hooks for the Music Player system
  */
 
+import { useNavigationActions } from "@/components/navigation/stores";
+import { NavigationItemId } from "@/components/navigation/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CURRENT_SONG, PLAYER_CONFIG, YOUTUBE_PLAYER_VARS } from "./config";
 import type {
@@ -192,5 +194,61 @@ export const usePlayerState = () => {
     state,
     updatePlayerState,
     handleProgressUpdate,
+  };
+};
+
+/**
+ * Hook for Music Player Button Integration
+ *
+ * Provides navigation system integration for individual music player buttons.
+ * Use this hook in button components to register with the glass pill system.
+ * Automatically handles both mobile and desktop registration.
+ */
+export const useMusicPlayerButton = (
+  buttonId: NavigationItemId,
+  buttonRef: React.RefObject<HTMLElement | null>
+) => {
+  const {
+    handleHoverStart,
+    handleHoverEnd,
+    handleMouseDown,
+    handleMouseUp,
+    handleElementMount,
+    handleMobileElementMount,
+  } = useNavigationActions();
+
+  // Register element on mount for both desktop and mobile
+  useEffect(() => {
+    if (buttonRef.current) {
+      // Register for desktop
+      handleElementMount(buttonId, buttonRef.current);
+      // Also register for mobile
+      handleMobileElementMount(buttonId, buttonRef.current);
+    }
+  }, [buttonId, handleElementMount, handleMobileElementMount, buttonRef]);
+
+  // Memoized hover start handler
+  const handleHoverStartCallback = useCallback(() => {
+    if (buttonRef.current) {
+      handleHoverStart(buttonId, buttonRef.current);
+    }
+  }, [handleHoverStart, buttonId, buttonRef]);
+
+  // Memoized hover end handler
+  const handleHoverEndCallback = useCallback(() => {
+    handleHoverEnd();
+  }, [handleHoverEnd]);
+
+  // Memoized mouse down handler
+  const handleMouseDownCallback = useCallback(() => {
+    handleMouseDown(buttonId);
+  }, [handleMouseDown, buttonId]);
+
+  return {
+    onMouseEnter: handleHoverStartCallback,
+    onMouseLeave: handleHoverEndCallback,
+    onTouchStart: handleHoverStartCallback,
+    onMouseDown: handleMouseDownCallback,
+    onMouseUp: handleMouseUp,
   };
 };
