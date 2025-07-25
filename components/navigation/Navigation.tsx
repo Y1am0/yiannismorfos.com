@@ -1,6 +1,11 @@
 "use client";
 
+import {
+  PAGE_LOAD_ANIMATIONS,
+  usePageLoadAnimation,
+} from "@/lib/usePageLoadAnimation";
 import { Quote } from "lucide-react";
+import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { memo, useEffect, useMemo, useRef } from "react";
 import { AbsoluteItem } from "./AbsoluteItem";
@@ -21,6 +26,9 @@ const NavigationComponent = () => {
   const parentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+
+  // Page load animation state
+  const { isNavigationVisible } = usePageLoadAnimation();
 
   const {
     displayedItem,
@@ -298,10 +306,17 @@ const NavigationComponent = () => {
 
   return (
     <>
-      <div
+      <motion.div
         ref={parentRef}
         className="w-full text-white max-w-screen-2xl mx-auto flex justify-center px-4 lg:px-12 py-8 relative"
         style={{ zIndex: Z_INDEX.navigationOverlay }}
+        initial={PAGE_LOAD_ANIMATIONS.navigation.initial}
+        animate={
+          isNavigationVisible
+            ? PAGE_LOAD_ANIMATIONS.navigation.animate
+            : PAGE_LOAD_ANIMATIONS.navigation.initial
+        }
+        transition={PAGE_LOAD_ANIMATIONS.navigation.transition}
       >
         {/* Logo - Always visible on left with high z-index */}
         <AbsoluteItem position="left">
@@ -336,7 +351,7 @@ const NavigationComponent = () => {
 
         {/* Glass pill effect */}
         <GlassPill displayedItem={displayedItem} />
-      </div>
+      </motion.div>
 
       {/* Mobile Menu Modal */}
       <MobileMenu />

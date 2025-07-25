@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  PAGE_LOAD_ANIMATIONS,
+  usePageLoadAnimation,
+} from "@/lib/usePageLoadAnimation";
+import { motion } from "motion/react";
 import React, { memo, useCallback, useEffect, useRef } from "react";
 import { MediaControls, SongInfo, VinylDisk } from "./components";
 import { PLAYER_CONFIG } from "./config";
@@ -13,6 +18,9 @@ import type { VinylDiskRef } from "./types";
  */
 const MusicPlayerComponent: React.FC = () => {
   const vinylDiskRef = useRef<VinylDiskRef>(null);
+
+  // Page load animation state
+  const { isMusicPlayerVisible } = usePageLoadAnimation();
 
   // Initialize player state
   const { state, updatePlayerState, handleProgressUpdate } = usePlayerState();
@@ -169,7 +177,16 @@ const MusicPlayerComponent: React.FC = () => {
   }, [state.isMuted, state.volume, updatePlayerState, playerRef]);
 
   return (
-    <div className={LAYOUT.containerClasses}>
+    <motion.div
+      className={LAYOUT.containerClasses}
+      initial={PAGE_LOAD_ANIMATIONS.musicPlayer.initial}
+      animate={
+        isMusicPlayerVisible
+          ? PAGE_LOAD_ANIMATIONS.musicPlayer.animate
+          : PAGE_LOAD_ANIMATIONS.musicPlayer.initial
+      }
+      transition={PAGE_LOAD_ANIMATIONS.musicPlayer.transition}
+    >
       {/* Vinyl disk with progress indicator */}
       <VinylDisk
         ref={vinylDiskRef}
@@ -194,7 +211,7 @@ const MusicPlayerComponent: React.FC = () => {
           onToggleMute={handleToggleMute}
         />
       </div>
-    </div>
+    </motion.div>
   );
 };
 

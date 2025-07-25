@@ -6,6 +6,10 @@ import {
   LinkedInIcon,
   TikTokIcon,
 } from "@/components/icons";
+import {
+  PAGE_LOAD_ANIMATIONS,
+  usePageLoadAnimation,
+} from "@/lib/usePageLoadAnimation";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -123,6 +127,10 @@ const ExternalLinkItem = ({
  */
 const ExternalLinksComponent = () => {
   const allLinks = getExternalLinks();
+
+  // Page load animation state
+  const { isExternalLinksVisible } = usePageLoadAnimation();
+
   // Define rotating sets by id order
   const linkSets = useMemo(
     () => [
@@ -193,7 +201,16 @@ const ExternalLinksComponent = () => {
   );
 
   return (
-    <div className="absolute right-4 bottom-8 lg:right-12 z-20 flex flex-col items-center space-y-2">
+    <motion.div
+      className="absolute right-4 bottom-8 lg:right-12 z-20 flex flex-col items-center space-y-2"
+      initial={PAGE_LOAD_ANIMATIONS.externalLinks.initial}
+      animate={
+        isExternalLinksVisible
+          ? PAGE_LOAD_ANIMATIONS.externalLinks.animate
+          : PAGE_LOAD_ANIMATIONS.externalLinks.initial
+      }
+      transition={PAGE_LOAD_ANIMATIONS.externalLinks.transition}
+    >
       {/* Animated vertical line with inner indicator - wrapped with padding for easier hover */}
       <div
         className={`relative ${LAYOUT_CONSTANTS.externalLinksLineContainer} cursor-pointer px-3 py-1`}
@@ -293,7 +310,7 @@ const ExternalLinksComponent = () => {
           </motion.div>
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
