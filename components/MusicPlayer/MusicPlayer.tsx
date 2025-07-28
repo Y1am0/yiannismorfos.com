@@ -20,7 +20,7 @@ const MusicPlayerComponent: React.FC = () => {
   const vinylDiskRef = useRef<VinylDiskRef>(null);
 
   // Page load animation state
-  const { isMusicPlayerVisible } = usePageLoadAnimation();
+  const { isMusicPlayerVisible, shouldAnimate } = usePageLoadAnimation();
 
   // Initialize player state
   const { state, updatePlayerState, handleProgressUpdate } = usePlayerState();
@@ -179,13 +179,21 @@ const MusicPlayerComponent: React.FC = () => {
   return (
     <motion.div
       className={LAYOUT.containerClasses}
-      initial={PAGE_LOAD_ANIMATIONS.musicPlayer.initial}
+      initial={
+        shouldAnimate
+          ? PAGE_LOAD_ANIMATIONS.musicPlayer.initial
+          : PAGE_LOAD_ANIMATIONS.musicPlayer.animate
+      }
       animate={
         isMusicPlayerVisible
           ? PAGE_LOAD_ANIMATIONS.musicPlayer.animate
           : PAGE_LOAD_ANIMATIONS.musicPlayer.initial
       }
-      transition={PAGE_LOAD_ANIMATIONS.musicPlayer.transition}
+      transition={
+        shouldAnimate
+          ? PAGE_LOAD_ANIMATIONS.musicPlayer.transition
+          : { duration: 0 }
+      }
     >
       {/* Vinyl disk with progress indicator */}
       <VinylDisk

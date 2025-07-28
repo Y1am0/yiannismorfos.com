@@ -129,7 +129,7 @@ const ExternalLinksComponent = () => {
   const allLinks = getExternalLinks();
 
   // Page load animation state
-  const { isExternalLinksVisible } = usePageLoadAnimation();
+  const { isExternalLinksVisible, shouldAnimate } = usePageLoadAnimation();
 
   // Define rotating sets by id order
   const linkSets = useMemo(
@@ -203,13 +203,21 @@ const ExternalLinksComponent = () => {
   return (
     <motion.div
       className="absolute right-4 bottom-8 lg:right-12 z-20 flex flex-col items-center space-y-2"
-      initial={PAGE_LOAD_ANIMATIONS.externalLinks.initial}
+      initial={
+        shouldAnimate
+          ? PAGE_LOAD_ANIMATIONS.externalLinks.initial
+          : PAGE_LOAD_ANIMATIONS.externalLinks.animate
+      }
       animate={
         isExternalLinksVisible
           ? PAGE_LOAD_ANIMATIONS.externalLinks.animate
           : PAGE_LOAD_ANIMATIONS.externalLinks.initial
       }
-      transition={PAGE_LOAD_ANIMATIONS.externalLinks.transition}
+      transition={
+        shouldAnimate
+          ? PAGE_LOAD_ANIMATIONS.externalLinks.transition
+          : { duration: 0 }
+      }
     >
       {/* Animated vertical line with inner indicator - wrapped with padding for easier hover */}
       <div

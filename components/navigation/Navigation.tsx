@@ -28,7 +28,11 @@ const NavigationComponent = () => {
   const pathname = usePathname();
 
   // Page load animation state
-  const { isNavigationVisible } = usePageLoadAnimation();
+  const {
+    isNavigationVisible,
+    shouldAnimate,
+    animationsComplete: pageLoadComplete,
+  } = usePageLoadAnimation();
 
   const {
     displayedItem,
@@ -139,6 +143,13 @@ const NavigationComponent = () => {
         return;
       }
 
+      // Hide glass pill during page load animations for better UX
+      // Exception: if user is actively hovering, show immediately
+      if (!pageLoadComplete && !hoveredItem) {
+        setGlassPillVisible(false);
+        return;
+      }
+
       // Desktop: Show pill on any displayed desktop element
       if (!isMobile) {
         const displayedDesktopElement = getDesktopElement(currentDisplayedItem);
@@ -176,11 +187,8 @@ const NavigationComponent = () => {
           }
         } else if ((isNavigationItem || isBlogItem) && isMobileMenuOpen) {
           // Navigation items and blog are ONLY visible when mobile menu is open - use mobile elements
-          // If user is actively hovering, position immediately. If it's just active item, wait for animations to complete
-          const shouldPosition =
-            hoveredItem === currentDisplayedItem || animationsComplete;
-
-          if (shouldPosition) {
+          // Page load check already handled above, so just check mobile menu animations
+          if (animationsComplete) {
             const displayedMobileElement =
               getMobileElement(currentDisplayedItem);
             if (displayedMobileElement) {
@@ -206,6 +214,7 @@ const NavigationComponent = () => {
     isMobile,
     isMobileMenuOpen,
     animationsComplete,
+    pageLoadComplete,
     getDesktopElement,
     getMobileElement,
     updateGlassPillPosition,
@@ -248,7 +257,7 @@ const NavigationComponent = () => {
             isMobileMenuOpen &&
             animationsComplete
           ) {
-            // Navigation items only work when mobile menu is open and animations are complete (use mobile elements)
+            // Navigation items only work when mobile menu is open and mobile animations are complete (use mobile elements)
             const activeElement = getMobileElement(activeItem);
             if (activeElement) {
               updateGlassPillPosition(activeElement, parentElement);
@@ -310,13 +319,21 @@ const NavigationComponent = () => {
         ref={parentRef}
         className="w-full text-white max-w-screen-2xl mx-auto flex justify-center px-4 lg:px-12 py-8 relative"
         style={{ zIndex: Z_INDEX.navigationOverlay }}
-        initial={PAGE_LOAD_ANIMATIONS.navigation.initial}
+        initial={
+          shouldAnimate
+            ? PAGE_LOAD_ANIMATIONS.navigation.initial
+            : PAGE_LOAD_ANIMATIONS.navigation.animate
+        }
         animate={
           isNavigationVisible
             ? PAGE_LOAD_ANIMATIONS.navigation.animate
             : PAGE_LOAD_ANIMATIONS.navigation.initial
         }
-        transition={PAGE_LOAD_ANIMATIONS.navigation.transition}
+        transition={
+          shouldAnimate
+            ? PAGE_LOAD_ANIMATIONS.navigation.transition
+            : { duration: 0 }
+        }
       >
         {/* Logo - Always visible on left with high z-index */}
         <AbsoluteItem position="left">
