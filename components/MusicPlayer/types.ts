@@ -14,6 +14,9 @@ export interface YouTubePlayer {
   getCurrentTime: () => number;
   getDuration: () => number;
   seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
+  getPlayerState?: () => number; // optional: some typings omit this, but YT API provides it
+  destroy?: () => void; // optional in our typing for safety
+  getIframe?: () => HTMLIFrameElement; // optional helper to verify DOM attachment
 }
 
 export interface YouTubePlayerConfig {
@@ -41,6 +44,15 @@ declare global {
   interface Window {
     YT: YouTubeAPI;
     onYouTubeIframeAPIReady: () => void;
+    __ytMusicPlayer?: YouTubePlayer; // singleton instance cache
+    __ytMusicPlayer_onStateChange?: (isPlaying: boolean) => void;
+    __ytMusicPlayer_onReady?: () => void;
+    __ytVinylRotationPaused?: number; // persists last rotation angle across remounts
+    __ytProgressAnimatedOnce?: boolean; // track if initial progress animation ran
+    __ytProgressPercent?: number; // last known progress percentage
+    __ytDuration?: number; // last known duration
+    __ytCurrentTime?: number; // last known current time
+    __ytIsPlaying?: boolean; // last known playing state
   }
 }
 
@@ -65,8 +77,8 @@ export interface MediaControlsProps {
 
 export interface VinylDiskProps {
   isPlaying: boolean;
-  playerId: string;
   progressPercentage: number;
+  animateOnMount?: boolean;
 }
 
 export interface VinylDiskRef {
@@ -76,6 +88,7 @@ export interface VinylDiskRef {
 export interface ProgressIndicatorProps {
   progressPercentage: number;
   radius: number;
+  animateOnMount?: boolean;
 }
 
 // Player state types

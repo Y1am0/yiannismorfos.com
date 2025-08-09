@@ -1,7 +1,13 @@
 "use client";
 
 import { motion } from "motion/react";
-import { forwardRef, useCallback, useImperativeHandle, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 import { CURRENT_SONG, PLAYER_CONFIG } from "../config";
 import { ANIMATIONS, COLORS, LAYOUT, VINYL_STYLES } from "../constants";
 import type { VinylDiskProps, VinylDiskRef } from "../types";
@@ -11,14 +17,25 @@ import { ProgressIndicator } from "./ProgressIndicator";
  * Spinning vinyl disk component with YouTube video background and circular progress indicator
  */
 export const VinylDisk = forwardRef<VinylDiskRef, VinylDiskProps>(
-  ({ isPlaying, playerId, progressPercentage }, ref) => {
-    const [pausedRotation, setPausedRotation] = useState(0);
+  ({ isPlaying, progressPercentage }, ref) => {
+    const [pausedRotation, setPausedRotation] = useState(() => {
+      if (
+        typeof window !== "undefined" &&
+        typeof window.__ytVinylRotationPaused === "number"
+      ) {
+        return window.__ytVinylRotationPaused;
+      }
+      return 0;
+    });
 
     /**
      * Resets the vinyl rotation to 0 degrees
      */
     const resetRotation = useCallback(() => {
       setPausedRotation(0);
+      if (typeof window !== "undefined") {
+        window.__ytVinylRotationPaused = 0;
+      }
     }, []);
 
     // Expose reset function to parent component via ref
@@ -30,17 +47,22 @@ export const VinylDisk = forwardRef<VinylDiskRef, VinylDiskProps>(
       [resetRotation]
     );
 
+    // Keep window-scoped cache in sync to avoid flicker on remount
+    useEffect(() => {
+      if (typeof window !== "undefined") {
+        window.__ytVinylRotationPaused = pausedRotation;
+      }
+    }, [pausedRotation]);
+
     return (
       <div className="relative">
-        {/* YouTube video player - positioned off-screen but still functional */}
-        <div className="absolute -left-[9999px] -top-[9999px]">
-          <div id={playerId} />
-        </div>
+        {/* The hidden YouTube container is now rendered once in the root layout via PLAYER_CONFIG.playerId */}
 
         {/* Circular Progress Indicator */}
         <ProgressIndicator
           progressPercentage={progressPercentage}
           radius={LAYOUT.progressIndicator.radius}
+          animateOnMount={false}
         />
 
         {/* Outer spinning disk with video thumbnail as background */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import React from "react";
+import React, { useMemo } from "react";
 import { COLORS, LAYOUT } from "../constants";
 import type { ProgressIndicatorProps } from "../types";
 
@@ -11,10 +11,21 @@ import type { ProgressIndicatorProps } from "../types";
 export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
   progressPercentage,
   radius,
+  animateOnMount = false,
 }) => {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset =
     circumference - (progressPercentage / 100) * circumference;
+
+  // Prevent initial flicker: after first mount in the session, render at correct offset with no animation
+  const shouldAnimate = useMemo(() => {
+    if (typeof window === "undefined") return animateOnMount;
+    if (!window.__ytProgressAnimatedOnce && animateOnMount) {
+      window.__ytProgressAnimatedOnce = true;
+      return true;
+    }
+    return false; // no animation on subsequent mounts (route changes)
+  }, [animateOnMount]);
 
   return (
     <div
@@ -46,12 +57,15 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
           strokeWidth="1"
           strokeLinecap="round"
           strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset }}
-          transition={{
-            duration: 0.5,
-            ease: "easeInOut",
+          initial={{
+            strokeDashoffset: shouldAnimate ? circumference : strokeDashoffset,
           }}
+          animate={{ strokeDashoffset }}
+          transition={
+            shouldAnimate
+              ? { duration: 0.5, ease: "easeInOut" }
+              : { duration: 0 }
+          }
         />
       </svg>
     </div>

@@ -25,6 +25,27 @@ const MusicPlayerComponent: React.FC = () => {
   // Initialize player state
   const { state, updatePlayerState, handleProgressUpdate } = usePlayerState();
 
+  // Hydrate UI state from window cache to avoid flicker on remounts
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const pct = window.__ytProgressPercent;
+    const dur = window.__ytDuration;
+    const cur = window.__ytCurrentTime;
+    const isPlaying = window.__ytIsPlaying;
+
+    const updates: Partial<typeof state> = {};
+    if (typeof pct === "number") updates.progressPercentage = pct;
+    if (typeof dur === "number") updates.duration = dur;
+    if (typeof cur === "number") updates.currentTime = cur;
+    if (typeof isPlaying === "boolean") updates.isPlaying = isPlaying;
+
+    if (Object.keys(updates).length) {
+      updatePlayerState(updates);
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Initialize YouTube player
   const { playerRef } = useYouTubePlayer(
     PLAYER_CONFIG.playerId,
@@ -199,8 +220,8 @@ const MusicPlayerComponent: React.FC = () => {
       <VinylDisk
         ref={vinylDiskRef}
         isPlaying={state.isPlaying}
-        playerId={PLAYER_CONFIG.playerId}
         progressPercentage={state.progressPercentage}
+        animateOnMount={shouldAnimate}
       />
 
       {/* Song information and controls */}
