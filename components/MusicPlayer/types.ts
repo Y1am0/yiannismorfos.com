@@ -53,6 +53,8 @@ declare global {
     __ytDuration?: number; // last known duration
     __ytCurrentTime?: number; // last known current time
     __ytIsPlaying?: boolean; // last known playing state
+    __ytVolume?: number; // last known volume (0-100)
+    __ytIsMuted?: boolean; // last known mute state
   }
 }
 

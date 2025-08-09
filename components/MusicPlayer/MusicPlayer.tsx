@@ -32,12 +32,16 @@ const MusicPlayerComponent: React.FC = () => {
     const dur = window.__ytDuration;
     const cur = window.__ytCurrentTime;
     const isPlaying = window.__ytIsPlaying;
+    const vol = window.__ytVolume;
+    const isMuted = window.__ytIsMuted;
 
     const updates: Partial<typeof state> = {};
     if (typeof pct === "number") updates.progressPercentage = pct;
     if (typeof dur === "number") updates.duration = dur;
     if (typeof cur === "number") updates.currentTime = cur;
     if (typeof isPlaying === "boolean") updates.isPlaying = isPlaying;
+    if (typeof vol === "number") updates.volume = vol;
+    if (typeof isMuted === "boolean") updates.isMuted = isMuted;
 
     if (Object.keys(updates).length) {
       updatePlayerState(updates);
@@ -51,7 +55,7 @@ const MusicPlayerComponent: React.FC = () => {
     PLAYER_CONFIG.playerId,
     (isPlaying) => updatePlayerState({ isPlaying }),
     () => {
-      // On player ready, get initial duration
+      // On player ready, get initial duration and restore volume/mute from cache
       if (playerRef.current) {
         try {
           const total = playerRef.current.getDuration();
@@ -60,6 +64,24 @@ const MusicPlayerComponent: React.FC = () => {
           }
         } catch (error) {
           console.log("Duration not yet available", error);
+        }
+
+        try {
+          if (typeof window !== "undefined") {
+            if (typeof window.__ytVolume === "number") {
+              playerRef.current.setVolume(window.__ytVolume);
+              updatePlayerState({ volume: window.__ytVolume });
+            }
+            if (window.__ytIsMuted === true) {
+              playerRef.current.mute();
+              updatePlayerState({ isMuted: true });
+            } else if (window.__ytIsMuted === false) {
+              playerRef.current.unMute();
+              updatePlayerState({ isMuted: false });
+            }
+          }
+        } catch (err) {
+          console.log("Volume/mute not yet set", err);
         }
       }
     }
@@ -152,14 +174,17 @@ const MusicPlayerComponent: React.FC = () => {
 
       try {
         updatePlayerState({ volume: newVolume });
+        if (typeof window !== "undefined") window.__ytVolume = newVolume;
 
         if (newVolume === 0) {
           playerRef.current.mute();
           updatePlayerState({ isMuted: true });
+          if (typeof window !== "undefined") window.__ytIsMuted = true;
         } else {
           if (state.isMuted) {
             playerRef.current.unMute();
             updatePlayerState({ isMuted: false });
+            if (typeof window !== "undefined") window.__ytIsMuted = false;
           }
           playerRef.current.setVolume(newVolume);
         }
@@ -170,6 +195,10 @@ const MusicPlayerComponent: React.FC = () => {
           volume: newVolume,
           isMuted: newVolume === 0,
         });
+        if (typeof window !== "undefined") {
+          window.__ytVolume = newVolume;
+          window.__ytIsMuted = newVolume === 0;
+        }
       }
     },
     [state.isMuted, updatePlayerState, playerRef]
@@ -182,18 +211,22 @@ const MusicPlayerComponent: React.FC = () => {
       if (state.isMuted) {
         playerRef.current.unMute();
         updatePlayerState({ isMuted: false });
+        if (typeof window !== "undefined") window.__ytIsMuted = false;
         if (state.volume === 0) {
           updatePlayerState({ volume: 50 });
           playerRef.current.setVolume(50);
+          if (typeof window !== "undefined") window.__ytVolume = 50;
         }
       } else {
         playerRef.current.mute();
         updatePlayerState({ isMuted: true });
+        if (typeof window !== "undefined") window.__ytIsMuted = true;
       }
     } catch (error) {
       console.error("Error controlling YouTube player mute:", error);
       // Fallback: just toggle the visual state
       updatePlayerState({ isMuted: !state.isMuted });
+      if (typeof window !== "undefined") window.__ytIsMuted = !state.isMuted;
     }
   }, [state.isMuted, state.volume, updatePlayerState, playerRef]);
 

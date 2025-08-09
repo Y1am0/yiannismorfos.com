@@ -21,6 +21,10 @@ export const MediaControls: React.FC<MediaControlsProps> = ({
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  const hideIfNotInteracting = () => {
+    if (!isDragging) setShowVolumeSlider(false);
+  };
+
   return (
     <div className={`flex items-center ${BUTTON_STYLES.controlSpacing}`}>
       {/* Play/Pause Button */}
@@ -33,11 +37,7 @@ export const MediaControls: React.FC<MediaControlsProps> = ({
       <div
         className="relative flex items-center"
         onMouseEnter={() => setShowVolumeSlider(true)}
-        onMouseLeave={() => {
-          if (!isDragging) {
-            setShowVolumeSlider(false);
-          }
-        }}
+        onMouseLeave={hideIfNotInteracting}
       >
         <VolumeButton
           volume={volume}
@@ -50,10 +50,16 @@ export const MediaControls: React.FC<MediaControlsProps> = ({
           isMuted={isMuted}
           onVolumeChange={(newVolume) => {
             onVolumeChange(newVolume);
-            // Track dragging state to prevent slider from hiding
-            setIsDragging(newVolume !== volume);
           }}
-          showSlider={showVolumeSlider}
+          showSlider={showVolumeSlider || isDragging}
+          onDragStart={() => {
+            setIsDragging(true);
+            setShowVolumeSlider(true);
+          }}
+          onDragEnd={() => {
+            setIsDragging(false);
+            // Do not force-hide here; let hover keep it visible if still hovered
+          }}
         />
       </div>
     </div>

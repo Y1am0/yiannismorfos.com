@@ -9,6 +9,8 @@ interface VolumeSliderProps {
   isMuted: boolean;
   onVolumeChange: (volume: number) => void;
   showSlider: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }
 
 /**
@@ -19,6 +21,8 @@ export const VolumeSlider: React.FC<VolumeSliderProps> = ({
   isMuted,
   onVolumeChange,
   showSlider,
+  onDragStart,
+  onDragEnd,
 }) => {
   const [isSliderHovered, setIsSliderHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -27,6 +31,7 @@ export const VolumeSlider: React.FC<VolumeSliderProps> = ({
     (e: React.MouseEvent<HTMLDivElement>) => {
       e.preventDefault();
       setIsDragging(true);
+      onDragStart?.();
 
       const slider = e.currentTarget;
       const rect = slider.getBoundingClientRect();
@@ -36,7 +41,7 @@ export const VolumeSlider: React.FC<VolumeSliderProps> = ({
       );
       onVolumeChange(Math.round(newVolume));
     },
-    [onVolumeChange]
+    [onVolumeChange, onDragStart]
   );
 
   const handleSliderMouseMove = useCallback(
@@ -57,8 +62,10 @@ export const VolumeSlider: React.FC<VolumeSliderProps> = ({
   );
 
   const handleSliderMouseUp = useCallback(() => {
+    if (!isDragging) return;
     setIsDragging(false);
-  }, []);
+    onDragEnd?.();
+  }, [isDragging, onDragEnd]);
 
   // Add global mouse move and mouse up listeners when dragging
   useEffect(() => {
