@@ -163,7 +163,7 @@ export const HomeHero = () => {
           <DelayedLink
             href="/connect"
             beforeNavigate={startExit}
-            className="relative inline-block text-white font-medium lg:text-xl md:text-lg after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[1px] after:w-0 after:bg-current after:transition-[width] after:duration-300 after:ease-out hover:after:w-full focus-visible:after:w-full"
+            className="relative inline-block text-white font-medium md:text-lg lg:text-xl after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[1px] after:w-0 after:bg-current after:transition-[width] after:duration-300 after:ease-out hover:after:w-full focus-visible:after:w-full"
             aria-label="Start a project—let's build something amazing"
           >
             Let&apos;s work together
