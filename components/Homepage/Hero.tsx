@@ -18,11 +18,11 @@ export const HomeHero = () => {
         delayChildren: 0, // no initial pause
       },
     },
+    // Keep container exit simple so children control motion
     exit: {
       opacity: 0,
-      y: -8,
-      filter: "blur(6px)",
-      transition: { duration: 0.3, ease: [0.4, 0, 1, 1] },
+      filter: "blur(24px)",
+      transition: { duration: 0.28, ease: [0.4, 0, 1, 1] },
     },
   } as const;
 
@@ -37,12 +37,20 @@ export const HomeHero = () => {
         delayChildren: 0.08, // words start shortly after line begins
       },
     },
+    // Prevent fallback to hidden on exit; keep y at 0
+    exit: {
+      opacity: 0,
+      y: 0,
+      transition: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+    },
   } as const;
 
   // Nested word-level animation with blur
   const wordParent = {
     hidden: {},
     show: { transition: { staggerChildren: 0.035 } },
+    // Reverse-stagger out so the last words leave first; delegates y to words
+    exit: { transition: { staggerChildren: 0.02, staggerDirection: -1 } },
   } as const;
 
   const word = {
@@ -52,6 +60,13 @@ export const HomeHero = () => {
       y: 0,
       filter: "blur(0px)",
       transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+    },
+    // Keep y at 0 on exit to avoid downward movement; fade and blur instead
+    exit: {
+      opacity: 0,
+      y: 0,
+      filter: "blur(8px)",
+      transition: { duration: 0.18, ease: [0.4, 0, 1, 1] },
     },
   } as const;
 
