@@ -1,11 +1,13 @@
 "use client";
 
+import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
+// Removed useDelayedNavigation in favor of DelayedLink wrapper
 import { motion } from "motion/react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+// Removed next/link in favor of DelayedLink
+import { DelayedLink } from "@/components/DelayedLink";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { ANIMATION_CONFIG, LAYOUT_CONSTANTS } from "./constants";
-import { useNavigationActions, useNavigationSelectors } from "./stores";
+import { useNavigationActions } from "./stores";
 import { NavigationItemId } from "./types";
 
 interface NavigationItemProps {
@@ -24,8 +26,7 @@ const NavigationItemComponent = ({
   isMobile = false,
 }: NavigationItemProps) => {
   const itemRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const { isMobileMenuOpen } = useNavigationSelectors();
+  const startExit = useRouteTransitionStore((s) => s.startExit);
 
   const {
     handleHoverStart,
@@ -49,31 +50,10 @@ const NavigationItemComponent = ({
     handleMouseDown(itemId);
   }, [handleMouseDown, itemId]);
 
-  // Memoized click handler with mobile menu animation support
-  const handleClickCallback = useCallback(
-    (e?: React.MouseEvent) => {
-      // If this is a mobile navigation item with a href and mobile menu is open,
-      // we need to delay navigation to allow exit animation
-      if (href && isMobile && isMobileMenuOpen) {
-        e?.preventDefault();
-
-        // First trigger the custom onClick (if any)
-        onClick?.();
-
-        // Start the close menu animation
-        closeMenu();
-
-        // Wait for the mobile menu exit animation to complete before navigating
-        setTimeout(() => {
-          router.push(href);
-        }, 300); // Match the exit animation duration from MobileMenu.tsx
-      } else {
-        // For desktop or non-href items, proceed normally
-        onClick?.();
-      }
-    },
-    [onClick, href, isMobile, isMobileMenuOpen, closeMenu, router]
-  );
+  // Local click side-effect handler for non-link items
+  const handleClickCallback = useCallback(() => {
+    onClick?.();
+  }, [onClick]);
 
   // Register element on mount
   useEffect(() => {
@@ -95,7 +75,8 @@ const NavigationItemComponent = ({
       onTouchStart={handleHoverStartCallback}
       onMouseDown={handleMouseDownCallback}
       onMouseUp={handleMouseUp}
-      onClick={handleClickCallback}
+      // Only attach onClick for non-link items to avoid double-calling with the outer Link
+      onClick={href ? undefined : handleClickCallback}
       onFocus={handleHoverStartCallback}
       onBlur={handleHoverEnd}
       {...ANIMATION_CONFIG.navigationItem}
@@ -105,20 +86,23 @@ const NavigationItemComponent = ({
     </motion.div>
   );
 
-  // Always wrap in Link for consistent DOM structure, but handle navigation manually when needed
+  // Wrap with DelayedLink when href exists; centralize navigation/delay and side effects
   return href ? (
-    <Link
+    <DelayedLink
       href={href}
-      onClick={(e) => {
-        // Only prevent default for mobile menu scenarios
-        if (isMobile && isMobileMenuOpen) {
-          e.preventDefault();
-          handleClickCallback(e);
-        }
+      delay={300}
+      // Run lightweight side-effects even on same-route clicks
+      onClick={() => {
+        onClick?.();
+        closeMenu();
+      }}
+      // Only start exit when navigation will proceed
+      beforeNavigate={() => {
+        startExit();
       }}
     >
       {content}
-    </Link>
+    </DelayedLink>
   ) : (
     content
   );

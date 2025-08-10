@@ -1,5 +1,6 @@
 import { MeshGradientComponent } from "@/components/MeshGradient";
 import { MusicPlayer } from "@/components/MusicPlayer";
+import { RouteTransitionSync } from "@/components/RouteTransitionSync";
 import { settings } from "@/lib/settings";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black h-dvh relative`}
       >
+        <RouteTransitionSync />
         <MeshGradientComponent
           speed={settings.background.speed}
           style={{
@@ -44,16 +46,18 @@ export default function RootLayout({
         />
 
         {/* Main content container with max-width constraint */}
-        <div className="relative z-20 max-w-screen-2xl mx-auto min-h-dvh">
+        <main className="relative z-20 max-w-screen-2xl mx-auto min-h-dvh">
           <Navigation />
-          {children}
+          <div className="h-[calc(100svh-112px)] pb-[132px] px-10 lg:px-18 text-white">
+            {children}
+          </div>
 
           {/* Music Player - Positioned absolutely on bottom left */}
           <MusicPlayer />
 
           {/* External Links - Positioned absolutely within the max-width container */}
           <ExternalLinks />
-        </div>
+        </main>
       </body>
     </html>
   );
