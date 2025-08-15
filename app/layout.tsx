@@ -48,9 +48,7 @@ export default function RootLayout({
         {/* Main content container with max-width constraint */}
         <main className="relative z-20 max-w-screen-2xl mx-auto min-h-dvh">
           <Navigation />
-          <div className="h-[calc(100svh-112px)] pb-[132px] px-10 lg:px-18 text-white">
-            {children}
-          </div>
+          <div className="px-10 lg:px-18 text-white">{children}</div>
 
           {/* Music Player - Positioned absolutely on bottom left */}
           <MusicPlayer />
