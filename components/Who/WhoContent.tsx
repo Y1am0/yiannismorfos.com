@@ -3,10 +3,13 @@
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { submitWhoPrompt } from "@/lib/who/actions";
+import { readStreamableValue } from "@ai-sdk/rsc";
 import type { Transition } from "motion/react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { item, word, wordLine } from "../Hello/variants";
+import { AnimatedText } from "./AnimatedText";
+import { ThinkingDots } from "./ThinkingDots";
 
 // Animation config (typed so literal union for type is preserved)
 const layoutSpring: Transition = {
@@ -27,7 +30,11 @@ export const WhoContent = () => {
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<
-    { role: "user" | "assistant"; content: string }[]
+    {
+      role: "user" | "assistant";
+      content: string;
+      isStreaming?: boolean;
+    }[]
   >([]);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -121,25 +128,83 @@ export const WhoContent = () => {
     }
   }, [hasConversation]);
 
+  const activeStreamIdsRef = useRef<Set<unknown>>(new Set());
+
   const onSubmit = useCallback(
     (e?: React.FormEvent | null) => {
       if (e) e.preventDefault();
       if (!input.trim() || pending) return;
       const prompt = input.trim();
       setError(null);
+
       // Optimistically add user message
       setMessages((m) => [...m, { role: "user", content: prompt }]);
       setInput("");
+
       startTransition(async () => {
         try {
-          const res = await submitWhoPrompt({ prompt });
-          setMessages((m) => [...m, { role: "assistant", content: res }]);
+          // Get conversation history for context (only non-streaming messages)
+          const conversationHistory = messages
+            .filter((msg) => !msg.isStreaming)
+            .map((msg) => ({ role: msg.role, content: msg.content }));
+
+          const { output } = await submitWhoPrompt({
+            prompt,
+            messages: conversationHistory,
+          });
+
+          // Guard: avoid double consumption in React Strict Mode dev
+          if (activeStreamIdsRef.current.has(output)) return;
+          activeStreamIdsRef.current.add(output);
+
+          // Add streaming assistant message
+          const assistantMessageIndex = messages.length + 1; // +1 for the user message we just added
+          setMessages((m) => [
+            ...m,
+            {
+              role: "assistant",
+              content: "",
+              isStreaming: true,
+            },
+          ]);
+
+          for await (const delta of readStreamableValue(output)) {
+            const piece = (delta as string) || "";
+            setMessages((m) => {
+              const newMessages = [...m];
+              const msg = newMessages[assistantMessageIndex];
+              if (msg && msg.role === "assistant") {
+                if (!piece) return newMessages;
+                // If provider / dev double loop returns cumulative text
+                if (piece.startsWith(msg.content)) {
+                  msg.content = piece; // cumulative replacement
+                } else if (msg.content.startsWith(piece)) {
+                  // ignore early duplicate
+                } else {
+                  msg.content += piece; // delta append
+                }
+              }
+              return newMessages;
+            });
+          }
+
+          // Mark streaming as complete
+          setMessages((m) => {
+            const copy = [...m];
+            const msg = copy[assistantMessageIndex];
+            if (msg && msg.role === "assistant") {
+              msg.isStreaming = false;
+            }
+            return copy;
+          });
+
+          activeStreamIdsRef.current.delete(output);
         } catch {
           setError("Something went wrong. Please retry.");
         }
       });
     },
-    [input, pending, startTransition]
+    [input, pending, startTransition, messages]
   );
 
   useEffect(() => {
@@ -402,33 +467,20 @@ export const WhoContent = () => {
                       : "self-start bg-white/5 border-white/15 text-white/80"
                   }`}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? (
+                    m.content.trim() === "" && m.isStreaming ? (
+                      <ThinkingDots />
+                    ) : (
+                      <AnimatedText
+                        text={m.content}
+                        isComplete={!m.isStreaming}
+                      />
+                    )
+                  ) : (
+                    m.content
+                  )}
                 </motion.div>
               ))}
-              {pending && (
-                <motion.div
-                  key="pending"
-                  initial={
-                    prefersReduced ? false : { opacity: 0, y: 10, scale: 0.97 }
-                  }
-                  animate={
-                    prefersReduced
-                      ? false
-                      : isExiting
-                      ? {
-                          opacity: 0,
-                          y: 0,
-                          scale: 1,
-                          transition: { duration: 0.18, ease: [0.4, 0, 1, 1] },
-                        }
-                      : { opacity: 1, y: 0, scale: 1 }
-                  }
-                  transition={bubbleSpring}
-                  className="self-start max-w-[60%] rounded-2xl px-4 py-3 text-sm md:text-base leading-relaxed backdrop-blur-sm border bg-white/5 border-white/15 text-white/55"
-                >
-                  Thinking…
-                </motion.div>
-              )}
               {error && (
                 <p className="text-red-300 text-sm md:text-base">{error}</p>
               )}
