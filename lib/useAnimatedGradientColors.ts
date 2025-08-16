@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { settings } from "./settings";
 
 interface ColorScheme {
@@ -16,6 +16,11 @@ interface AnimatedColors {
   color2: string;
   color3: string;
   color4: string;
+}
+
+interface RouteSchemeWithVariants {
+  variants: Record<string, ColorScheme>;
+  defaultVariant: string;
 }
 
 // Helper function to interpolate between two hex colors
@@ -78,48 +83,73 @@ export function useAnimatedGradientColors(): AnimatedColors {
   const currentColorsRef = useRef(currentColors);
   currentColorsRef.current = currentColors;
 
-  useEffect(() => {
-    const targetScheme =
-      settings.background.colorSchemes[
-        pathname as keyof typeof settings.background.colorSchemes
-      ] || settings.background.default;
-
+  const animateTo = (targetScheme: ColorScheme) => {
     const startScheme: ColorScheme = {
       color1: { hex: currentColorsRef.current.color1 },
       color2: { hex: currentColorsRef.current.color2 },
       color3: { hex: currentColorsRef.current.color3 },
       color4: { hex: currentColorsRef.current.color4 },
     };
-
-    // Animation duration in milliseconds
     const duration = 1000;
     const startTime = Date.now();
-
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-
-      // Use easeInOutCubic for smooth animation
       const easedProgress =
         progress < 0.5
           ? 4 * progress * progress * progress
           : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
       const interpolatedColors = interpolateColorScheme(
         startScheme,
         targetScheme,
         easedProgress
       );
-
       setCurrentColors(interpolatedColors);
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
+      if (progress < 1) requestAnimationFrame(animate);
     };
-
     requestAnimationFrame(animate);
-  }, [pathname]);
+  };
+
+  // variant override state
+  const [overrideVariant, setOverrideVariant] = useState<string | null>(null);
+
+  const resolveScheme = useCallback((): ColorScheme => {
+    const entry = settings.background.colorSchemes[
+      pathname as keyof typeof settings.background.colorSchemes
+    ] as ColorScheme | RouteSchemeWithVariants | undefined;
+    if (!entry) return settings.background.default as ColorScheme;
+    if ((entry as RouteSchemeWithVariants).variants) {
+      const withVar = entry as RouteSchemeWithVariants;
+      if (overrideVariant && withVar.variants[overrideVariant]) {
+        return withVar.variants[overrideVariant];
+      }
+      return withVar.variants[withVar.defaultVariant];
+    }
+    return entry as ColorScheme;
+  }, [pathname, overrideVariant]);
+
+  // React to route path or variant changes
+  useEffect(() => {
+    const targetScheme = resolveScheme();
+    animateTo(targetScheme);
+  }, [resolveScheme]);
+
+  // Expose imperative override API via global (simple, minimal footprint)
+  // window.__meshGradientOverride?.set('who-ai') etc.
+  useEffect(() => {
+    window.__meshGradientOverride = {
+      set: (key) => {
+        // key used here is variant when on /who; null resets
+        setOverrideVariant(key);
+      },
+    };
+  }, []);
 
   return currentColors;
+}
+
+declare global {
+  interface Window {
+    __meshGradientOverride?: { set: (key: string | null) => void };
+  }
 }
