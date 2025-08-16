@@ -90,7 +90,7 @@ export const HomeHero = () => {
 
   return (
     <motion.div
-      className="w-full h-full flex items-center justify-center px-10 lg:px-18"
+      className="w-full h-full flex items-center justify-center"
       variants={container}
       initial={prefersReduced ? false : "hidden"}
       animate={prefersReduced ? false : isExiting ? "exit" : "show"}

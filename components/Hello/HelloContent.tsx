@@ -23,7 +23,7 @@ export const HelloContent = () => {
 
   return (
     <ScrollablePageContainer>
-      <div className="w-full max-w-5xl px-10 lg:px-18 mx-auto flex flex-col md:flex-row items-center md:items-start gap-10 min-h-0 pt-8">
+      <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-10 min-h-0 pt-8">
         {/* meraki Feature - Mobile only (above image) */}
         <motion.div variants={item} className="mb-6 md:hidden">
           <motion.h1

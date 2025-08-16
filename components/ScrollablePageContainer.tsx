@@ -117,7 +117,7 @@ export const ScrollablePageContainer = ({
       {showScrollIndicator && (
         <motion.div
           aria-hidden
-          className="pointer-events-none px-10 lg:px-18 absolute top-0 left-0 right-0 z-20"
+          className="pointer-events-none absolute top-0 left-0 right-0 z-20"
           initial={false}
           animate={{ opacity: isScrolling ? 1 : 0 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
@@ -140,12 +140,13 @@ export const ScrollablePageContainer = ({
       {/* Scrollable content (centers vertically only when NOT scrollable) */}
       <div
         ref={scrollRef}
-        className={`scrollable-content overflow-y-auto scrollbar-hide h-full flex flex-col ${
+        className={`scrollable-content overflow-y-auto scrollbar-hide h-full flex flex-col touch-pan-y ${
           isScrollable ? "justify-start" : "justify-center"
         }`}
         style={
           isScrollable
             ? {
+                WebkitOverflowScrolling: "touch",
                 WebkitMaskImage: hasScrolled
                   ? "linear-gradient(to bottom, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)"
                   : "linear-gradient(to bottom, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
@@ -153,7 +154,7 @@ export const ScrollablePageContainer = ({
                   ? "linear-gradient(to bottom, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)"
                   : "linear-gradient(to bottom, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
               }
-            : undefined
+            : { WebkitOverflowScrolling: "touch" }
         }
       >
         {children}
