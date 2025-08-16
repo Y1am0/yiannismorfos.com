@@ -5,7 +5,7 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { submitWhoPrompt } from "@/lib/who/actions";
 import type { Transition } from "motion/react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { item, word, wordLine } from "../Hello/variants";
 
 // Animation config (typed so literal union for type is preserved)
@@ -42,6 +42,8 @@ export const WhoContent = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const initialInputRef = useRef<HTMLInputElement | null>(null);
+  const stickyInputRef = useRef<HTMLInputElement | null>(null);
   const [buttonPad, setButtonPad] = useState(92); // default reserve space
 
   // Auto-scroll to latest message whenever a new one is added
@@ -119,23 +121,26 @@ export const WhoContent = () => {
     }
   }, [hasConversation]);
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || pending) return;
-    const prompt = input.trim();
-    setError(null);
-    // Optimistically add user message
-    setMessages((m) => [...m, { role: "user", content: prompt }]);
-    setInput("");
-    startTransition(async () => {
-      try {
-        const res = await submitWhoPrompt({ prompt });
-        setMessages((m) => [...m, { role: "assistant", content: res }]);
-      } catch {
-        setError("Something went wrong. Please retry.");
-      }
-    });
-  };
+  const onSubmit = useCallback(
+    (e?: React.FormEvent | null) => {
+      if (e) e.preventDefault();
+      if (!input.trim() || pending) return;
+      const prompt = input.trim();
+      setError(null);
+      // Optimistically add user message
+      setMessages((m) => [...m, { role: "user", content: prompt }]);
+      setInput("");
+      startTransition(async () => {
+        try {
+          const res = await submitWhoPrompt({ prompt });
+          setMessages((m) => [...m, { role: "assistant", content: res }]);
+        } catch {
+          setError("Something went wrong. Please retry.");
+        }
+      });
+    },
+    [input, pending, startTransition]
+  );
 
   useEffect(() => {
     const btn = buttonRef.current;
@@ -148,6 +153,48 @@ export const WhoContent = () => {
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, [pending]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Get the currently active input based on conversation state
+      const currentInput = hasConversation
+        ? stickyInputRef.current
+        : initialInputRef.current;
+      if (!currentInput) return;
+
+      const active = document.activeElement as HTMLElement | null;
+      // If already typing in an editable element, skip
+      if (active && (active === currentInput || active.isContentEditable))
+        return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.isComposing) return;
+      if (e.key === "Tab") return;
+      if (e.key === "Escape") return;
+      // Printable character
+      if (e.key.length === 1 && !e.repeat) {
+        e.preventDefault();
+        currentInput.focus({ preventScroll: true });
+        setInput((prev) => prev + e.key);
+        return;
+      }
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        currentInput.focus({ preventScroll: true });
+        setInput((prev) => prev.slice(0, -1));
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        currentInput.focus({ preventScroll: true });
+        if (input.trim()) {
+          onSubmit();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", handler, { capture: true });
+  }, [input, onSubmit, hasConversation]);
 
   return (
     <LayoutGroup>
@@ -240,10 +287,11 @@ export const WhoContent = () => {
                 >
                   <div className="w-full relative">
                     <input
+                      ref={initialInputRef}
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Ask about skills, fit, previous collaborations, approach..."
-                      className={`w-full pl-5 truncate rounded-full bg-white/5 border border-white/15 focus:border-white/35 outline-none text-white/90 placeholder:text-white/35 text-sm md:text-base backdrop-blur-sm transition-[padding,background,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] shadow-[0_0_0_0_rgba(255,255,255,0)] focus:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] py-5 ${
+                      className={`who-prompt w-full pl-5 truncate rounded-full bg-white/5 border border-white/15 focus:border-white/35 outline-none text-white/90 placeholder:text-white/35 text-[16px] md:text-base backdrop-blur-sm transition-[padding,background,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] shadow-[0_0_0_0_rgba(255,255,255,0)] focus:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] py-5 ${
                         pending ? "animate-pulse" : ""
                       }`}
                       style={{ paddingRight: buttonPad }}
@@ -281,7 +329,7 @@ export const WhoContent = () => {
           {hasConversation && (
             <motion.div
               aria-hidden
-              className="pointer-events-none absolute top-0 left-0 right-0 max-w-3xl z-20 mx-auto"
+              className="pointer-events-none absolute top-0 left-0 right-0 max-w-3xl px-10 z-20 mx-auto"
               initial={false}
               animate={{ opacity: isScrolling ? 1 : 0 }}
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
@@ -306,7 +354,7 @@ export const WhoContent = () => {
           )}
           <div
             ref={scrollRef}
-            className={`w-full max-w-3xl mx-auto h-full px-8 overflow-y-auto scrollbar-hide transition-[padding] duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${
+            className={`w-full max-w-3xl mx-auto h-full px-10 overflow-y-auto scrollbar-hide transition-[padding] duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${
               hasConversation ? "pt-6" : "pt-[160px]"
             }`}
             style={
@@ -411,10 +459,11 @@ export const WhoContent = () => {
           >
             <div className="w-full relative">
               <input
+                ref={stickyInputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask a follow-up..."
-                className={`w-full pl-5 truncate rounded-full bg-white/5 border border-white/15 focus:border-white/35 outline-none text-white/90 placeholder:text-white/35 text-sm md:text-base backdrop-blur-sm transition-[padding,background,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] shadow-[0_0_0_0_rgba(255,255,255,0)] focus:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] py-3 ${
+                className={`who-prompt w-full pl-5 truncate rounded-full bg-white/5 border border-white/15 focus:border-white/35 outline-none text-white/90 placeholder:text-white/35 text-[16px] md:text-base backdrop-blur-sm transition-[padding,background,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] shadow-[0_0_0_0_rgba(255,255,255,0)] focus:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] py-3 ${
                   pending ? "animate-pulse" : ""
                 }`}
                 style={{ paddingRight: buttonPad }}
