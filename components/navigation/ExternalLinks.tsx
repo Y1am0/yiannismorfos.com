@@ -219,14 +219,14 @@ const ExternalLinksComponent = () => {
           : { duration: 0 }
       }
     >
-      {/* Animated vertical line with inner indicator - wrapped with padding for easier hover */}
+      {/* Toggle (Vertical for xl+, Horizontal for md-xl, hidden < md) */}
+      {/* Vertical line (xl and above) */}
       <div
-        className={`relative ${LAYOUT_CONSTANTS.externalLinksLineContainer} cursor-pointer px-3 py-1`}
+        className={`relative ${LAYOUT_CONSTANTS.externalLinksLineContainer} cursor-pointer px-3 py-1 hidden xl:block`}
         onMouseEnter={() => handleLineHover(true)}
         onMouseLeave={() => handleLineHover(false)}
         onClick={handleLineClick}
       >
-        {/* Hover tooltip with context-aware text */}
         <AnimatePresence>
           {isLineHovered && (
             <motion.div
@@ -269,15 +269,14 @@ const ExternalLinksComponent = () => {
             {...ANIMATION_CONFIG.stretchingLine}
           />
         </AnimatePresence>
-        {/* Inner indicator line that slides between top and bottom half - outside AnimatePresence */}
         <motion.div
-          key={`indicator-${setIndex}`} // Force recreation to ensure stretch animation plays
+          key={`indicator-${setIndex}`}
           className={`${LAYOUT_CONSTANTS.externalLinksIndicatorHeight} bg-white/70 absolute top-1 left-1/2 -translate-x-1/2 origin-top`}
           initial={{
             y:
               setIndex === 0
                 ? EXTERNAL_LINKS.indicatorPositions.bottom
-                : EXTERNAL_LINKS.indicatorPositions.top, // Start from opposite position to slide
+                : EXTERNAL_LINKS.indicatorPositions.top,
             scaleY: 1,
             width: "1px",
           }}
@@ -285,8 +284,8 @@ const ExternalLinksComponent = () => {
             y:
               setIndex === 0
                 ? EXTERNAL_LINKS.indicatorPositions.top
-                : EXTERNAL_LINKS.indicatorPositions.bottom, // Slide to target position
-            scaleY: [1, EXTERNAL_LINKS.stretchScale.indicator, 1], // More pronounced stretch to match proportional scaling
+                : EXTERNAL_LINKS.indicatorPositions.bottom,
+            scaleY: [1, EXTERNAL_LINKS.stretchScale.indicator, 1],
             width: isLineHovered ? "4px" : "1px",
           }}
           transition={{
@@ -295,6 +294,32 @@ const ExternalLinksComponent = () => {
           }}
         />
       </div>
+
+      {/* Horizontal line (below xl) */}
+      <div
+        className="relative xl:hidden w-full cursor-pointer py-2"
+        onMouseEnter={() => handleLineHover(true)}
+        onMouseLeave={() => handleLineHover(false)}
+        onClick={handleLineClick}
+      >
+        {/* Base line */}
+        <div className="h-px w-full bg-white/40 relative" />
+        {/* Indicator segment */}
+        <motion.div
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-[3px] bg-white/80"
+          initial={false}
+          animate={{
+            x: setIndex === 0 ? "0%" : "100%",
+            width: "50%",
+            scaleX: [1, 1.05, 1],
+          }}
+          transition={{
+            duration: 0.45,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
       {/* External links with fixed height to prevent line movement */}
       <div
         className={`flex flex-col ${LAYOUT_CONSTANTS.externalLinksContainerHeight}`}

@@ -5,7 +5,7 @@ import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { motion } from "motion/react";
 // Removed next/link in favor of DelayedLink
 import { DelayedLink } from "@/components/DelayedLink";
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { ANIMATION_CONFIG, LAYOUT_CONSTANTS } from "./constants";
 import { useNavigationActions } from "./stores";
 import { NavigationItemId } from "./types";
@@ -27,6 +27,21 @@ const NavigationItemComponent = ({
 }: NavigationItemProps) => {
   const itemRef = useRef<HTMLDivElement>(null);
   const startExit = useRouteTransitionStore((s) => s.startExit);
+
+  // Detect touch / coarse pointer devices to disable hover logic
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nav: Navigator & { maxTouchPoints?: number } =
+      navigator as Navigator & {
+        maxTouchPoints?: number;
+      };
+    const isTouch =
+      "ontouchstart" in window ||
+      (typeof nav.maxTouchPoints === "number" && nav.maxTouchPoints > 0) ||
+      window.matchMedia("(pointer: coarse)").matches;
+    setIsTouchDevice(isTouch);
+  }, []);
 
   const {
     handleHoverStart,
@@ -70,9 +85,9 @@ const NavigationItemComponent = ({
     <motion.div
       ref={itemRef}
       className={`text-2xl font-thin ${LAYOUT_CONSTANTS.itemPadding} cursor-pointer relative focus-visible:outline-none`}
-      onHoverStart={handleHoverStartCallback}
-      onHoverEnd={handleHoverEnd}
-      onTouchStart={handleHoverStartCallback}
+      onHoverStart={isTouchDevice ? undefined : handleHoverStartCallback}
+      onHoverEnd={isTouchDevice ? undefined : handleHoverEnd}
+      onTouchStart={isTouchDevice ? undefined : handleHoverStartCallback}
       onMouseDown={handleMouseDownCallback}
       onMouseUp={handleMouseUp}
       // Only attach onClick for non-link items to avoid double-calling with the outer Link

@@ -2,7 +2,7 @@
 
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { AnimatePresence, motion } from "motion/react";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES,
@@ -19,8 +19,23 @@ interface GlassPillProps {
 }
 
 const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
-  const { glassPillStyle, glassPillVisible, pressedItem } =
+  const { glassPillStyle, glassPillVisible, pressedItem, activeItem } =
     useNavigationSelectors();
+
+  // Detect touch / coarse pointer devices (post-mount to avoid hydration mismatch)
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nav: Navigator & { maxTouchPoints?: number } =
+      navigator as Navigator & {
+        maxTouchPoints?: number;
+      };
+    const isTouch =
+      "ontouchstart" in window ||
+      (typeof nav.maxTouchPoints === "number" && nav.maxTouchPoints > 0) ||
+      window.matchMedia("(pointer: coarse)").matches;
+    setIsTouchDevice(isTouch);
+  }, []);
 
   // Respect OS-level Reduce Motion preference
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -103,10 +118,16 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
     circularItems,
   ]);
 
+  // Determine if pill should render (touch devices: only show for active item)
+  const shouldRender =
+    glassPillVisible &&
+    pillConfiguration &&
+    (!isTouchDevice || (displayedItem && displayedItem === activeItem));
+
   // Always render AnimatePresence, let glassPillVisible control the animation
   return (
     <AnimatePresence>
-      {glassPillVisible && pillConfiguration && (
+      {shouldRender && (
         <motion.div
           className={`${
             pillConfiguration.isMobileMenuItem ? "fixed" : "absolute"

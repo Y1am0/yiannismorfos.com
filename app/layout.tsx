@@ -29,6 +29,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Preload portrait image globally so it's cached before visiting /hello */}
+        <link rel="preload" as="image" href="/me.png" fetchPriority="high" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black h-dvh relative`}
       >
@@ -48,7 +52,7 @@ export default function RootLayout({
         {/* Main content container with max-width constraint */}
         <main className="relative z-20 max-w-screen-2xl mx-auto min-h-dvh">
           <Navigation />
-          <div className="px-10 lg:px-18 text-white">{children}</div>
+          <div className="text-white">{children}</div>
 
           {/* Music Player - Positioned absolutely on bottom left */}
           <MusicPlayer />

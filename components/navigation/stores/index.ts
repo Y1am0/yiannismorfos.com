@@ -61,6 +61,17 @@ export const useNavigationActions = () => {
   // Combined handlers that coordinate multiple stores
   const handleHoverStart = useCallback(
     (item: NavigationItemId, element: Element) => {
+      if (typeof window !== "undefined") {
+        const nav: Navigator & { maxTouchPoints?: number } =
+          navigator as Navigator & {
+            maxTouchPoints?: number;
+          };
+        const isTouch =
+          "ontouchstart" in window ||
+          (typeof nav.maxTouchPoints === "number" && nav.maxTouchPoints > 0) ||
+          window.matchMedia("(pointer: coarse)").matches;
+        if (isTouch) return; // Skip hover logic on touch devices
+      }
       if (process.env.NODE_ENV === "development") {
         console.log(
           `[Navigation] Hover START: ${item}, mobile: ${
@@ -82,6 +93,17 @@ export const useNavigationActions = () => {
   );
 
   const handleHoverEnd = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const nav: Navigator & { maxTouchPoints?: number } =
+        navigator as Navigator & {
+          maxTouchPoints?: number;
+        };
+      const isTouch =
+        "ontouchstart" in window ||
+        (typeof nav.maxTouchPoints === "number" && nav.maxTouchPoints > 0) ||
+        window.matchMedia("(pointer: coarse)").matches;
+      if (isTouch) return; // Skip hover end logic on touch devices
+    }
     if (process.env.NODE_ENV === "development") {
       console.log(
         `[Navigation] Hover END, mobile: ${getCurrentState().isMobile}`

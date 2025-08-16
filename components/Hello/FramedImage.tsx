@@ -33,7 +33,7 @@ export const FramedImage = ({
             duration: 0.9,
             ease: [0.22, 1, 0.36, 1],
             times: [0, 0.7, 1],
-            delay: 0.02,
+            delay: 0.3,
           }}
         />
         {/* Right */}
@@ -50,7 +50,7 @@ export const FramedImage = ({
             duration: 0.9,
             ease: [0.22, 1, 0.36, 1],
             times: [0, 0.7, 1],
-            delay: 0.1,
+            delay: 0.5,
           }}
         />
         {/* Bottom */}
@@ -67,7 +67,7 @@ export const FramedImage = ({
             duration: 0.9,
             ease: [0.22, 1, 0.36, 1],
             times: [0, 0.7, 1],
-            delay: 0.18,
+            delay: 0.6,
           }}
         />
         {/* Left */}
@@ -84,7 +84,7 @@ export const FramedImage = ({
             duration: 0.9,
             ease: [0.22, 1, 0.36, 1],
             times: [0, 0.7, 1],
-            delay: 0.26,
+            delay: 0.4,
           }}
         />
       </div>

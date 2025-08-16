@@ -117,7 +117,7 @@ export const ScrollablePageContainer = ({
       {showScrollIndicator && (
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute top-0 left-0 right-0 z-20"
+          className="pointer-events-none px-10 lg:px-18 absolute top-0 left-0 right-0 z-20"
           initial={false}
           animate={{ opacity: isScrolling ? 1 : 0 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
