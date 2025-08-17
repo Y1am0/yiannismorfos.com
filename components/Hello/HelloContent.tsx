@@ -28,7 +28,7 @@ export const HelloContent = () => {
         <motion.div variants={item} className="mb-6 md:hidden">
           <motion.h1
             variants={wordLine}
-            className={`${bodoni.className} font-semibold tracking-tight text-5xl md:text-6xl lg:text-7xl text-white/95 leading-[0.9] inline-block`}
+            className={`${bodoni.className} font-semibold tracking-tight text-5xl md:text-6xl lg:text-7xl text-white/95 leading-[0.9] inline-block select-none`}
           >
             {/* Animate each letter for a richer effect */}
             {"meraki".split("").map((ch, i, arr) => (
@@ -75,7 +75,7 @@ export const HelloContent = () => {
           <motion.div variants={item} className="mb-6 hidden md:block">
             <motion.h1
               variants={wordLine}
-              className={`${bodoni.className} font-semibold tracking-tight text-5xl md:text-6xl lg:text-7xl text-white/95 leading-[0.9] inline-block`}
+              className={`${bodoni.className} font-semibold tracking-tight text-5xl md:text-6xl lg:text-7xl text-white/95 leading-[0.9] inline-block select-none`}
             >
               {/* Animate each letter for a richer effect */}
               {"meraki".split("").map((ch, i, arr) => (
