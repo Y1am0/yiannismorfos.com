@@ -3,6 +3,7 @@
 import { openai } from "@ai-sdk/openai";
 import { createStreamableValue } from "@ai-sdk/rsc";
 import { ModelMessage, streamText } from "ai";
+import { checkWhoRateLimit } from "./rateLimit";
 
 const SYSTEM_PROMPT = `You are AI Yiannis, the personal AI assistant for Yiannis Morfos. You advocate for him (never impersonate him) using a tone that is warm, professional, confident, and genuinely enthusiastic about collaborating.
 
@@ -66,6 +67,34 @@ export async function submitWhoPrompt({
   prompt,
   messages = [],
 }: SubmitWhoPromptArgs) {
+  // Rate limit check (server side only)
+  const rl = await checkWhoRateLimit();
+  if (!rl.allowed) {
+    const stream = createStreamableValue("");
+    const requestId = crypto.randomUUID();
+    (async () => {
+      let msg = "";
+      if (rl.reason === "daily") {
+        msg =
+          "Daily limit reached. Feel free to use the contact page " +
+          (process.env.BASE_URL || "") +
+          "/connect for anything important.";
+      } else if (rl.reason === "window") {
+        msg = `Too many messages in a short window. Try again in ~${
+          rl.retryAfter ?? 30
+        }s.`;
+      } else if (rl.reason === "burst") {
+        msg = `You’re sending messages too quickly—wait ~${
+          rl.retryAfter ?? 5
+        }s.`;
+      } else {
+        msg = "Rate limit hit. Please try again shortly.";
+      }
+      stream.update(msg);
+      stream.done();
+    })();
+    return { output: stream.value, requestId };
+  }
   // Convert conversation history to ModelMessage format
   const conversationHistory: ModelMessage[] = messages.map((m) => ({
     role: m.role,
