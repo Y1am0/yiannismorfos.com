@@ -2,6 +2,7 @@
 
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { motion } from "motion/react";
+import { DelayedLink } from "../DelayedLink";
 import { word } from "../Hello/variants";
 
 const LINK_CLASS =
@@ -259,7 +260,19 @@ function RenderInlineTokens({
               </em>
             );
           case "link":
-            return (
+            return isInternalConnectLink(tok.url) ? (
+              <DelayedLink
+                key={key}
+                href={tok.url || "/connect"}
+                className={LINK_CLASS}
+              >
+                <AnimatedInline
+                  content={tok.content}
+                  charIndexRef={charIndexRef}
+                  variantKey={`${baseKey}-link-${i}`}
+                />
+              </DelayedLink>
+            ) : (
               <a
                 key={key}
                 href={tok.url}
@@ -402,7 +415,15 @@ export const AnimatedText = ({
                 </em>
               );
             case "link":
-              return (
+              return isInternalConnectLink(el.url) ? (
+                <DelayedLink
+                  key={i}
+                  href={el.url || "/connect"}
+                  className={LINK_CLASS}
+                >
+                  {el.content}
+                </DelayedLink>
+              ) : (
                 <a
                   key={i}
                   href={el.url}
@@ -518,7 +539,19 @@ export const AnimatedText = ({
               </em>
             );
           case "link":
-            return (
+            return isInternalConnectLink(el.url) ? (
+              <DelayedLink
+                key={i}
+                href={el.url || "/connect"}
+                className={LINK_CLASS}
+              >
+                <AnimatedInline
+                  content={el.content}
+                  charIndexRef={charIndexRef}
+                  variantKey={`link-${i}`}
+                />
+              </DelayedLink>
+            ) : (
               <a
                 key={i}
                 href={el.url}

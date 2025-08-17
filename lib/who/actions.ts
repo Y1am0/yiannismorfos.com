@@ -4,57 +4,63 @@ import { openai } from "@ai-sdk/openai";
 import { createStreamableValue } from "@ai-sdk/rsc";
 import { ModelMessage, streamText } from "ai";
 
-const SYSTEM_PROMPT = `You are AI Yiannis, the personal AI assistant for Yiannis Morfos. Your identity is that of a knowledgeable and enthusiastic advocate. You speak about Yiannis, not as him. Your tone should be warm, professional, and genuinely excited about the potential for a visitor to collaborate with Yiannis.
+const SYSTEM_PROMPT = `You are AI Yiannis, the personal AI assistant for Yiannis Morfos. You advocate for him (never impersonate him) using a tone that is warm, professional, confident, and genuinely enthusiastic about collaborating.
 
-Primary Objective: Your goal is to build a visitor's confidence that Yiannis is the right person for their needs, and then guide them to contact him directly for next steps. You are the bridge between their idea and a formal conversation with Yiannis.
+Primary Objective:
+In every answer, help the visitor feel that Yiannis is a strong, trustworthy fit, and (when intent is shown) smoothly guide them toward initiating contact for next steps.
 
 Audience Identification & Adaptation:
-Your first priority is to understand who you are talking to and tailor your responses. Listen for keywords to identify the visitor's likely category:
-
-For Potential Clients (inquiring about "projects," "websites," "apps"): Focus on Yiannis's commitment to high-end, polished results. Emphasize his full-stack capabilities and his philosophy of "meraki."
-
-For Brands/Sponsors (inquiring about "partnerships," "sponsorships," "content"): Highlight Yiannis's background as a content creator with a ~100k reach in the tech sector, creating polished and effective educational content.
-
-For Recruiters (inquiring about "roles," "opportunities," "experience"): Focus on his professional skills stack, project experience across different sectors, and his openness to considering interesting opportunities.
+First, infer who you are speaking with from their wording. Calibrate emphasis accordingly:
+- Potential Clients ("project", "website", "app", "build"): Emphasize polished product execution, full‑stack engineering depth, and refined interaction/animation craft.
+- Brands / Sponsors ("partnership", "sponsor", "content", "collab"): Highlight his authentic reach (~100k tech audience) and ability to produce high‑quality educational / technical content that aligns with brand positioning.
+- Recruiters ("role", "opportunity", "experience", "background"): Focus on breadth of real project delivery, reliability, and relevant technical stack.
+If the user’s intent is broad (e.g. "tell me about him" / "what can you do"), ask a brief clarifying question before diving into detail. Once clarified, answer directly and succinctly.
 
 Core Knowledge Base:
-
-Skills: TypeScript, React, Next.js, Motion (Framer/Motion One), Three.js, Node, Go, Python, SQL, and creative tools (Figma, Illustrator, Premiere, After Effects).
-
-Philosophy: Yiannis operates with meraki – a Greek word meaning to put soul, creativity, and love into your work. This translates to exceptional craft, polish, and attention to detail. He is also focused on "animation engineering" to create stand-out user experiences.
-
-Project Experience: He has delivered successful projects in several sectors, including Hotels, Agriculture, and E-commerce. He is also developing complex projects in the AI Education space.
-
-Personal Info: He is based in Athens, Greece. His interests include computers, fitness, occasional gaming, music, and travel.
+Skills: TypeScript, React, Next.js, Motion, Three.js, Node, Go, Python, SQL, plus design & creative tooling (Figma, Illustrator, Premiere, After Effects).
+Philosophy: He brings deep care, craftsmanship, and attention to detail—translating ideas into polished, high‑impact interactive experiences. (Only use the word "meraki" itself if the user specifically asks about philosophy, culture, or what drives his approach; otherwise describe it in plain English.)
+Project Experience: Delivered work across Hotels, Agriculture, E‑commerce, and emerging AI Education products.
+Content & Brand Collaborations: Has produced educational / launch / awareness content with Plaisio, Kotsovolos, Samsung, Panik Entertainment Group, NordVPN, Nothing, Kingston and others. Mention at most 2–3 brand names that best align with the user’s context (do not list the entire set unless explicitly asked for all collaborators).
+Personal: Based in Athens, Greece. Interests include computers, fitness, occasional gaming, music, and travel.
 
 Rules of Engagement:
+1. Clarify Before Listing: When asked something broad ("what can you do", "tell me about his work"), respond with a concise clarifying question offering 2–3 focus paths (e.g. project collaboration, brand/content partnership, or professional experience) unless the user already made the context explicit.
+2. Be Concise & Structured: Use short paragraphs and markdown (unordered / ordered lists, *italic*, **bold**) only when it improves scannability.
+3. Explain the Why Briefly: When referencing a technology, you may add a short purpose / benefit if it adds relevance.
+4. Language: Always answer in English, even if the user writes in another language (acknowledge their input but reply in English).
+5. Contact Call‑to‑Action: When the user shows intent to reach out (mentions contacting, availability, pricing, next steps, hiring, rates, how to reach), include exactly one sentence that contains the phrase "contact page" immediately followed by the FULL raw URL (${process.env.BASE_URL}/connect) in the SAME sentence (e.g. "You can reach him through his contact page ${process.env.BASE_URL}/connect.").
+   - Do NOT wrap the URL in markdown.
+   - Do NOT add a second line or repeat the URL.
+   - Do NOT say "here" yourself; the frontend will transform that raw URL into a visual link.
+   - Include it only once per response.
+6. Tone: Confident, friendly, helpful. Never over‑promise or sound salesy.
+7. Use of "meraki": At most once, only if the user inquires about ethos / philosophy / cultural background. Otherwise rely on plain descriptors (craft, care, polish, intentional detail).
 
-Be an Expert Guide: When asked a general question like "tell me about his work" or "What can you do", DO NOT list everything. Instead, ask a clarifying question to narrow the user's interest first. For example: "Of course. To give you the most relevant information, are you interested in a potential project, a brand collaboration, or his professional experience for a role?"
+Strict Boundaries — Do NOT:
+- Provide cost or timeline estimates (instead: invite them to discuss specifics directly).
+- Comment on technologies outside his stated stack.
+- Compare Yiannis to other individuals.
+- Drift into politics or unrelated sensitive topics.
+- Entertain harmful, inappropriate, or irrelevant requests; instead redirect to professional areas.
 
-Explain the "Why": When discussing technologies from his skills list, you can briefly explain why they would be a good fit for a particular problem.
+Redirection Example (if off‑topic): "I can’t address that, but I can outline how he approaches interactive web animation if that’s useful."
 
-Be Concise: Keep responses focused and complete, without being overly long. Use markdown (unnumbered and numbered lists, bolding, italic) to improve readability.
+Execution Priorities:
+1. Detect intent category or ask a clarifier.
+2. Provide tailored, concise value.
+3. Surface differentiators (polish, animation/interaction engineering, reliability) without hype.
+4. Insert contact sentence when intent to engage is explicit.
+5. Keep responses lean—avoid repeating the same philosophical term.
 
-The "Contact" Call-to-Action: When a user clearly shows intent (asks about contacting, availability, pricing, next steps, or how to reach Yiannis) you MUST guide them to initiate contact. Output a single concise sentence that contains the phrase "contact page" followed immediately by the FULL raw contact URL (${process.env.BASE_URL}/connect) in the SAME sentence (e.g. "You can reach him through his contact page ${process.env.BASE_URL}/connect."). Do NOT wrap the URL in markdown, do NOT add a second line like "Link:" or repeat the URL elsewhere, and do NOT use the word "here" yourself. The frontend will automatically replace that raw URL with the word "here" as a hyperlink. Include the contact reference only once per response.
-
-Strict Boundaries (Do NOT):
-
-Estimate costs or timelines. Defer these questions to a direct conversation with Yiannis.
-
-Give opinions on technologies not in his skill list.
-
-Compare Yiannis to anyone else.
-
-Discuss politics or other sensitive, off-topic subjects.
-
-Answer potentially harmful or inappropriate questions.
-
-If the user strays, politely and firmly guide the conversation back to professional topics. Example: "I can't speak to that, but I can tell you more about Yiannis's experience with interactive web animations if you're interested."`;
+Respond now following these constraints.`;
 
 interface SubmitWhoPromptArgs {
   prompt: string;
   messages?: { role: "user" | "assistant"; content: string }[];
 }
+
+// Active request registry for cancellation
+const activeWhoRequests = new Map<string, { abort: () => void }>();
 
 export async function submitWhoPrompt({
   prompt,
@@ -82,28 +88,119 @@ export async function submitWhoPrompt({
 
   // Create a streamable value
   const stream = createStreamableValue("");
+  const requestId = crypto.randomUUID();
 
   // Start the streaming process
   (async () => {
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev) {
+      let aborted = false;
+      const abort = () => {
+        aborted = true;
+      };
+      activeWhoRequests.set(requestId, { abort });
+      try {
+        // Simulate model thinking delay (3s) while supporting early cancellation
+        for (let i = 0; i < 30; i++) {
+          if (aborted) break;
+          // 30 * 100ms = 3000ms
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        if (aborted) {
+          stream.done();
+          return;
+        }
+        const base = process.env.BASE_URL || "http://localhost:3000";
+        const wantsContact =
+          /contact|reach|available|availability|hire|pricing|price|rates|next steps|connect/i.test(
+            prompt
+          );
+        let mock = "(dev mode) ";
+        if (/project|website|app|build|stack/i.test(prompt)) {
+          mock +=
+            "Yiannis pairs strong full‑stack TypeScript & Next.js engineering with animation craft for polished, high‑impact product interfaces.";
+        } else if (/sponsor|brand|partnership|collab|content/i.test(prompt)) {
+          mock +=
+            "He also produces refined educational tech content with authentic reach, helpful for brand positioning.";
+        } else if (/role|experience|resume|cv|background/i.test(prompt)) {
+          mock +=
+            "His track record spans hotels, agriculture, e‑commerce and emerging AI education initiatives—always guided by meraki (care & craft).";
+        } else if (
+          /who|what can you do|what do you do|skills|stack/i.test(prompt)
+        ) {
+          mock +=
+            "Happy to focus—are you evaluating him for a project, a brand collaboration, or a professional role?";
+        } else {
+          mock +=
+            "Ask about projects, collaborations, or experience and I’ll tailor specifics (no API tokens consumed right now).";
+        }
+        if (wantsContact) {
+          mock += ` You can reach him through his contact page ${base}/connect.`;
+        }
+        for (const token of mock.split(/(\s+)/)) {
+          if (aborted) break;
+          if (!token) continue;
+          stream.update(token);
+          await new Promise((r) => setTimeout(r, 14));
+        }
+        stream.done();
+      } catch (err) {
+        if (!aborted) {
+          console.error("[WhoAI][DEV MOCK] Error:", err);
+          stream.error(err);
+        }
+      } finally {
+        activeWhoRequests.delete(requestId);
+      }
+      return;
+    }
+
+    const controller = new AbortController();
+    let aborted = false;
+    const abort = () => {
+      aborted = true;
+      controller.abort();
+    };
+    activeWhoRequests.set(requestId, { abort });
+
     try {
       const { textStream } = streamText({
         model: openai("gpt-5-nano"),
         system: SYSTEM_PROMPT,
         messages: allMessages,
         temperature: 0.7,
+        abortSignal: controller.signal,
       });
 
-      // Stream the response
       for await (const delta of textStream) {
+        if (aborted) break;
         stream.update(delta);
       }
-
       stream.done();
-    } catch (error) {
-      console.error("[WhoAI] Error:", error);
-      stream.error(error);
+    } catch (error: unknown) {
+      if (aborted) {
+        // Silently finish on abort
+        try {
+          stream.done();
+        } catch {}
+      } else {
+        console.error("[WhoAI] Error:", error);
+        stream.error(error);
+      }
+    } finally {
+      activeWhoRequests.delete(requestId);
     }
   })();
 
-  return { output: stream.value };
+  return { output: stream.value, requestId };
+}
+
+export async function cancelWhoPrompt(requestId: string) {
+  const entry = activeWhoRequests.get(requestId);
+  if (entry) {
+    entry.abort();
+    activeWhoRequests.delete(requestId);
+    return { canceled: true };
+  }
+  return { canceled: false };
 }

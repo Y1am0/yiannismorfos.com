@@ -2,14 +2,21 @@
 
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
-import { submitWhoPrompt } from "@/lib/who/actions";
+import { cancelWhoPrompt, submitWhoPrompt } from "@/lib/who/actions";
 import { readStreamableValue } from "@ai-sdk/rsc";
+import { RotateCcw, Square } from "lucide-react";
 import type { Transition } from "motion/react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { item, word, wordLine } from "../Hello/variants";
 import { AnimatedText } from "./AnimatedText";
 import { ThinkingDots } from "./ThinkingDots";
+import {
+  selectActiveRequestId,
+  selectHasConversation,
+  selectMessages,
+  useConversationState,
+} from "./stores/conversationState";
 
 // Animation config (typed so literal union for type is preserved)
 const layoutSpring: Transition = {
@@ -29,29 +36,38 @@ export const WhoContent = () => {
   const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<
-    {
-      role: "user" | "assistant";
-      content: string;
-      isStreaming?: boolean;
-    }[]
-  >([]);
+  const storeMessages = useConversationState(selectMessages);
+  const activeRequestId = useConversationState(selectActiveRequestId);
+  const hasConversation = useConversationState(selectHasConversation);
+  const addUserMessage = useConversationState((s) => s.addUserMessage);
+  const startAssistantMessage = useConversationState(
+    (s) => s.startAssistantMessage
+  );
+  const appendAssistantDelta = useConversationState(
+    (s) => s.appendAssistantDelta
+  );
+  const finalizeAssistant = useConversationState((s) => s.finalizeAssistant);
+  const setActiveRequest = useConversationState((s) => s.setActiveRequest);
+  const setLastUserPrompt = useConversationState((s) => s.setLastUserPrompt);
+  const cancelStreamingInStore = useConversationState((s) => s.cancelStreaming);
+  const purgeIfExpired = useConversationState((s) => s.purgeIfExpired);
+  const lastUserPrompt = useConversationState((s) => s.lastUserPrompt);
+  const resetConversation = useConversationState((s) => s.reset);
+  const messages = storeMessages;
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const hasConversation = messages.length > 0;
-
-  // Custom scroll indicator state (mirrors ScrollablePageContainer)
+  // Scroll / indicator state
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [segment, setSegment] = useState({ left: 0, width: 100 });
   const [isScrolling, setIsScrolling] = useState(false);
   const inactivityTimerRef = useRef<number | null>(null);
-  const [hasScrolled, setHasScrolled] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const initialInputRef = useRef<HTMLInputElement | null>(null);
   const stickyInputRef = useRef<HTMLInputElement | null>(null);
-  const [buttonPad, setButtonPad] = useState(92); // default reserve space
+  const [buttonPad, setButtonPad] = useState(92); // dynamic right padding based on button width
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   // Auto-scroll to latest message whenever a new one is added
   useEffect(() => {
@@ -64,7 +80,124 @@ export const WhoContent = () => {
   }, [messages.length, hasConversation]);
 
   useEffect(() => {
-    if (!hasConversation) return; // only after first message
+    purgeIfExpired();
+  }, [purgeIfExpired]);
+
+  // Dynamically adjust input right padding so text never overlaps button (works for Send/Stop width changes)
+  useEffect(() => {
+    const compute = () => {
+      const btn = buttonRef.current;
+      if (!btn) return; // keep previous value
+      const width = btn.offsetWidth; // includes padding
+      // Add a small gap (12px) so caret never touches button
+      setButtonPad(width + 12);
+    };
+    compute();
+    // Observe button size changes (label changes between Send/Stop, responsive styles)
+    const btn = buttonRef.current;
+    let ro: ResizeObserver | null = null;
+    if (btn && typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => compute());
+      ro.observe(btn);
+    }
+    window.addEventListener("resize", compute);
+    return () => {
+      window.removeEventListener("resize", compute);
+      if (ro) ro.disconnect();
+    };
+  }, [activeRequestId, pending, hasConversation]);
+
+  const activeStreamIdsRef = useRef<Set<unknown>>(new Set());
+
+  const onSubmit = useCallback(
+    (e?: React.FormEvent | null) => {
+      if (e) e.preventDefault();
+      if (!input.trim() || activeRequestId) return; // prevent new while active
+      const prompt = input.trim();
+      setError(null);
+
+      addUserMessage(prompt);
+      setLastUserPrompt(prompt);
+      setInput("");
+
+      startTransition(async () => {
+        try {
+          const conversationHistory = messages
+            .filter((m) => !m.isStreaming)
+            .map((m) => ({ role: m.role, content: m.content }));
+
+          const { output, requestId } = await submitWhoPrompt({
+            prompt,
+            messages: conversationHistory,
+          });
+          setActiveRequest(requestId || null);
+
+          if (activeStreamIdsRef.current.has(output)) return;
+          activeStreamIdsRef.current.add(output);
+
+          const assistantIndex = startAssistantMessage();
+
+          for await (const delta of readStreamableValue(output)) {
+            const piece = (delta as string) || "";
+            if (!piece) continue;
+            appendAssistantDelta(assistantIndex, piece);
+          }
+
+          finalizeAssistant(assistantIndex);
+          activeStreamIdsRef.current.delete(output);
+          setActiveRequest(null);
+        } catch {
+          setError("Something went wrong. Please retry.");
+          setActiveRequest(null);
+        }
+      });
+    },
+    [
+      input,
+      messages,
+      startTransition,
+      addUserMessage,
+      appendAssistantDelta,
+      finalizeAssistant,
+      setActiveRequest,
+      setLastUserPrompt,
+      activeRequestId,
+      startAssistantMessage,
+    ]
+  );
+
+  const cancelActive = useCallback(async () => {
+    if (!activeRequestId) return;
+    try {
+      await cancelWhoPrompt(activeRequestId);
+    } catch {}
+    cancelStreamingInStore();
+    setActiveRequest(null);
+    if (lastUserPrompt) setInput(lastUserPrompt);
+  }, [
+    activeRequestId,
+    cancelStreamingInStore,
+    lastUserPrompt,
+    setActiveRequest,
+  ]);
+
+  const restartConversation = useCallback(async () => {
+    // If something is streaming, cancel it first
+    if (activeRequestId) {
+      try {
+        await cancelWhoPrompt(activeRequestId);
+      } catch {}
+    }
+    resetConversation();
+    setActiveRequest(null);
+    setInput("");
+    // Focus initial input after next paint (it will remount)
+    requestAnimationFrame(() => {
+      initialInputRef.current?.focus({ preventScroll: true });
+    });
+  }, [activeRequestId, resetConversation, setActiveRequest]);
+
+  useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     let frame: number | null = null;
@@ -82,7 +215,6 @@ export const WhoContent = () => {
       frame = null;
       const { scrollHeight, clientHeight, scrollTop } = el;
       const canScroll = scrollHeight > clientHeight + 1;
-      setHasScrolled(scrollTop > 8);
       if (!canScroll) {
         setSegment({ left: 0, width: 100 });
         setIsScrolling(false);
@@ -95,6 +227,7 @@ export const WhoContent = () => {
         left: topRatio * (100 - visibleRatio * 100),
         width: visibleRatio * 100,
       });
+      setHasScrolled(scrollTop > 8);
     };
 
     const onScroll = () => {
@@ -128,114 +261,17 @@ export const WhoContent = () => {
     }
   }, [hasConversation]);
 
-  const activeStreamIdsRef = useRef<Set<unknown>>(new Set());
-
-  const onSubmit = useCallback(
-    (e?: React.FormEvent | null) => {
-      if (e) e.preventDefault();
-      if (!input.trim() || pending) return;
-      const prompt = input.trim();
-      setError(null);
-
-      // Optimistically add user message
-      setMessages((m) => [...m, { role: "user", content: prompt }]);
-      setInput("");
-
-      startTransition(async () => {
-        try {
-          // Get conversation history for context (only non-streaming messages)
-          const conversationHistory = messages
-            .filter((msg) => !msg.isStreaming)
-            .map((msg) => ({ role: msg.role, content: msg.content }));
-
-          const { output } = await submitWhoPrompt({
-            prompt,
-            messages: conversationHistory,
-          });
-
-          // Guard: avoid double consumption in React Strict Mode dev
-          if (activeStreamIdsRef.current.has(output)) return;
-          activeStreamIdsRef.current.add(output);
-
-          // Add streaming assistant message
-          const assistantMessageIndex = messages.length + 1; // +1 for the user message we just added
-          setMessages((m) => [
-            ...m,
-            {
-              role: "assistant",
-              content: "",
-              isStreaming: true,
-            },
-          ]);
-
-          for await (const delta of readStreamableValue(output)) {
-            const piece = (delta as string) || "";
-            setMessages((m) => {
-              const newMessages = [...m];
-              const msg = newMessages[assistantMessageIndex];
-              if (msg && msg.role === "assistant") {
-                if (!piece) return newMessages;
-                // If provider / dev double loop returns cumulative text
-                if (piece.startsWith(msg.content)) {
-                  msg.content = piece; // cumulative replacement
-                } else if (msg.content.startsWith(piece)) {
-                  // ignore early duplicate
-                } else {
-                  msg.content += piece; // delta append
-                }
-              }
-              return newMessages;
-            });
-          }
-
-          // Mark streaming as complete
-          setMessages((m) => {
-            const copy = [...m];
-            const msg = copy[assistantMessageIndex];
-            if (msg && msg.role === "assistant") {
-              msg.isStreaming = false;
-            }
-            return copy;
-          });
-
-          activeStreamIdsRef.current.delete(output);
-        } catch {
-          setError("Something went wrong. Please retry.");
-        }
-      });
-    },
-    [input, pending, startTransition, messages]
-  );
-
-  useEffect(() => {
-    const btn = buttonRef.current;
-    if (!btn) return;
-    const update = () => {
-      // button width + gap (16px) to ensure placeholder never reaches button edge
-      setButtonPad(btn.offsetWidth + 20);
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, [pending]);
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Get the currently active input based on conversation state
       const currentInput = hasConversation
         ? stickyInputRef.current
         : initialInputRef.current;
       if (!currentInput) return;
-
       const active = document.activeElement as HTMLElement | null;
-      // If already typing in an editable element, skip
       if (active && (active === currentInput || active.isContentEditable))
         return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.isComposing) return;
-      if (e.key === "Tab") return;
-      if (e.key === "Escape") return;
-      // Printable character
+      if (e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
+      if (e.key === "Tab" || e.key === "Escape") return;
       if (e.key.length === 1 && !e.repeat) {
         e.preventDefault();
         currentInput.focus({ preventScroll: true });
@@ -251,9 +287,7 @@ export const WhoContent = () => {
       if (e.key === "Enter") {
         e.preventDefault();
         currentInput.focus({ preventScroll: true });
-        if (input.trim()) {
-          onSubmit();
-        }
+        if (input.trim()) onSubmit();
       }
     };
     window.addEventListener("keydown", handler, { capture: true });
@@ -367,11 +401,23 @@ export const WhoContent = () => {
                     />
                     <button
                       ref={buttonRef}
-                      type="submit"
-                      disabled={pending || !input.trim()}
-                      className="absolute cursor-pointer right-1.5 top-1/2 -translate-y-1/2 px-5 h-14 rounded-full text-sm md:text-[15px] font-medium bg-white/10 hover:bg-white/20 disabled:opacity-40 text-white transition-colors duration-300"
+                      type={activeRequestId ? "button" : "submit"}
+                      onClick={activeRequestId ? cancelActive : undefined}
+                      disabled={
+                        pending && !activeRequestId ? !input.trim() : false
+                      }
+                      className="absolute cursor-pointer right-1.5 top-1/2 -translate-y-1/2 px-5 h-14 rounded-full text-sm md:text-[15px] font-medium bg-white/10 hover:bg-white/20 disabled:opacity-40 text-white transition-colors duration-300 flex items-center gap-1"
                     >
-                      {pending ? "…" : "Send"}
+                      {activeRequestId ? (
+                        <>
+                          <Square className="w-4 h-4" />
+                          Stop
+                        </>
+                      ) : pending ? (
+                        "…"
+                      ) : (
+                        "Send"
+                      )}
                     </button>
                   </div>
                 </motion.form>
@@ -477,7 +523,7 @@ export const WhoContent = () => {
                       />
                     )
                   ) : (
-                    m.content
+                    <span className="chat-user-content">{m.content}</span>
                   )}
                 </motion.div>
               ))}
@@ -510,12 +556,22 @@ export const WhoContent = () => {
             className="fixed left-1/2 -translate-x-1/2 w-full max-w-3xl px-6 bottom-[168px]"
           >
             <div className="w-full relative">
+              {/* Restart button */}
+              <button
+                type="button"
+                onClick={restartConversation}
+                aria-label="Restart conversation"
+                className="absolute left-1.5 top-1/2 cursor-pointer -translate-y-1/2 h-10 w-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors duration-300 disabled:opacity-40 z-10"
+                disabled={pending && !!activeRequestId}
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
               <input
                 ref={stickyInputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask a follow-up..."
-                className={`who-prompt w-full pl-5 truncate rounded-full bg-white/5 border border-white/15 focus:border-white/35 outline-none text-white/90 placeholder:text-white/35 text-[16px] md:text-base backdrop-blur-sm transition-[padding,background,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] shadow-[0_0_0_0_rgba(255,255,255,0)] focus:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] py-3 ${
+                className={`who-prompt w-full pl-14 truncate rounded-full bg-white/5 border border-white/15 focus:border-white/35 outline-none text-white/90 placeholder:text-white/35 text-[16px] md:text-base backdrop-blur-sm transition-[padding,background,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] shadow-[0_0_0_0_rgba(255,255,255,0)] focus:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] py-3 ${
                   pending ? "animate-pulse" : ""
                 }`}
                 style={{ paddingRight: buttonPad }}
@@ -526,27 +582,24 @@ export const WhoContent = () => {
               />
               <button
                 ref={buttonRef}
-                type="submit"
-                disabled={pending || !input.trim()}
-                className="absolute cursor-pointer right-1.5 top-1/2 -translate-y-1/2 px-5 h-10 rounded-full text-sm md:text-[15px] font-medium bg-white/10 hover:bg-white/20 disabled:opacity-40 text-white transition-colors duration-300"
+                type={activeRequestId ? "button" : "submit"}
+                onClick={activeRequestId ? cancelActive : undefined}
+                disabled={pending && !activeRequestId ? !input.trim() : false}
+                className="absolute cursor-pointer right-1.5 top-1/2 -translate-y-1/2 px-5 h-10 rounded-full text-sm md:text-[15px] font-medium bg-white/10 hover:bg-white/20 disabled:opacity-40 text-white transition-colors duration-300 flex items-center gap-1"
               >
-                {pending ? "…" : "Send"}
+                {activeRequestId ? (
+                  <>
+                    <Square className="w-4 h-4" /> Stop
+                  </>
+                ) : pending ? (
+                  "…"
+                ) : (
+                  "Send"
+                )}
               </button>
             </div>
           </motion.form>
         )}
-
-        <style jsx global>{`
-          .scrollbar-hide {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-          }
-          .scrollbar-hide::-webkit-scrollbar {
-            width: 0 !important;
-            height: 0 !important;
-            display: none !important;
-          }
-        `}</style>
       </div>
     </LayoutGroup>
   );
