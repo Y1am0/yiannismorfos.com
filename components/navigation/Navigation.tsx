@@ -317,7 +317,7 @@ const NavigationComponent = () => {
     <>
       <motion.div
         ref={parentRef}
-        className="w-full text-white max-w-screen-2xl mx-auto flex justify-center px-4 lg:px-12 py-8 relative"
+        className="w-full text-white max-w-screen-2xl mx-auto flex justify-center px-4 lg:px-12 py-8 relative nav-area"
         style={{ zIndex: Z_INDEX.navigationOverlay }}
         initial={
           shouldAnimate

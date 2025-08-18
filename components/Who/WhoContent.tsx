@@ -465,12 +465,15 @@ export const WhoContent = () => {
           )}
           <div
             ref={scrollRef}
-            className={`w-full max-w-3xl mx-auto h-full px-10 overflow-y-auto scrollbar-hide transition-[padding] duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${
+            className={`w-full max-w-3xl mx-auto h-full px-10 overflow-y-auto scrollable-area scrollbar-hide transition-[padding] duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${
               hasConversation ? "pt-6" : "pt-[160px]"
             }`}
             style={
               hasConversation
                 ? {
+                    WebkitOverflowScrolling: "touch",
+                    touchAction: "pan-y",
+                    overscrollBehavior: "contain",
                     WebkitMaskImage: hasScrolled
                       ? "linear-gradient(to bottom, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)"
                       : "linear-gradient(to bottom, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
@@ -478,7 +481,11 @@ export const WhoContent = () => {
                       ? "linear-gradient(to bottom, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)"
                       : "linear-gradient(to bottom, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
                   }
-                : undefined
+                : {
+                    WebkitOverflowScrolling: "touch",
+                    touchAction: "pan-y",
+                    overscrollBehavior: "contain",
+                  }
             }
           >
             <div className="flex flex-col gap-4 w-full pb-4">

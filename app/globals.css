@@ -118,6 +118,21 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Allow natural scrolling and pull-to-refresh */
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Ensure scrollable areas can receive touch events properly */
+  .scrollable-area {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* For navigation area - allow pull to refresh by not interfering with touch */
+  .nav-area {
+    touch-action: auto;
   }
 }
 
