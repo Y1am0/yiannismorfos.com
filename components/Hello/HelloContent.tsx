@@ -159,7 +159,7 @@ export const HelloContent = () => {
                   duration: 0.5,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="px-3 py-1 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-[11px] md:text-xs tracking-wide uppercase text-white/70 hover:text-white hover:border-white/30 transition-colors"
+                className="px-3 py-1 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-[11px] md:text-xs tracking-wide uppercase text-white/70 hover:text-white hover:border-white/30 transition-colors select-none"
               >
                 {tech}
               </motion.li>
