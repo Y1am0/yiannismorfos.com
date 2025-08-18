@@ -10,6 +10,7 @@ import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { item, word, wordLine } from "../Hello/variants";
 import { AnimatedText } from "./AnimatedText";
+import { QuestionBadges } from "./QuestionBadges";
 import { ThinkingDots } from "./ThinkingDots";
 import {
   selectActiveRequestId,
@@ -109,40 +110,32 @@ export const WhoContent = () => {
 
   const activeStreamIdsRef = useRef<Set<unknown>>(new Set());
 
-  const onSubmit = useCallback(
-    (e?: React.FormEvent | null) => {
-      if (e) e.preventDefault();
-      if (!input.trim() || activeRequestId) return; // prevent new while active
-      const prompt = input.trim();
+  const sendPrompt = useCallback(
+    (promptRaw: string) => {
+      const prompt = promptRaw.trim();
+      if (!prompt || activeRequestId) return;
       setError(null);
-
       addUserMessage(prompt);
       setLastUserPrompt(prompt);
       setInput("");
-
       startTransition(async () => {
         try {
           const conversationHistory = messages
             .filter((m) => !m.isStreaming)
             .map((m) => ({ role: m.role, content: m.content }));
-
           const { output, requestId } = await submitWhoPrompt({
             prompt,
             messages: conversationHistory,
           });
           setActiveRequest(requestId || null);
-
           if (activeStreamIdsRef.current.has(output)) return;
           activeStreamIdsRef.current.add(output);
-
           const assistantIndex = startAssistantMessage();
-
           for await (const delta of readStreamableValue(output)) {
             const piece = (delta as string) || "";
             if (!piece) continue;
             appendAssistantDelta(assistantIndex, piece);
           }
-
           finalizeAssistant(assistantIndex);
           activeStreamIdsRef.current.delete(output);
           setActiveRequest(null);
@@ -153,17 +146,24 @@ export const WhoContent = () => {
       });
     },
     [
-      input,
-      messages,
-      startTransition,
+      activeRequestId,
       addUserMessage,
       appendAssistantDelta,
       finalizeAssistant,
+      messages,
       setActiveRequest,
       setLastUserPrompt,
-      activeRequestId,
       startAssistantMessage,
+      startTransition,
     ]
+  );
+
+  const onSubmit = useCallback(
+    (e?: React.FormEvent | null) => {
+      if (e) e.preventDefault();
+      sendPrompt(input);
+    },
+    [input, sendPrompt]
   );
 
   const cancelActive = useCallback(async () => {
@@ -364,6 +364,7 @@ export const WhoContent = () => {
                   <span className="text-white/90">who</span> exaclty can I be
                   for <span className="text-white/90">your next big idea?</span>
                 </motion.p>
+
                 <motion.form
                   onSubmit={onSubmit}
                   layout
@@ -421,6 +422,18 @@ export const WhoContent = () => {
                     </button>
                   </div>
                 </motion.form>
+
+                {/* Question suggestions - positioned below input with high z-index */}
+                <div className="w-full max-w-3xl px-6 mx-auto pointer-events-auto relative z-30">
+                  <QuestionBadges
+                    prefersReduced={prefersReduced}
+                    variants={item}
+                    className="mt-3"
+                    onQuestionClick={(question) => {
+                      sendPrompt(question);
+                    }}
+                  />
+                </div>
               </div>
             </motion.div>
           )}
