@@ -14,7 +14,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ANIMATION_CONFIG,
-  EXTERNAL_LINKS,
   EXTERNAL_LINK_ROTATION_INTERVAL,
   LAYOUT_CONSTANTS,
 } from "./constants";
@@ -219,87 +218,9 @@ const ExternalLinksComponent = () => {
           : { duration: 0 }
       }
     >
-      {/* Toggle (Vertical for xl+, Horizontal for md-xl, hidden < md) */}
-      {/* Vertical line (xl and above) */}
+      {/* Horizontal line (all sizes) */}
       <div
-        className={`relative ${LAYOUT_CONSTANTS.externalLinksLineContainer} cursor-pointer px-3 py-1 hidden xl:block`}
-        onMouseEnter={() => handleLineHover(true)}
-        onMouseLeave={() => handleLineHover(false)}
-        onClick={handleLineClick}
-      >
-        <AnimatePresence>
-          {isLineHovered && (
-            <motion.div
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute right-full pr-4 top-1/2 -translate-y-1/2 text-right text-xs text-white/70 whitespace-nowrap"
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={setIndex}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 30 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  {setIndex === 0 ? (
-                    <>
-                      <div className="text-white">Development Socials</div>
-                      <div className="italic">
-                        Press to show Content Creation Socials
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-white">Content Creation Socials</div>
-                      <div className="italic">
-                        Press to show Development Socials
-                      </div>
-                    </>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <AnimatePresence initial={false} mode="wait">
-          <motion.div
-            key={`line-${setIndex}`}
-            className={`w-px ${LAYOUT_CONSTANTS.externalLinksLineHeight} bg-white/40 absolute top-1 left-1/2 -translate-x-1/2 origin-top`}
-            {...ANIMATION_CONFIG.stretchingLine}
-          />
-        </AnimatePresence>
-        <motion.div
-          key={`indicator-${setIndex}`}
-          className={`${LAYOUT_CONSTANTS.externalLinksIndicatorHeight} bg-white/70 absolute top-1 left-1/2 -translate-x-1/2 origin-top`}
-          initial={{
-            y:
-              setIndex === 0
-                ? EXTERNAL_LINKS.indicatorPositions.bottom
-                : EXTERNAL_LINKS.indicatorPositions.top,
-            scaleY: 1,
-            width: "1px",
-          }}
-          animate={{
-            y:
-              setIndex === 0
-                ? EXTERNAL_LINKS.indicatorPositions.top
-                : EXTERNAL_LINKS.indicatorPositions.bottom,
-            scaleY: [1, EXTERNAL_LINKS.stretchScale.indicator, 1],
-            width: isLineHovered ? "4px" : "1px",
-          }}
-          transition={{
-            ...ANIMATION_CONFIG.indicatorLine.transition,
-            width: { duration: 0.2, ease: "easeInOut" },
-          }}
-        />
-      </div>
-
-      {/* Horizontal line (below xl) */}
-      <div
-        className="relative xl:hidden w-full cursor-pointer py-2"
-        onMouseEnter={() => handleLineHover(true)}
-        onMouseLeave={() => handleLineHover(false)}
+        className="relative w-full cursor-pointer py-2"
         onClick={handleLineClick}
       >
         {/* Base line */}

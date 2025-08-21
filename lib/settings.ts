@@ -34,8 +34,8 @@ export const settings = {
       },
       "/what": {
         color1: { hex: "#0000ff" },
-        color2: { hex: "#0000ff" },
-        color3: { hex: "#00c0ff" },
+        color2: { hex: "#000000" },
+        color3: { hex: "#000000" },
         color4: { hex: "#0000ff" },
       },
       "/connect": {

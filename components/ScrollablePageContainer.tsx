@@ -9,8 +9,12 @@ interface ScrollablePageContainerProps {
   children: React.ReactNode;
   className?: string;
   variants?: { container?: Variants };
-  maskGradient?: string;
-  showScrollIndicator?: boolean;
+  maskGradient?: string; // radial or other overall page mask
+  showScrollIndicator?: boolean; // progress bar
+  verticalFade?: boolean; // enable vertical top/bottom fade mask inside scroll area
+  deferTopFadeUntilScrolled?: boolean; // only reveal top fade after user scrolls
+  fadeSize?: string; // size of fade region (e.g. '10%')
+  centerWhenNotScrollable?: boolean; // center content vertically when it fits
 }
 
 const defaultContainer: Variants = {
@@ -32,6 +36,10 @@ export const ScrollablePageContainer = ({
   variants,
   maskGradient = defaultMaskGradient,
   showScrollIndicator = true,
+  verticalFade = true,
+  deferTopFadeUntilScrolled = true,
+  fadeSize = "10%",
+  centerWhenNotScrollable = true,
 }: ScrollablePageContainerProps) => {
   const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
@@ -42,29 +50,27 @@ export const ScrollablePageContainer = ({
   const [isScrollable, setIsScrollable] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
 
-  // Update progress based on vertical scroll position & manage visibility
+  // Update progress + scroll states
   useEffect(() => {
-    if (!showScrollIndicator) return;
     const el = scrollRef.current;
     if (!el) return;
-
     let frame: number | null = null;
 
     const hideLater = () => {
-      if (inactivityTimerRef.current) {
+      if (inactivityTimerRef.current)
         window.clearTimeout(inactivityTimerRef.current);
-      }
-      inactivityTimerRef.current = window.setTimeout(() => {
-        setIsScrolling(false);
-      }, 650); // fade out delay after last scroll
+      inactivityTimerRef.current = window.setTimeout(
+        () => setIsScrolling(false),
+        650
+      );
     };
 
     const update = () => {
       frame = null;
       const { scrollHeight, clientHeight, scrollTop } = el;
-      const canScroll = scrollHeight > clientHeight + 1; // tolerance
+      const canScroll = scrollHeight > clientHeight + 1;
       setIsScrollable(canScroll);
-      setHasScrolled(scrollTop > 8); // top fade only after slight scroll
+      setHasScrolled(scrollTop > 8);
       if (!canScroll) {
         setSegment({ left: 0, width: 100 });
         setIsScrolling(false);
@@ -97,13 +103,24 @@ export const ScrollablePageContainer = ({
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       if (frame != null) cancelAnimationFrame(frame);
-      if (inactivityTimerRef.current) {
+      if (inactivityTimerRef.current)
         window.clearTimeout(inactivityTimerRef.current);
-      }
     };
   }, [showScrollIndicator, isScrolling]);
 
   const containerVariants = variants?.container ?? defaultContainer;
+
+  // Build vertical fade gradient (applied only when scrollable & enabled)
+  const verticalMask = (() => {
+    if (!verticalFade) return undefined;
+    if (!isScrollable) return undefined; // no need to fade if content fits
+    const topFadeActive = !deferTopFadeUntilScrolled || hasScrolled;
+    if (topFadeActive) {
+      return `linear-gradient(to bottom, rgba(0,0,0,0) 0%, #000 ${fadeSize}, #000 calc(100% - ${fadeSize}), rgba(0,0,0,0) 100%)`;
+    }
+    // Top fully opaque until user scrolls => only bottom fade visible
+    return `linear-gradient(to bottom, #000 ${fadeSize}, #000 calc(100% - ${fadeSize}), rgba(0,0,0,0) 100%)`;
+  })();
 
   return (
     <motion.div
@@ -140,43 +157,22 @@ export const ScrollablePageContainer = ({
       {/* Scrollable content (centers vertically only when NOT scrollable) */}
       <div
         ref={scrollRef}
-        className={`scrollable-content scrollable-area overflow-y-auto scrollbar-hide h-full flex flex-col touch-pan-y ${
-          isScrollable ? "justify-start" : "justify-center"
+        className={`scrollable-content scrollable-area overflow-y-auto scrollbar-hide h-full flex flex-col ${
+          centerWhenNotScrollable && !isScrollable
+            ? "justify-center"
+            : "justify-start"
         }`}
-        style={
-          isScrollable
-            ? {
-                WebkitOverflowScrolling: "touch",
-                overscrollBehavior: "contain",
-                touchAction: "pan-y",
-                WebkitMaskImage: hasScrolled
-                  ? "linear-gradient(to bottom, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)"
-                  : "linear-gradient(to bottom, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
-                maskImage: hasScrolled
-                  ? "linear-gradient(to bottom, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)"
-                  : "linear-gradient(to bottom, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
-              }
-            : {
-                WebkitOverflowScrolling: "touch",
-                touchAction: "pan-y",
-                overscrollBehavior: "contain",
-              }
-        }
+        style={{
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
+          touchAction: "pan-y",
+          ...(verticalMask
+            ? { WebkitMaskImage: verticalMask, maskImage: verticalMask }
+            : {}),
+        }}
       >
         {children}
       </div>
-      {/* Global scrollbar hide styles */}
-      <style jsx global>{`
-        .scrollbar-hide {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          width: 0 !important;
-          height: 0 !important;
-          display: none !important;
-        }
-      `}</style>
     </motion.div>
   );
 };

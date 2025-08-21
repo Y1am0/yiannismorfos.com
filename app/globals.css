@@ -154,3 +154,33 @@
   -webkit-hyphens: auto;
   -ms-hyphens: auto;
 }
+
+/* WhatContent scroll fade mask (animated edge mask custom properties) */
+@property --left-alpha {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --right-alpha {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --left-width {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+@property --right-width {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+.scroll-fade-mask {
+  transition: --left-alpha 320ms ease, --left-width 320ms ease,
+    --right-alpha 320ms ease, --right-width 320ms ease;
+}
+.scroll-fade-mask.reduce-motion {
+  transition: none;
+}

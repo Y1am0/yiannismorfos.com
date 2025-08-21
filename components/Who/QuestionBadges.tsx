@@ -16,9 +16,9 @@ interface QuestionBadgesProps {
 
 // Default questions list
 const DEFAULT_QUESTIONS = [
-  "Can you help me with an app idea?",
-  "I need a website for my business",
-  "What's Yiannis' favorite song?",
+  "I have an app idea. Can Yiannis build it?",
+  "I need a website for my business.",
+  "I would like to create sponsored video content with Yiannis.",
 ];
 
 /**
