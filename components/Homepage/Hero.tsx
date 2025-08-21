@@ -106,7 +106,7 @@ export const HomeHero = () => {
         {/* Line 1 */}
         <motion.div className="overflow-hidden py-2" variants={line}>
           <motion.p
-            className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white text-balance"
+            className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white text-balance select-none"
             variants={wordParent}
           >
             {line1Tokens.map((tok, i) => (
@@ -128,7 +128,7 @@ export const HomeHero = () => {
         {/* Line 2 */}
         <motion.div className="overflow-hidden py-2" variants={line}>
           <motion.p
-            className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white/90 text-balance"
+            className="text-4xl md:text-5xl lg:text-6xl font-semibold select-none text-white/90 text-balance"
             variants={wordParent}
           >
             {line2Tokens.map((tok, i) => (

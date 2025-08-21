@@ -11,6 +11,7 @@ import {
   Z_INDEX,
 } from "./constants";
 import { useNavigationSelectors } from "./stores";
+import { useMobileMenuState } from "./stores/mobileMenuState";
 
 import { ExternalLinkId, NavigationItemId } from "./types";
 
@@ -39,6 +40,9 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
 
   // Respect OS-level Reduce Motion preference
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  // Viewport gating: use global store isMobile to mirror Navigation.tsx logic
+  const isSmallViewport = useMobileMenuState((s) => s.isMobile);
 
   // Define which items should have circular glass pills
   const circularItems = useMemo(
@@ -119,25 +123,50 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
   ]);
 
   // Determine if pill should render (touch devices: only show for active item)
-  const shouldRender =
-    glassPillVisible &&
-    pillConfiguration &&
-    (!isTouchDevice || (displayedItem && displayedItem === activeItem));
+  const cfg = pillConfiguration;
+  const shouldRender = (() => {
+    if (!glassPillVisible || !cfg) return false;
+    // On touch: only for active item
+    if (isTouchDevice) return !!displayedItem && displayedItem === activeItem;
+    // On small viewport (desktop < md): behave like touch, but allow hover for mobile menu items
+    if (isSmallViewport) {
+      const isExternalLink = displayedItem
+        ? NAVIGATION_CATEGORIES.externalLinks.includes(
+            displayedItem as ExternalLinkId
+          )
+        : false;
+      const isMusicPlayerButton = displayedItem
+        ? NAVIGATION_CATEGORIES.musicPlayerButtons.includes(displayedItem)
+        : false;
+      const isNavigationItem = displayedItem
+        ? NAVIGATION_CATEGORIES.navigationItems.includes(
+            displayedItem as NavigationItemId
+          )
+        : false;
+      // Allow hover only for mobile menu navigation items
+      if (cfg.isMobileMenuItem && isNavigationItem) return !!displayedItem;
+      // Disallow hover for external links and music controls; active only
+      if (isExternalLink || isMusicPlayerButton)
+        return !!displayedItem && displayedItem === activeItem;
+      // Default: active only
+      return !!displayedItem && displayedItem === activeItem;
+    }
+    // Regular desktop: follow global visibility (hover/active) determined up the stack
+    return true;
+  })();
 
   // Always render AnimatePresence, let glassPillVisible control the animation
   return (
     <AnimatePresence>
-      {shouldRender && (
+      {shouldRender && cfg && (
         <motion.div
           className={`${
-            pillConfiguration.isMobileMenuItem ? "fixed" : "absolute"
+            cfg.isMobileMenuItem ? "fixed" : "absolute"
           } rounded-full pointer-events-none py-2`}
-          style={pillConfiguration.positionStyle}
+          style={cfg.positionStyle}
           animate={{
             opacity: 1,
-            ...(prefersReducedMotion
-              ? {}
-              : { scale: pillConfiguration.isPressed ? 1.1 : 1 }),
+            ...(prefersReducedMotion ? {} : { scale: cfg.isPressed ? 1.1 : 1 }),
           }}
           initial={
             prefersReducedMotion
@@ -156,9 +185,9 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
               : {
                   scale: {
                     type: "spring",
-                    stiffness: pillConfiguration.isPressed ? 400 : 300,
-                    damping: pillConfiguration.isPressed ? 25 : 20,
-                    bounce: pillConfiguration.isPressed ? 0.3 : 0.8,
+                    stiffness: cfg.isPressed ? 400 : 300,
+                    damping: cfg.isPressed ? 25 : 20,
+                    bounce: cfg.isPressed ? 0.3 : 0.8,
                   },
                 }),
             layout: ANIMATION_CONFIG.glassPill.transition.layout,

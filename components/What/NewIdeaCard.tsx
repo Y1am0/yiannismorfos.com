@@ -17,7 +17,7 @@ export const NewIdeaCard = ({
   cardWidth,
   baseDelay = 0,
 }: NewIdeaCardProps) => {
-  const stagger = 0.16;
+  const stagger = 0.1;
   const startDelay = baseDelay + index * stagger;
   const startExit = useRouteTransitionStore((s) => s.startExit);
 
@@ -29,9 +29,13 @@ export const NewIdeaCard = ({
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
       transition={{
-        opacity: { duration: 0.6, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
-        y: { duration: 0.65, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
-        filter: { duration: 0.6, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
+        opacity: {
+          duration: 0.45,
+          delay: startDelay,
+          ease: [0.22, 1, 0.36, 1],
+        },
+        y: { duration: 0.5, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
+        filter: { duration: 0.45, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
       }}
       className={`group relative overflow-hidden flex-shrink-0 border border-dashed border-white/60 ${
         isMobile ? "h-60 snap-center" : "h-64"

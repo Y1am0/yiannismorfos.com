@@ -1,13 +1,8 @@
 import WorkDetailContent from "@/components/What/WorkDetailContent";
 
-interface PageProps {
-  params: { id: string };
-}
+type Params = Promise<{ id: string }>;
 
-export default function WhatDetailPage({ params }: PageProps) {
-  return (
-    <div className="h-[calc(100svh-112px)] pb-[148px]">
-      <WorkDetailContent id={params.id} />
-    </div>
-  );
+export default async function WhatDetailPage(props: { params: Params }) {
+  const params = await props.params;
+  return <WorkDetailContent id={params.id} />;
 }

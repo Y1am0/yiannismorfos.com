@@ -15,6 +15,7 @@ interface ScrollablePageContainerProps {
   deferTopFadeUntilScrolled?: boolean; // only reveal top fade after user scrolls
   fadeSize?: string; // size of fade region (e.g. '10%')
   centerWhenNotScrollable?: boolean; // center content vertically when it fits
+  addTopPadding?: boolean; // optional pt-4 on the scrollable content
 }
 
 const defaultContainer: Variants = {
@@ -40,6 +41,7 @@ export const ScrollablePageContainer = ({
   deferTopFadeUntilScrolled = true,
   fadeSize = "10%",
   centerWhenNotScrollable = true,
+  addTopPadding = false,
 }: ScrollablePageContainerProps) => {
   const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
@@ -109,18 +111,10 @@ export const ScrollablePageContainer = ({
   }, [showScrollIndicator, isScrolling]);
 
   const containerVariants = variants?.container ?? defaultContainer;
-
-  // Build vertical fade gradient (applied only when scrollable & enabled)
-  const verticalMask = (() => {
-    if (!verticalFade) return undefined;
-    if (!isScrollable) return undefined; // no need to fade if content fits
-    const topFadeActive = !deferTopFadeUntilScrolled || hasScrolled;
-    if (topFadeActive) {
-      return `linear-gradient(to bottom, rgba(0,0,0,0) 0%, #000 ${fadeSize}, #000 calc(100% - ${fadeSize}), rgba(0,0,0,0) 100%)`;
-    }
-    // Top fully opaque until user scrolls => only bottom fade visible
-    return `linear-gradient(to bottom, #000 ${fadeSize}, #000 calc(100% - ${fadeSize}), rgba(0,0,0,0) 100%)`;
-  })();
+  // Build vertical fade values using CSS custom properties so they animate (like WhatContent)
+  const topFadeActive = !deferTopFadeUntilScrolled || hasScrolled;
+  const topAlpha = verticalFade && isScrollable && topFadeActive ? 0 : 1;
+  const bottomAlpha = verticalFade && isScrollable ? 0 : 1;
 
   return (
     <motion.div
@@ -161,13 +155,25 @@ export const ScrollablePageContainer = ({
           centerWhenNotScrollable && !isScrollable
             ? "justify-center"
             : "justify-start"
-        }`}
+        } ${addTopPadding ? "pt-4" : ""} ${
+          verticalFade ? "vertical-scroll-fade" : ""
+        } ${prefersReduced ? "reduce-motion" : ""}`}
         style={{
           WebkitOverflowScrolling: "touch",
           overscrollBehavior: "contain",
           touchAction: "pan-y",
-          ...(verticalMask
-            ? { WebkitMaskImage: verticalMask, maskImage: verticalMask }
+          ...(verticalFade
+            ? ({
+                // Animated custom properties to control the vertical mask
+                ["--top-alpha"]: String(topAlpha),
+                ["--bottom-alpha"]: String(bottomAlpha),
+                ["--top-size"]: fadeSize,
+                ["--bottom-size"]: fadeSize,
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, rgba(0,0,0,var(--top-alpha)) 0%, #000 var(--top-size), #000 calc(100% - var(--bottom-size)), rgba(0,0,0,var(--bottom-alpha)) 100%)",
+                maskImage:
+                  "linear-gradient(to bottom, rgba(0,0,0,var(--top-alpha)) 0%, #000 var(--top-size), #000 calc(100% - var(--bottom-size)), rgba(0,0,0,var(--bottom-alpha)) 100%)",
+              } as React.CSSProperties)
             : {}),
         }}
       >

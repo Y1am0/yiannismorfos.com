@@ -184,3 +184,33 @@
 .scroll-fade-mask.reduce-motion {
   transition: none;
 }
+
+/* Vertical fade for ScrollablePageContainer (animate like WhatContent) */
+@property --top-alpha {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --bottom-alpha {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --top-size {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 10%;
+}
+@property --bottom-size {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 10%;
+}
+
+.vertical-scroll-fade {
+  transition: --top-alpha 320ms ease, --bottom-alpha 320ms ease,
+    --top-size 320ms ease, --bottom-size 320ms ease;
+}
+.vertical-scroll-fade.reduce-motion {
+  transition: none;
+}

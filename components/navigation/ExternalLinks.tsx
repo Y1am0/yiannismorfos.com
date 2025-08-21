@@ -140,7 +140,7 @@ const ExternalLinksComponent = () => {
   );
   const [setIndex, setSetIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [isLineHovered, setIsLineHovered] = useState(false);
+  // Hover state removed for simplified horizontal-only variant
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cycle through sets on interval, pause if hovered
@@ -169,10 +169,7 @@ const ExternalLinksComponent = () => {
   }, []);
 
   // Handle line hover to pause timer and animate width
-  const handleLineHover = useCallback((hovered: boolean) => {
-    setIsPaused(hovered);
-    setIsLineHovered(hovered);
-  }, []);
+  // Hover handlers removed; no hover UI for the indicator
 
   // Handle line click to manually change set and reset timer
   const handleLineClick = useCallback(() => {
@@ -201,7 +198,7 @@ const ExternalLinksComponent = () => {
 
   return (
     <motion.div
-      className="absolute right-4 bottom-8 lg:right-12 z-20 flex flex-col items-center space-y-2"
+      className="z-20 flex flex-col items-center space-y-2"
       initial={
         shouldAnimate
           ? PAGE_LOAD_ANIMATIONS.externalLinks.initial
@@ -220,7 +217,7 @@ const ExternalLinksComponent = () => {
     >
       {/* Horizontal line (all sizes) */}
       <div
-        className="relative w-full cursor-pointer py-2"
+        className="relative w-16 cursor-pointer py-2"
         onClick={handleLineClick}
       >
         {/* Base line */}
