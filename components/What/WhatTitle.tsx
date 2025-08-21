@@ -21,7 +21,7 @@ export const WhatTitle = ({
       variants={wordLine}
       initial={prefersReduced ? false : "hidden"}
       animate={prefersReduced ? false : isExiting ? "exit" : "show"}
-      className={`text-4xl md:text-5xl lg:text-6xl font-semibold text-white text-center pt-4 pb-6 lg:pb-8 ${className}`}
+      className={`text-4xl md:text-5xl lg:text-6xl select-none font-semibold text-white text-center pb-6 lg:pb-8 ${className}`}
     >
       <span className="inline-flex flex-wrap justify-center gap-x-[0.5ch] align-top">
         {wordsArr.map((w, wi) => (

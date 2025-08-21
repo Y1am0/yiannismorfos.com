@@ -22,7 +22,7 @@ export const WorkCard = ({
   onClick,
   baseDelay = 0,
 }: WorkCardProps) => {
-  const stagger = 0.16;
+  const stagger = 0.1;
   const startDelay = baseDelay + index * stagger;
   const startExit = useRouteTransitionStore((s) => s.startExit);
   return (
@@ -33,9 +33,13 @@ export const WorkCard = ({
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
       transition={{
-        opacity: { duration: 0.6, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
-        y: { duration: 0.65, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
-        filter: { duration: 0.6, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
+        opacity: {
+          duration: 0.45,
+          delay: startDelay,
+          ease: [0.22, 1, 0.36, 1],
+        },
+        y: { duration: 0.5, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
+        filter: { duration: 0.45, delay: startDelay, ease: [0.22, 1, 0.36, 1] },
       }}
       className={`group relative overflow-hidden flex-shrink-0 border border-white/50 transition-colors duration-300 ease-[0.22,1,0.36,1] hover:border-white/90 ${
         isMobile ? "h-60 snap-center" : "h-64"
@@ -60,8 +64,8 @@ export const WorkCard = ({
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
           transition={{
-            duration: 0.45,
-            delay: startDelay + 0.1,
+            duration: 0.36,
+            delay: startDelay + 0.05,
             ease: [0.22, 1, 0.36, 1],
           }}
           className="text-white"

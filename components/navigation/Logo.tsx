@@ -3,7 +3,6 @@
 import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { memo, useCallback, useEffect, useRef } from "react";
-import { LAYOUT_CONSTANTS } from "./constants";
 import { useNavigationActions } from "./stores";
 
 interface LogoProps {
@@ -45,7 +44,7 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
   const content = (
     <div
       ref={logoRef}
-      className={`${LAYOUT_CONSTANTS.itemPadding} cursor-pointer select-none`}
+      className={`px-2 sm:px-6 py-2 cursor-pointer select-none`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEnd}
       onTouchStart={handleHoverStartCallback}

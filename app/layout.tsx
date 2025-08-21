@@ -82,15 +82,19 @@ export default function RootLayout({
         />
 
         {/* Main content container with max-width constraint */}
-        <main className="relative z-20 max-w-screen-2xl mx-auto min-h-dvh overflow-hidden">
-          <Navigation />
-          <div className="text-white px-10 lg:px-18">{children}</div>
+        <main className="relative z-20 max-w-screen-2xl mx-auto h-dvh overflow-hidden flex flex-col">
+          <div className="shrink-0">
+            <Navigation />
+          </div>
+          <div className="text-white px-6 sm:px-10 lg:px-18 flex-1 min-h-0">
+            {children}
+          </div>
 
-          {/* Music Player - Positioned absolutely on bottom left */}
-          <MusicPlayer />
-
-          {/* External Links - Positioned absolutely within the max-width container */}
-          <ExternalLinks />
+          {/* Global footer bar: music player on the left, external links on the right */}
+          <div className="px-6 sm:px-10 lg:px-18 py-4 flex items-center justify-between shrink-0">
+            <MusicPlayer />
+            <ExternalLinks />
+          </div>
         </main>
       </body>
     </html>

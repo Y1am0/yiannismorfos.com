@@ -4,8 +4,7 @@
 
 // UI Layout constants
 export const LAYOUT = {
-  containerClasses:
-    "absolute bottom-8 py-4 left-10 lg:left-18 z-20 flex items-center space-x-4",
+  containerClasses: "py-4 flex items-center space-x-4",
   vinylSize: {
     width: "w-20",
     height: "h-20",

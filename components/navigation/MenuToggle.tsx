@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { LAYOUT_CONSTANTS } from "./constants";
 import { useNavigationActions, useNavigationSelectors } from "./stores";
 
 const MenuToggleComponent = () => {
@@ -48,7 +47,7 @@ const MenuToggleComponent = () => {
   return (
     <div
       ref={iconRef}
-      className={`${LAYOUT_CONSTANTS.itemPadding} cursor-pointer select-none`}
+      className={`px-2 sm:px-6 py-2 cursor-pointer select-none`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEndCallback}
       onTouchStart={handleHoverStartCallback}

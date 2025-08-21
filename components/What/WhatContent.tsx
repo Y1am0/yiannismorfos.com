@@ -5,16 +5,18 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { ScrollablePageContainer } from "../ScrollablePageContainer";
-import { WORK_CARDS } from "./data";
+import { CONTENT_CARDS, WORK_CARDS } from "./data";
 import { NewIdeaCard } from "./NewIdeaCard";
 import { SliderArrows } from "./SliderArrows";
 import { WorkCardData } from "./types";
+import { WhatTabs } from "./WhatTabs";
 import { WhatTitle } from "./WhatTitle";
 import { WorkCard } from "./WorkCard";
 
 export const WhatContent = () => {
   const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
+  const [activeSet, setActiveSet] = useState<"dev" | "content">("dev");
   const [isMobile, setIsMobile] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -22,6 +24,9 @@ export const WhatContent = () => {
   const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasAutoCenteredRef = useRef(false);
+  const hasMountedRef = useRef(false);
+  const lastCenteredIndexRef = useRef(0);
 
   const CARD_WIDTH = 280;
   const DESKTOP_GAP = 24;
@@ -29,7 +34,8 @@ export const WhatContent = () => {
   const MOBILE_SIDE_PADDING = 16; // px-4 on mobile track
   const MASK_MARGIN = 8; // reduce width slightly so mask doesn't cover edges
   const MOBILE_SINGLE_RATIO = 0.9; // narrow single card to 85% of inner width
-  const TOTAL_CARDS = WORK_CARDS.length + 1; // include NewIdeaCard
+  const cards = activeSet === "dev" ? WORK_CARDS : CONTENT_CARDS;
+  const TOTAL_CARDS = cards.length + 1; // include NewIdeaCard
 
   // Resize & visible count
   useEffect(() => {
@@ -60,6 +66,11 @@ export const WhatContent = () => {
     ro.observe(containerRef.current);
     return () => ro.disconnect();
   }, [isMobile, TOTAL_CARDS]);
+
+  // Mark component as mounted to skip initial title delay on subsequent swaps
+  useEffect(() => {
+    hasMountedRef.current = true;
+  }, []);
 
   // Scroll position detection
   useEffect(() => {
@@ -107,43 +118,141 @@ export const WhatContent = () => {
   const handleNext = () => {
     if (!canGoNext || !scrollContainerRef.current) return;
     const el = scrollContainerRef.current;
-    const GAP = isMobile ? MOBILE_GAP : DESKTOP_GAP;
-    let amount: number;
     if (visibleCount === 1) {
-      const innerWidth =
-        containerWidth - (isMobile ? MOBILE_SIDE_PADDING * 2 : 0);
-      const fullWidthSingle = innerWidth < CARD_WIDTH + GAP;
-      const rawWidth = fullWidthSingle
-        ? innerWidth * (isMobile ? MOBILE_SINGLE_RATIO : 1)
-        : Math.min(CARD_WIDTH, innerWidth);
-      const cardWidth = rawWidth - MASK_MARGIN;
-      amount = cardWidth + GAP;
-    } else {
-      const move = Math.min(visibleCount, TOTAL_CARDS - 1);
-      amount = move * (CARD_WIDTH + GAP);
+      const children = Array.from(el.children) as HTMLElement[];
+      if (children.length === 0) return;
+      const containerCenter = el.scrollLeft + el.clientWidth / 2;
+      const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
+      let current = 0;
+      let minDist = Number.POSITIVE_INFINITY;
+      centers.forEach((cx, i) => {
+        const d = Math.abs(cx - containerCenter);
+        if (d < minDist) {
+          minDist = d;
+          current = i;
+        }
+      });
+      const next = Math.min(current + 1, children.length - 1);
+      const target = centers[next] - el.clientWidth / 2;
+      el.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+      return;
     }
+    const GAP = isMobile ? MOBILE_GAP : DESKTOP_GAP;
+    const move = Math.min(visibleCount, TOTAL_CARDS - 1);
+    const amount = move * (CARD_WIDTH + GAP);
     el.scrollBy({ left: amount, behavior: "smooth" });
   };
   const handlePrev = () => {
     if (!canGoPrev || !scrollContainerRef.current) return;
     const el = scrollContainerRef.current;
-    const GAP = isMobile ? MOBILE_GAP : DESKTOP_GAP;
-    let amount: number;
     if (visibleCount === 1) {
-      const innerWidth =
-        containerWidth - (isMobile ? MOBILE_SIDE_PADDING * 2 : 0);
-      const fullWidthSingle = innerWidth < CARD_WIDTH + GAP;
-      const rawWidth = fullWidthSingle
-        ? innerWidth * (isMobile ? MOBILE_SINGLE_RATIO : 1)
-        : Math.min(CARD_WIDTH, innerWidth);
-      const cardWidth = rawWidth - MASK_MARGIN;
-      amount = cardWidth + GAP;
-    } else {
-      const move = Math.min(visibleCount, TOTAL_CARDS - 1);
-      amount = move * (CARD_WIDTH + GAP);
+      const children = Array.from(el.children) as HTMLElement[];
+      if (children.length === 0) return;
+      const containerCenter = el.scrollLeft + el.clientWidth / 2;
+      const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
+      let current = 0;
+      let minDist = Number.POSITIVE_INFINITY;
+      centers.forEach((cx, i) => {
+        const d = Math.abs(cx - containerCenter);
+        if (d < minDist) {
+          minDist = d;
+          current = i;
+        }
+      });
+      const prev = Math.max(current - 1, 0);
+      const target = centers[prev] - el.clientWidth / 2;
+      el.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+      return;
     }
+    const GAP = isMobile ? MOBILE_GAP : DESKTOP_GAP;
+    const move = Math.min(visibleCount, TOTAL_CARDS - 1);
+    const amount = move * (CARD_WIDTH + GAP);
     el.scrollBy({ left: -amount, behavior: "smooth" });
   };
+
+  // Center the first card on mobile after layout to align with snap-center and padding
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    // Run once per mount/responsive recalculation
+    if (hasAutoCenteredRef.current) return;
+    hasAutoCenteredRef.current = true;
+    const id = window.requestAnimationFrame(() => {
+      const first = el.children.item(0) as HTMLElement | null;
+      if (!first) return;
+      const target =
+        first.offsetLeft + first.clientWidth / 2 - el.clientWidth / 2;
+      el.scrollTo({ left: Math.max(0, target), behavior: "auto" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isMobile]);
+
+  // Helpers to detect current centered index and scroll to target index
+  const getCurrentCenteredIndex = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return 0;
+    const children = Array.from(el.children) as HTMLElement[];
+    if (children.length === 0) return 0;
+    const containerCenter = el.scrollLeft + el.clientWidth / 2;
+    const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
+    let current = 0;
+    let minDist = Number.POSITIVE_INFINITY;
+    centers.forEach((cx, i) => {
+      const d = Math.abs(cx - containerCenter);
+      if (d < minDist) {
+        minDist = d;
+        current = i;
+      }
+    });
+    return current; // includes NewIdeaCard at index 0
+  };
+
+  const scrollToIndex = (index: number) => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const children = Array.from(el.children) as HTMLElement[];
+    if (children.length === 0) return;
+    const clamped = Math.max(0, Math.min(index, children.length - 1));
+    const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
+    const target = centers[clamped] - el.clientWidth / 2;
+    el.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+  };
+
+  // Smoothly center to a given index and resolve when close enough or timeout
+  const centerToIndex = (index: number) =>
+    new Promise<void>((resolve) => {
+      const el = scrollContainerRef.current;
+      if (!el) return resolve();
+      const children = Array.from(el.children) as HTMLElement[];
+      if (children.length === 0) return resolve();
+      const clamped = Math.max(0, Math.min(index, children.length - 1));
+      const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
+      const targetLeft = Math.max(0, centers[clamped] - el.clientWidth / 2);
+      const tol = 2;
+      const start = performance.now();
+      const maxMs = 650;
+      const check = () => {
+        if (Math.abs(el.scrollLeft - targetLeft) <= tol) return resolve();
+        if (performance.now() - start > maxMs) return resolve();
+        requestAnimationFrame(check);
+      };
+      el.scrollTo({ left: targetLeft, behavior: "smooth" });
+      requestAnimationFrame(check);
+    });
+
+  // When switching dataset, preserve the approximate centered index
+  useEffect(() => {
+    // After cards re-render, align to previous center if possible
+    if (!hasMountedRef.current) return;
+    // Defer to next frame so children measurements are ready
+    const id = requestAnimationFrame(() => {
+      const prev = lastCenteredIndexRef.current;
+      // If previous index exceeds new length, clamp
+      scrollToIndex(Math.min(prev, TOTAL_CARDS - 1));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [activeSet, TOTAL_CARDS, isMobile, containerWidth]);
 
   // Animated mask variables (fade) -------------------------------------------------
   // We keep a single gradient mask and animate the edge transparency/width via CSS custom properties.
@@ -183,7 +292,24 @@ export const WhatContent = () => {
       fadeSize="10%"
     >
       <div className="w-full max-w-5xl mx-auto flex flex-col justify-center">
-        <WhatTitle prefersReduced={prefersReduced} isExiting={isExiting} />
+        <div className="w-full flex flex-col items-center gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <WhatTitle
+            prefersReduced={prefersReduced}
+            isExiting={isExiting}
+            className="!pt-2 !pb-2 text-center lg:text-left"
+          />
+          <motion.div variants={item} className="w-full lg:w-auto">
+            <WhatTabs
+              active={activeSet}
+              onSelect={async (next) => {
+                lastCenteredIndexRef.current = getCurrentCenteredIndex();
+                await centerToIndex(0);
+                lastCenteredIndexRef.current = 0;
+                setActiveSet(next);
+              }}
+            />
+          </motion.div>
+        </div>
         <motion.div
           variants={item}
           className="relative mt-4"
@@ -205,25 +331,29 @@ export const WhatContent = () => {
                 msOverflowStyle: "none",
               }}
             >
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence
+                mode="popLayout"
+                initial={!hasMountedRef.current}
+              >
                 {(() => {
                   const cardWidth = computeCardWidth();
+                  const baseDelayValue = hasMountedRef.current ? 0 : 0.7;
                   return [
                     <NewIdeaCard
                       key="new-idea"
                       index={0}
                       isMobile={isMobile}
                       cardWidth={cardWidth}
-                      baseDelay={0.7}
+                      baseDelay={baseDelayValue}
                     />,
-                    ...WORK_CARDS.map((card: WorkCardData, index) => (
+                    ...cards.map((card: WorkCardData, index) => (
                       <WorkCard
-                        key={card.id}
+                        key={`${activeSet}-${card.id}`}
                         card={card}
                         index={index + 1}
                         isMobile={isMobile}
                         cardWidth={cardWidth}
-                        baseDelay={0.7}
+                        baseDelay={baseDelayValue}
                       />
                     )),
                   ];
