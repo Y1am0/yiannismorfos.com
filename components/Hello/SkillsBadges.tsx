@@ -104,7 +104,7 @@ export const SkillsBadges: React.FC<SkillsBadgesProps> = ({
               direction="left"
               autoFill
             >
-              <ul className="flex flex-nowrap gap-2.5">
+              <ul className="flex flex-nowrap gap-2.5 mr-2.5">
                 {firstRow.map((skill) => (
                   <li key={`skills-1-${skill}`}>
                     <span className={chipClass}>{skill}</span>
@@ -134,7 +134,7 @@ export const SkillsBadges: React.FC<SkillsBadgesProps> = ({
               direction="right"
               autoFill
             >
-              <ul className="flex flex-nowrap gap-2.5">
+              <ul className="flex flex-nowrap gap-2.5 mr-2.5">
                 {secondRow.map((skill) => (
                   <li key={`skills-2-${skill}`}>
                     <span className={chipClass}>{skill}</span>

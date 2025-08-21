@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Bodoni_Moda } from "next/font/google";
+import { Fragment } from "react";
 // Extracted shared variants
 import { fastLine, fastWord, item, word, wordLine } from "./variants";
 // Extracted framed image component
@@ -111,19 +112,22 @@ export const HelloContent = () => {
             variants={fastLine}
             className="text-white/80 text-base leading-relaxed text-justify"
           >
-            <motion.p
+            <motion.div
               className="block"
               variants={{ show: { transition: { staggerChildren: 0.012 } } }}
             >
               {`Meraki. That's the bar. Whether I'm engineering your next high-value project, designing fluid animations that feel almost tactile, or educating over 100,000 curious minds through video, everything receives my obsessive craft. I'm Yiannis, and I work from the principle that beautiful design and powerful technology are inseparable. I don't take shortcuts; I deliver polished solutions that perform and are built to endure.`
                 .split(" ")
                 .map((w, i, arr) => (
-                  <motion.span key={`para-word-${i}-${w}`} variants={fastWord}>
-                    {w}
-                    {i < arr.length - 1 && " "}
-                  </motion.span>
+                  <Fragment key={`para-word-${i}-${w}`}>
+                    <motion.span variants={fastWord}>
+                      {w}
+                      {i < arr.length - 1 && " "}
+                    </motion.span>
+                    {w.endsWith("craft.") && <div className="w-full h-4" />}
+                  </Fragment>
                 ))}
-            </motion.p>
+            </motion.div>
           </motion.div>
 
           {/* Skills Carousel */}
