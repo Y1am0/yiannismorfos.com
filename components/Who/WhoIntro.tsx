@@ -67,7 +67,7 @@ export const WhoIntro = ({
             const title = "You've heard enough";
             const wordsArr = title.split(" ");
             return (
-              <span className="inline-flex flex-wrap justify-center gap-x-[0.5ch] align-top">
+              <span className="inline-flex select-none flex-wrap justify-center gap-x-[0.5ch] align-top">
                 {wordsArr.map((w, wi) => (
                   <span key={`who-word-${wi}`} className="inline-block">
                     {w.split("").map((ch, i, arr) => (

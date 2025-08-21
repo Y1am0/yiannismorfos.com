@@ -19,7 +19,8 @@ export const LAYOUT = {
     height: "w-20 h-6",
   },
   songInfo: {
-    titleClasses: "text-white text-sm font-medium mb-1 max-w-48 truncate",
+    titleClasses:
+      "text-white text-xs md:text-sm font-medium mb-1 max-w-48 truncate",
     artistClasses: "text-white/70 text-xs mb-2 italic",
     maxArtistWidth: "max-w-42",
   },
