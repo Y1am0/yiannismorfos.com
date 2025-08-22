@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BUTTON_STYLES } from "../constants";
 import type { MediaControlsProps } from "../types";
 import { PlayPauseButton, RestartButton, VolumeButton } from "./ControlButtons";
@@ -20,8 +20,20 @@ export const MediaControls: React.FC<MediaControlsProps> = ({
 }) => {
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMdUp, setIsMdUp] = useState(false);
+
+  // Only enable hover-to-open slider on md and up
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsMdUp(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   const hideIfNotInteracting = () => {
+    if (!isMdUp) return;
     if (!isDragging) setShowVolumeSlider(false);
   };
 
@@ -36,7 +48,9 @@ export const MediaControls: React.FC<MediaControlsProps> = ({
       {/* Volume Control */}
       <div
         className="relative flex items-center"
-        onMouseEnter={() => setShowVolumeSlider(true)}
+        onMouseEnter={() => {
+          if (isMdUp) setShowVolumeSlider(true);
+        }}
         onMouseLeave={hideIfNotInteracting}
       >
         <VolumeButton
@@ -51,7 +65,7 @@ export const MediaControls: React.FC<MediaControlsProps> = ({
           onVolumeChange={(newVolume) => {
             onVolumeChange(newVolume);
           }}
-          showSlider={showVolumeSlider || isDragging}
+          showSlider={isMdUp && (showVolumeSlider || isDragging)}
           onDragStart={() => {
             setIsDragging(true);
             setShowVolumeSlider(true);

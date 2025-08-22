@@ -143,8 +143,10 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
             displayedItem as NavigationItemId
           )
         : false;
+      const isBlogItem = displayedItem === "blog";
       // Allow hover only for mobile menu navigation items
-      if (cfg.isMobileMenuItem && isNavigationItem) return !!displayedItem;
+      if (cfg.isMobileMenuItem && (isNavigationItem || isBlogItem))
+        return !!displayedItem;
       // Disallow hover for external links and music controls; active only
       if (isExternalLink || isMusicPlayerButton)
         return !!displayedItem && displayedItem === activeItem;

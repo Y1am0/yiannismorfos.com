@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Bodoni_Moda } from "next/font/google";
+import { Fragment } from "react";
 // Extracted shared variants
 import { fastLine, fastWord, item, word, wordLine } from "./variants";
 // Extracted framed image component
@@ -10,6 +11,7 @@ import { FramedImage } from "./FramedImage";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { ScrollablePageContainer } from "../ScrollablePageContainer";
+import { SkillsBadges } from "./SkillsBadges";
 
 const bodoni = Bodoni_Moda({
   subsets: ["latin"],
@@ -69,7 +71,7 @@ export const HelloContent = () => {
         {/* TEXT PANEL */}
         <motion.div
           variants={item}
-          className="text-center md:text-left max-w-xl"
+          className="text-center md:text-left w-full md:flex-1 md:min-w-0 md:max-w-none"
         >
           {/* meraki Feature - Desktop only */}
           <motion.div variants={item} className="mb-6 hidden md:block">
@@ -110,61 +112,26 @@ export const HelloContent = () => {
             variants={fastLine}
             className="text-white/80 text-base leading-relaxed text-justify"
           >
-            <motion.p
+            <motion.div
               className="block"
               variants={{ show: { transition: { staggerChildren: 0.012 } } }}
             >
               {`Meraki. That's the bar. Whether I'm engineering your next high-value project, designing fluid animations that feel almost tactile, or educating over 100,000 curious minds through video, everything receives my obsessive craft. I'm Yiannis, and I work from the principle that beautiful design and powerful technology are inseparable. I don't take shortcuts; I deliver polished solutions that perform and are built to endure.`
                 .split(" ")
                 .map((w, i, arr) => (
-                  <motion.span key={`para-word-${i}-${w}`} variants={fastWord}>
-                    {w}
-                    {i < arr.length - 1 && " "}
-                  </motion.span>
+                  <Fragment key={`para-word-${i}-${w}`}>
+                    <motion.span variants={fastWord}>
+                      {w}
+                      {i < arr.length - 1 && " "}
+                    </motion.span>
+                    {w.endsWith("craft.") && <div className="w-full h-4" />}
+                  </Fragment>
                 ))}
-            </motion.p>
+            </motion.div>
           </motion.div>
 
-          {/* Badges */}
-          <motion.ul variants={item} className="my-8 flex flex-wrap gap-2.5">
-            {[
-              "TypeScript",
-              "React",
-              "Next.js",
-              "Motion",
-              "Three.js",
-              "Node",
-              "Go",
-              "Python",
-              "SQL",
-              "Figma",
-              "Illustrator",
-              "Premiere",
-              "After Effects",
-            ].map((tech, i) => (
-              <motion.li
-                key={tech}
-                initial={
-                  prefersReduced
-                    ? false
-                    : { opacity: 0, y: 12, filter: "blur(4px)" }
-                }
-                animate={
-                  prefersReduced
-                    ? false
-                    : { opacity: 1, y: 0, filter: "blur(0px)" }
-                }
-                transition={{
-                  delay: 0.5 + i * 0.04,
-                  duration: 0.5,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                className="px-3 py-1 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm text-[11px] md:text-xs tracking-wide uppercase text-white/70 hover:text-white hover:border-white/30 transition-colors select-none"
-              >
-                {tech}
-              </motion.li>
-            ))}
-          </motion.ul>
+          {/* Skills Carousel */}
+          <SkillsBadges prefersReduced={prefersReduced} variants={item} />
         </motion.div>
       </div>
     </ScrollablePageContainer>

@@ -8,21 +8,22 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { fastLine, fastWord, item, word, wordLine } from "../Hello/variants";
 import { Arrow } from "./Arrow";
-import { WORK_CARDS } from "./data";
-import { WorkCardData } from "./types";
+import { workData } from "./data";
+import type { WorkItemData } from "./types";
 
 interface WorkDetailContentProps {
   id: string;
 }
 
-function getWorkById(id: string): WorkCardData | undefined {
-  return WORK_CARDS.find((c) => c.id === id);
+function getWorkById(id: string): WorkItemData | undefined {
+  return workData.find((c) => c.id === id);
 }
 
 export const WorkDetailContent = ({ id }: WorkDetailContentProps) => {
   const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const startExit = useRouteTransitionStore((s) => s.startExit);
+  const backHref = "/what?tab=dev";
 
   const work = getWorkById(id);
 
@@ -99,7 +100,7 @@ export const WorkDetailContent = ({ id }: WorkDetailContentProps) => {
           {/* Back link */}
           <motion.div variants={item} className="mt-8">
             <DelayedLink
-              href="/what"
+              href={backHref}
               beforeNavigate={startExit}
               className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors"
               aria-label="Back to projects"

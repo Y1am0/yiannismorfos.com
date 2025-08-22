@@ -2,6 +2,7 @@
 
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { motion } from "motion/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DelayedLink } from "../DelayedLink";
 import { word } from "../Hello/variants";
 
@@ -29,6 +30,8 @@ interface AnimatedTextProps {
   text: string;
   isComplete?: boolean;
   className?: string;
+  rateCharsPerSecond?: number;
+  animateWindow?: number;
 }
 
 // Normalize raw contact link to markdown [here](url)
@@ -182,10 +185,12 @@ function AnimatedInline({
   content,
   charIndexRef,
   variantKey,
+  animateFromIndex,
 }: {
   content: string;
   charIndexRef: { current: number };
   variantKey: string;
+  animateFromIndex: number;
 }) {
   const tokens = tokenizeWords(content);
   return (
@@ -196,27 +201,49 @@ function AnimatedInline({
         const letters = [...tok];
         const start = charIndexRef.current;
         charIndexRef.current += letters.length;
+        // If entire token is before animate window, render it as a single text node
+        if (start + letters.length <= animateFromIndex) {
+          return (
+            <span
+              key={`${variantKey}-w-${i}`}
+              className="inline-block align-baseline"
+            >
+              {tok}
+            </span>
+          );
+        }
         return (
           <span
             key={`${variantKey}-w-${i}`}
             className="inline-block align-baseline"
           >
-            {letters.map((ch, j) => (
-              <motion.span
-                key={`${variantKey}-ch-${i}-${j}`}
-                variants={word}
-                initial="hidden"
-                animate="show"
-                transition={{
-                  delay: (start + j) * 0.02,
-                  duration: 0.3,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                className="inline-block"
-              >
-                {ch}
-              </motion.span>
-            ))}
+            {letters.map((ch, j) => {
+              const globalIndex = start + j;
+              const key = `${variantKey}-ch-${i}-${j}`;
+              if (globalIndex < animateFromIndex) {
+                return (
+                  <span key={key} className="inline-block">
+                    {ch}
+                  </span>
+                );
+              }
+              return (
+                <motion.span
+                  key={key}
+                  variants={word}
+                  initial="hidden"
+                  animate="show"
+                  transition={{
+                    delay: globalIndex * 0.02,
+                    duration: 0.3,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="inline-block"
+                >
+                  {ch}
+                </motion.span>
+              );
+            })}
           </span>
         );
       })}
@@ -229,10 +256,12 @@ function RenderInlineTokens({
   tokens,
   charIndexRef,
   baseKey,
+  animateFromIndex,
 }: {
   tokens: InlineToken[];
   charIndexRef: { current: number };
   baseKey: string;
+  animateFromIndex: number;
 }) {
   return (
     <>
@@ -246,6 +275,7 @@ function RenderInlineTokens({
                   content={tok.content}
                   charIndexRef={charIndexRef}
                   variantKey={`${baseKey}-bold-${i}`}
+                  animateFromIndex={animateFromIndex}
                 />
               </strong>
             );
@@ -256,6 +286,7 @@ function RenderInlineTokens({
                   content={tok.content}
                   charIndexRef={charIndexRef}
                   variantKey={`${baseKey}-italic-${i}`}
+                  animateFromIndex={animateFromIndex}
                 />
               </em>
             );
@@ -270,6 +301,7 @@ function RenderInlineTokens({
                   content={tok.content}
                   charIndexRef={charIndexRef}
                   variantKey={`${baseKey}-link-${i}`}
+                  animateFromIndex={animateFromIndex}
                 />
               </DelayedLink>
             ) : (
@@ -283,6 +315,7 @@ function RenderInlineTokens({
                   content={tok.content}
                   charIndexRef={charIndexRef}
                   variantKey={`${baseKey}-link-${i}`}
+                  animateFromIndex={animateFromIndex}
                 />
               </a>
             );
@@ -293,6 +326,7 @@ function RenderInlineTokens({
                 content={tok.content}
                 charIndexRef={charIndexRef}
                 variantKey={`${baseKey}-text-${i}`}
+                animateFromIndex={animateFromIndex}
               />
             );
         }
@@ -305,9 +339,91 @@ export const AnimatedText = ({
   text,
   isComplete = true,
   className = "",
+  rateCharsPerSecond = 60,
+  animateWindow = 180,
 }: AnimatedTextProps) => {
   const prefersReduced = usePrefersReducedMotion();
-  const elements = parseMarkdown(text);
+  // Stream smoothing: buffer incoming text and reveal at a steady rate
+  const [visibleText, setVisibleText] = useState<string>("");
+  const bufferRef = useRef<string>("");
+  const targetTextRef = useRef<string>("");
+  const rafRef = useRef<number | null>(null);
+  const lastTsRef = useRef<number>(0);
+  const accRef = useRef<number>(0);
+  const speedRef = useRef<number>(rateCharsPerSecond);
+
+  useEffect(() => {
+    speedRef.current = rateCharsPerSecond;
+  }, [rateCharsPerSecond]);
+
+  const tick = useCallback((ts: number) => {
+    const dt = Math.max(0, ts - lastTsRef.current) / 1000;
+    lastTsRef.current = ts;
+    accRef.current += dt * speedRef.current;
+    const toConsume = Math.floor(accRef.current);
+    if (toConsume > 0) {
+      const chunk = bufferRef.current.slice(0, toConsume);
+      bufferRef.current = bufferRef.current.slice(toConsume);
+      accRef.current -= toConsume;
+      if (chunk.length) setVisibleText((prev) => prev + chunk);
+    }
+    if (bufferRef.current.length > 0) {
+      rafRef.current = requestAnimationFrame(tick);
+    } else {
+      rafRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (prefersReduced || isComplete) {
+      setVisibleText(text);
+      bufferRef.current = "";
+      targetTextRef.current = text;
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      return;
+    }
+    const prevTarget = targetTextRef.current;
+    if (text.startsWith(prevTarget)) {
+      const appended = text.slice(prevTarget.length);
+      if (appended.length > 0) {
+        bufferRef.current += appended;
+        targetTextRef.current = text;
+        if (rafRef.current == null) {
+          lastTsRef.current = performance.now();
+          rafRef.current = requestAnimationFrame(tick);
+        }
+      }
+    } else {
+      // Replace content (new message or edited text)
+      bufferRef.current = text;
+      targetTextRef.current = text;
+      setVisibleText("");
+      if (rafRef.current == null) {
+        lastTsRef.current = performance.now();
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    }
+  }, [text, prefersReduced, isComplete, tick]);
+
+  useEffect(
+    () => () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    },
+    []
+  );
+
+  const elements = useMemo(() => parseMarkdown(visibleText), [visibleText]);
+  const totalAnimatedChars = useMemo(
+    () => visibleText.replace(/\s/g, "").length,
+    [visibleText]
+  );
+  const shouldAnimateChars = !prefersReduced && !isComplete;
+  const animateFromIndex = shouldAnimateChars
+    ? Math.max(0, totalAnimatedChars - animateWindow)
+    : totalAnimatedChars;
 
   if (prefersReduced) {
     return (
@@ -463,24 +579,31 @@ export const AnimatedText = ({
                 className="flex items-baseline gap-2"
                 style={{ marginLeft: `${el.indent * 16}px` }}
               >
-                <motion.span
-                  variants={word}
-                  initial="hidden"
-                  animate="show"
-                  transition={{
-                    delay: startDelayIndex * 0.02,
-                    duration: 0.3,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  className="text-white/60 flex-shrink-0 select-none"
-                >
-                  •
-                </motion.span>
+                {shouldAnimateChars ? (
+                  <motion.span
+                    variants={word}
+                    initial="hidden"
+                    animate="show"
+                    transition={{
+                      delay: startDelayIndex * 0.02,
+                      duration: 0.3,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="text-white/60 flex-shrink-0 select-none"
+                  >
+                    •
+                  </motion.span>
+                ) : (
+                  <span className="text-white/60 flex-shrink-0 select-none">
+                    •
+                  </span>
+                )}
                 <span>
                   <RenderInlineTokens
                     tokens={inline}
                     charIndexRef={charIndexRef}
                     baseKey={`ul-${i}`}
+                    animateFromIndex={animateFromIndex}
                   />
                 </span>
               </div>
@@ -495,24 +618,31 @@ export const AnimatedText = ({
                 className="flex items-baseline gap-2"
                 style={{ marginLeft: `${el.indent * 16}px` }}
               >
-                <motion.span
-                  variants={word}
-                  initial="hidden"
-                  animate="show"
-                  transition={{
-                    delay: startDelayIndex * 0.02,
-                    duration: 0.3,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  className="text-white/60 flex-shrink-0 select-none"
-                >
-                  {el.order}.
-                </motion.span>
+                {shouldAnimateChars ? (
+                  <motion.span
+                    variants={word}
+                    initial="hidden"
+                    animate="show"
+                    transition={{
+                      delay: startDelayIndex * 0.02,
+                      duration: 0.3,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="text-white/60 flex-shrink-0 select-none"
+                  >
+                    {el.order}.
+                  </motion.span>
+                ) : (
+                  <span className="text-white/60 flex-shrink-0 select-none">
+                    {el.order}.
+                  </span>
+                )}
                 <span>
                   <RenderInlineTokens
                     tokens={inline}
                     charIndexRef={charIndexRef}
                     baseKey={`ol-${i}`}
+                    animateFromIndex={animateFromIndex}
                   />
                 </span>
               </div>
@@ -525,6 +655,7 @@ export const AnimatedText = ({
                   content={el.content}
                   charIndexRef={charIndexRef}
                   variantKey={`bold-${i}`}
+                  animateFromIndex={animateFromIndex}
                 />
               </strong>
             );
@@ -535,6 +666,7 @@ export const AnimatedText = ({
                   content={el.content}
                   charIndexRef={charIndexRef}
                   variantKey={`italic-${i}`}
+                  animateFromIndex={animateFromIndex}
                 />
               </em>
             );
@@ -549,6 +681,7 @@ export const AnimatedText = ({
                   content={el.content}
                   charIndexRef={charIndexRef}
                   variantKey={`link-${i}`}
+                  animateFromIndex={animateFromIndex}
                 />
               </DelayedLink>
             ) : (
@@ -562,6 +695,7 @@ export const AnimatedText = ({
                   content={el.content}
                   charIndexRef={charIndexRef}
                   variantKey={`link-${i}`}
+                  animateFromIndex={animateFromIndex}
                 />
               </a>
             );
@@ -572,6 +706,7 @@ export const AnimatedText = ({
                   content={el.content}
                   charIndexRef={charIndexRef}
                   variantKey={`text-${i}`}
+                  animateFromIndex={animateFromIndex}
                 />
               </span>
             );
