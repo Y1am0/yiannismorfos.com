@@ -5,7 +5,7 @@ export const tiktokData: TikTokContentData[] = [
     id: "ollama-short",
     title: "How to use Ollama",
     short: "Short form explainer on how to run local models.",
-    image: "tiktok://thumb/ollama-short",
+    image: "",
     slug: "ai-explainer-reel",
     platform: "tiktok",
     videoId: "7510110586475154710",

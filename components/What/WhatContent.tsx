@@ -28,7 +28,10 @@ export const WhatContent = ({
   const searchParams = useSearchParams();
   const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
-  const [activeSet, setActiveSet] = useState<"dev" | "content">("dev");
+  const [activeSet, setActiveSet] = useState<"dev" | "content">(() => {
+    const tab = searchParams.get("tab");
+    return tab === "content" ? "content" : "dev";
+  });
   const [isMobile, setIsMobile] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -340,7 +343,10 @@ export const WhatContent = ({
                 // Update URL query param without adding history entries
                 const params = new URLSearchParams(searchParams.toString());
                 params.set("tab", next);
-                router.replace(`${pathname}?${params.toString()}`);
+                if (typeof window !== "undefined") {
+                  const url = `${pathname}?${params.toString()}`;
+                  window.history.replaceState(null, "", url);
+                }
               }}
             />
           </motion.div>

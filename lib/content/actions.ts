@@ -16,3 +16,25 @@ export async function getTikTokThumbnailUrl(
     return null;
   }
 }
+
+export async function resolveYouTubeThumbnailUrl(
+  videoId: string
+): Promise<string> {
+  const base = `https://i.ytimg.com/vi/${videoId}`;
+  const candidates = [
+    `${base}/maxresdefault.jpg`, // 1280x720 (best)
+    `${base}/hq720.jpg`, // 1280x720
+    `${base}/mqdefault.jpg`, // 320x180 (16:9)
+    `${base}/hqdefault.jpg`, // 480x360 (4:3, may letterbox)
+  ];
+  for (const url of candidates) {
+    try {
+      const res = await fetch(url, {
+        method: "HEAD",
+        next: { revalidate: 60 * 60 * 24 },
+      });
+      if (res.ok) return url;
+    } catch {}
+  }
+  return `${base}/hqdefault.jpg`;
+}

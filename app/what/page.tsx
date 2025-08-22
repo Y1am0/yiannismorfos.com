@@ -1,7 +1,11 @@
 import { tiktokData, workData, youtubeData } from "@/components/What/data";
 import { WorkCardData } from "@/components/What/types";
 import { WhatContent } from "@/components/What/WhatContent";
-import { getTikTokThumbnailUrl } from "@/lib/content/actions";
+import {
+  getTikTokThumbnailUrl,
+  resolveYouTubeThumbnailUrl,
+} from "@/lib/content/actions";
+import { Suspense } from "react";
 
 export default async function WhatPage() {
   // Resolve thumbnails for TikTok content on the server
@@ -11,14 +15,20 @@ export default async function WhatPage() {
         const thumb = await getTikTokThumbnailUrl(c.authorHandle, c.videoId);
         return { ...c, image: thumb ?? c.image };
       }
+      if (c.platform === "youtube" && c.videoId) {
+        const thumb = await resolveYouTubeThumbnailUrl(c.videoId);
+        return { ...c, image: thumb };
+      }
       return c;
     })
   );
 
   return (
-    <WhatContent
-      initialWorkCards={workData}
-      initialContentCards={contentCards}
-    />
+    <Suspense fallback={null}>
+      <WhatContent
+        initialWorkCards={workData}
+        initialContentCards={contentCards}
+      />
+    </Suspense>
   );
 }
