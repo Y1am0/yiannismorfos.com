@@ -3,6 +3,7 @@
 import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { motion } from "motion/react";
+import Image from "next/image";
 import { WorkCardData } from "./types";
 
 interface WorkCardProps {
@@ -49,14 +50,17 @@ export const WorkCard = ({
         minWidth: cardWidth,
       }}
     >
-      <div
-        className="absolute inset-0 origin-center transition-transform duration-500 ease-[0.22,1,0.36,1] group-hover:scale-[0.94] will-change-transform"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.65)), url(${card.image})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
+      <div className="absolute inset-0 origin-center transition-transform duration-500 ease-[0.22,1,0.36,1] group-hover:scale-[0.94] will-change-transform">
+        <Image
+          src={card.image}
+          alt={card.title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 280px, 280px"
+          priority={index < 2}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/35 to-black/65" />
+      </div>
       <div className="absolute inset-0 p-6 flex flex-col justify-end pointer-events-none">
         <motion.div
           key="collapsed"

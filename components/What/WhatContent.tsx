@@ -3,9 +3,10 @@
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { AnimatePresence, motion } from "motion/react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ScrollablePageContainer } from "../ScrollablePageContainer";
-import { CONTENT_CARDS, WORK_CARDS } from "./data";
+import { tiktokData, workData, youtubeData } from "./data";
 import { NewIdeaCard } from "./NewIdeaCard";
 import { SliderArrows } from "./SliderArrows";
 import { WorkCardData } from "./types";
@@ -13,7 +14,18 @@ import { WhatTabs } from "./WhatTabs";
 import { WhatTitle } from "./WhatTitle";
 import { WorkCard } from "./WorkCard";
 
-export const WhatContent = () => {
+interface WhatContentProps {
+  initialWorkCards?: WorkCardData[];
+  initialContentCards?: WorkCardData[];
+}
+
+export const WhatContent = ({
+  initialWorkCards = workData,
+  initialContentCards = [...tiktokData, ...youtubeData],
+}: WhatContentProps) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const [activeSet, setActiveSet] = useState<"dev" | "content">("dev");
@@ -34,8 +46,27 @@ export const WhatContent = () => {
   const MOBILE_SIDE_PADDING = 16; // px-4 on mobile track
   const MASK_MARGIN = 8; // reduce width slightly so mask doesn't cover edges
   const MOBILE_SINGLE_RATIO = 0.9; // narrow single card to 85% of inner width
-  const cards = activeSet === "dev" ? WORK_CARDS : CONTENT_CARDS;
+  const cards = activeSet === "dev" ? initialWorkCards : initialContentCards;
   const TOTAL_CARDS = cards.length + 1; // include NewIdeaCard
+
+  // Sync active tab from URL on mount and when the query changes (back/forward)
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const isValid = tab === "dev" || tab === "content";
+    if (isValid && tab !== activeSet) {
+      setActiveSet(tab as "dev" | "content");
+    }
+  }, [searchParams, activeSet]);
+
+  // Ensure a default tab is present in the URL (dev) on first mount
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab !== "dev" && tab !== "content") {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", "dev");
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+  }, [pathname, router, searchParams]);
 
   // Resize & visible count
   useEffect(() => {
@@ -306,6 +337,10 @@ export const WhatContent = () => {
                 await centerToIndex(0);
                 lastCenteredIndexRef.current = 0;
                 setActiveSet(next);
+                // Update URL query param without adding history entries
+                const params = new URLSearchParams(searchParams.toString());
+                params.set("tab", next);
+                router.replace(`${pathname}?${params.toString()}`);
               }}
             />
           </motion.div>
