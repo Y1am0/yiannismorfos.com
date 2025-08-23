@@ -6,7 +6,6 @@ import { item, word, wordLine } from "../Hello/variants";
 import { QuestionBadges } from "./QuestionBadges";
 
 interface WhoIntroProps {
-  prefersReduced: boolean;
   isExiting: boolean;
   input: string;
   onInputChange: (v: string) => void;
@@ -21,7 +20,6 @@ interface WhoIntroProps {
 }
 
 export const WhoIntro = ({
-  prefersReduced,
   isExiting,
   input,
   onInputChange,
@@ -38,29 +36,23 @@ export const WhoIntro = ({
     <motion.div
       key="who-intro"
       className="h-full w-full flex items-center justify-center pointer-events-none overflow-x-hidden"
-      initial={prefersReduced ? false : { opacity: 0, filter: "blur(18px)" }}
+      initial={{ opacity: 0, filter: "blur(18px)" }}
       animate={
-        prefersReduced
-          ? false
-          : isExiting
+        isExiting
           ? { opacity: 0, filter: "blur(10px)" }
           : { opacity: 1, filter: "blur(0px)" }
       }
-      exit={
-        prefersReduced
-          ? { opacity: 0 }
-          : {
-              opacity: 0,
-              filter: "blur(14px)",
-              transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-            }
-      }
+      exit={{
+        opacity: 0,
+        filter: "blur(14px)",
+        transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+      }}
     >
       <div className="w-full max-w-3xl mx-auto sm:px-6 pointer-events-none">
         <motion.h1
           variants={wordLine}
-          initial={prefersReduced ? false : "hidden"}
-          animate={prefersReduced ? false : isExiting ? "exit" : "show"}
+          initial="hidden"
+          animate={isExiting ? "exit" : "show"}
           className="font-semibold tracking-tight text-4xl md:text-5xl lg:text-6xl text-white/95 leading-[0.95] text-center"
         >
           {(() => {
@@ -89,8 +81,8 @@ export const WhoIntro = ({
         </motion.h1>
         <motion.p
           variants={item}
-          initial={prefersReduced ? false : "hidden"}
-          animate={prefersReduced ? false : isExiting ? "exit" : "show"}
+          initial="hidden"
+          animate={isExiting ? "exit" : "show"}
           className="mt-5 text-white/60 max-w-xl mx-auto md:text-lg leading-relaxed text-center"
         >
           about Yiannis Morfos, but <span className="text-white/90">who</span>{" "}
@@ -110,17 +102,11 @@ export const WhoIntro = ({
           }}
           key="prompt-initial"
           animate={
-            prefersReduced
-              ? undefined
-              : isExiting
+            isExiting
               ? { scale: 1, filter: "blur(10px)", opacity: 0 }
               : { scale: 1.04, filter: "blur(0px)", opacity: 1 }
           }
-          exit={
-            prefersReduced
-              ? { opacity: 0 }
-              : { opacity: 0, scale: 1, filter: "blur(10px)" }
-          }
+          exit={{ opacity: 0, scale: 1, filter: "blur(10px)" }}
           className="mt-14 w-full max-w-3xl px-3 sm:px-6 mx-auto pointer-events-auto"
         >
           <div className="w-full relative">
@@ -162,7 +148,6 @@ export const WhoIntro = ({
         {/* Question suggestions - positioned below input with high z-index */}
         <div className="w-full max-w-3xl px-3 sm:px-6 mx-auto pointer-events-auto relative z-30">
           <QuestionBadges
-            prefersReduced={prefersReduced}
             variants={item}
             className="mt-3"
             onQuestionClick={(q) => onQuestionClick(q)}

@@ -5,7 +5,6 @@ import React, { useEffect, useRef, useState } from "react";
 import Marquee from "react-fast-marquee";
 
 interface QuestionBadgesProps {
-  prefersReduced: boolean;
   variants?: Variants;
   className?: string;
   questions?: string[];
@@ -28,7 +27,6 @@ const DEFAULT_QUESTIONS = [
  * Automatically switches to an infinite horizontal marquee when content would overflow.
  */
 export const QuestionBadges: React.FC<QuestionBadgesProps> = ({
-  prefersReduced,
   variants,
   className = "my-6",
   questions = DEFAULT_QUESTIONS,
@@ -39,25 +37,24 @@ export const QuestionBadges: React.FC<QuestionBadgesProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLUListElement | null>(null);
   const [isMarquee, setIsMarquee] = useState(false);
-  const [show, setShow] = useState(prefersReduced ? true : false); // start hidden unless reduced motion
+  const [show, setShow] = useState(false); // start hidden unless reduced motion
   const questionsKey = questions.join("|");
 
   // Orchestrate delayed reveal (on first mount and on remount after reset)
   useEffect(() => {
-    if (prefersReduced) return;
     // only trigger if not already shown
     if (!show) {
       const t = window.setTimeout(() => setShow(true), appearDelayMs);
       return () => window.clearTimeout(t);
     }
-  }, [prefersReduced, appearDelayMs, questionsKey, show]);
+  }, [appearDelayMs, questionsKey, show]);
 
   useEffect(() => {
     const evaluate = () => {
       if (!containerRef.current || !contentRef.current) return;
       const cW = containerRef.current.clientWidth;
       const scrollW = contentRef.current.scrollWidth;
-      setIsMarquee(!prefersReduced && scrollW > cW + 1);
+      setIsMarquee(scrollW > cW + 1);
     };
 
     // Only evaluate once content is rendered (after show)
@@ -76,43 +73,7 @@ export const QuestionBadges: React.FC<QuestionBadgesProps> = ({
         window.removeEventListener("resize", evaluate);
       };
     }
-  }, [prefersReduced, show]);
-
-  // Static (non-marquee) rendering with per-item entrance animation (stagger only when show is true)
-  const staticList = (
-    <motion.ul
-      ref={contentRef}
-      className="flex flex-nowrap gap-3 justify-center"
-    >
-      {questions.map((question, i) => (
-        <motion.li
-          key={question}
-          initial={
-            prefersReduced ? false : { opacity: 0, y: 10, filter: "blur(6px)" }
-          }
-          animate={
-            prefersReduced
-              ? false
-              : show
-              ? { opacity: 1, y: 0, filter: "blur(0px)" }
-              : { opacity: 0, y: 10, filter: "blur(6px)" }
-          }
-          transition={{
-            delay: prefersReduced ? 0 : show ? 0.25 + i * 0.05 : 0,
-            duration: 0.45,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        >
-          <button
-            onClick={() => onQuestionClick?.(question)}
-            className="px-4 py-2 rounded-full border border-white/20 bg-white/8 backdrop-blur-sm text-xs md:text-sm text-white/75 hover:text-white hover:border-white/40 hover:bg-white/12 transition-all duration-300 whitespace-nowrap cursor-pointer"
-          >
-            {question}
-          </button>
-        </motion.li>
-      ))}
-    </motion.ul>
-  );
+  }, [show]);
 
   // Marquee rendering
   const marquee = (
@@ -194,18 +155,12 @@ export const QuestionBadges: React.FC<QuestionBadgesProps> = ({
   return (
     <motion.div variants={variants} className={className} ref={containerRef}>
       <motion.div
-        initial={
-          prefersReduced ? false : { opacity: 0, y: 6, filter: "blur(8px)" }
-        }
-        animate={
-          prefersReduced
-            ? { opacity: 1 }
-            : { opacity: 1, y: 0, filter: "blur(0px)" }
-        }
+        initial={{ opacity: 0, y: 6, filter: "blur(8px)" }}
+        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        style={!show && !prefersReduced ? { pointerEvents: "none" } : undefined}
+        style={!show ? { pointerEvents: "none" } : undefined}
       >
-        {isMarquee ? marquee : prefersReduced ? reducedOverflow : staticList}
+        {isMarquee ? marquee : reducedOverflow}
       </motion.div>
     </motion.div>
   );

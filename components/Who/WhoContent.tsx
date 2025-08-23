@@ -2,7 +2,6 @@
 
 import { ScrollablePageContainer } from "@/components/ScrollablePageContainer";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { cancelWhoPrompt, submitWhoPrompt } from "@/lib/who/actions";
 import { readStreamableValue } from "@ai-sdk/rsc";
 import { AnimatePresence, LayoutGroup } from "motion/react";
@@ -20,7 +19,6 @@ import {
 // Animation config is now encapsulated within subcomponents
 
 export const WhoContent = () => {
-  const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const [input, setInput] = useState("");
   const storeMessages = useConversationState(selectMessages);
@@ -248,7 +246,6 @@ export const WhoContent = () => {
           <AnimatePresence onExitComplete={() => setIntroExited(true)}>
             {!hasConversation && (
               <WhoIntro
-                prefersReduced={prefersReduced}
                 isExiting={isExiting}
                 input={input}
                 onInputChange={setInput}
@@ -278,7 +275,7 @@ export const WhoContent = () => {
               <div className="w-full max-w-3xl mx-auto h-full flex-1 min-h-0">
                 <WhoMessages
                   messages={messages}
-                  prefersReduced={prefersReduced}
+                  prefersReduced={false}
                   isExiting={isExiting}
                   error={error}
                   endRef={endRef}
@@ -289,7 +286,7 @@ export const WhoContent = () => {
 
           {hasConversation && (
             <WhoInput
-              prefersReduced={prefersReduced}
+              prefersReduced={false}
               isExiting={isExiting}
               onSubmit={onSubmit}
               restartConversation={restartConversation}

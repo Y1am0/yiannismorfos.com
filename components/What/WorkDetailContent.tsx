@@ -3,7 +3,6 @@
 import { DelayedLink } from "@/components/DelayedLink";
 import { ScrollablePageContainer } from "@/components/ScrollablePageContainer";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { fastLine, fastWord, item, word, wordLine } from "../Hello/variants";
@@ -20,7 +19,6 @@ function getWorkById(id: string): WorkItemData | undefined {
 }
 
 export const WorkDetailContent = ({ id }: WorkDetailContentProps) => {
-  const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const startExit = useRouteTransitionStore((s) => s.startExit);
   const backHref = "/what?tab=dev";
@@ -62,8 +60,8 @@ export const WorkDetailContent = ({ id }: WorkDetailContentProps) => {
           {/* Title */}
           <motion.h1
             variants={wordLine}
-            initial={prefersReduced ? false : "hidden"}
-            animate={prefersReduced ? false : isExiting ? "exit" : "show"}
+            initial="hidden"
+            animate={isExiting ? "exit" : "show"}
             className={`font-semibold tracking-tight text-4xl md:text-5xl lg:text-6xl text-white/95 leading-[0.95] inline-block select-none`}
           >
             {work.title.split("").map((ch, i, arr) => (

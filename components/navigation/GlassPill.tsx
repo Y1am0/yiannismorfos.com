@@ -1,6 +1,4 @@
 "use client";
-
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useEffect, useMemo, useState } from "react";
 import {
@@ -37,9 +35,6 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
       window.matchMedia("(pointer: coarse)").matches;
     setIsTouchDevice(isTouch);
   }, []);
-
-  // Respect OS-level Reduce Motion preference
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Viewport gating: use global store isMobile to mirror Navigation.tsx logic
   const isSmallViewport = useMobileMenuState((s) => s.isMobile);
@@ -168,30 +163,18 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
           style={cfg.positionStyle}
           animate={{
             opacity: 1,
-            ...(prefersReducedMotion ? {} : { scale: cfg.isPressed ? 1.1 : 1 }),
+            scale: cfg.isPressed ? 1.1 : 1,
           }}
-          initial={
-            prefersReducedMotion
-              ? { opacity: 0 }
-              : ANIMATION_CONFIG.glassPill.initial
-          }
-          exit={
-            prefersReducedMotion
-              ? { opacity: 0 }
-              : ANIMATION_CONFIG.glassPill.exit
-          }
+          initial={ANIMATION_CONFIG.glassPill.initial}
+          exit={ANIMATION_CONFIG.glassPill.exit}
           transition={{
             opacity: ANIMATION_CONFIG.glassPill.transition,
-            ...(prefersReducedMotion
-              ? {}
-              : {
-                  scale: {
-                    type: "spring",
-                    stiffness: cfg.isPressed ? 400 : 300,
-                    damping: cfg.isPressed ? 25 : 20,
-                    bounce: cfg.isPressed ? 0.3 : 0.8,
-                  },
-                }),
+            scale: {
+              type: "spring",
+              stiffness: cfg.isPressed ? 400 : 300,
+              damping: cfg.isPressed ? 25 : 20,
+              bounce: cfg.isPressed ? 0.3 : 0.8,
+            },
             layout: ANIMATION_CONFIG.glassPill.transition.layout,
           }}
           layout

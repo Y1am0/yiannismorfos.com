@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { AnimatePresence, motion } from "motion/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -26,7 +25,6 @@ export const WhatContent = ({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const [activeSet, setActiveSet] = useState<"dev" | "content">(() => {
     const tab = searchParams.get("tab");
@@ -328,7 +326,6 @@ export const WhatContent = ({
       <div className="w-full max-w-5xl mx-auto flex flex-col justify-center">
         <div className="w-full flex flex-col items-center gap-2 lg:flex-row lg:items-center lg:justify-between">
           <WhatTitle
-            prefersReduced={prefersReduced}
             isExiting={isExiting}
             className="!pt-2 !pb-2 text-center lg:text-left"
           />
@@ -361,7 +358,7 @@ export const WhatContent = ({
               ref={scrollContainerRef}
               className={`flex overflow-x-auto scrollbar-hide pb-4 scroll-fade-mask ${
                 isMobile ? "gap-4 px-4 snap-x snap-mandatory" : "gap-6"
-              } ${prefersReduced ? "reduce-motion" : ""}`}
+              }`}
               style={{
                 ...maskVars,
                 WebkitMaskImage:

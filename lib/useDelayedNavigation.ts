@@ -1,6 +1,4 @@
 "use client";
-
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -12,7 +10,6 @@ export type DelayedNavOptions = {
 
 export function useDelayedNavigation(defaultDelay = 300) {
   const router = useRouter();
-  const prefersReduced = usePrefersReducedMotion();
   const timeoutRef = useRef<number | null>(null);
 
   const cancel = useCallback(() => {
@@ -28,8 +25,7 @@ export function useDelayedNavigation(defaultDelay = 300) {
         const {
           delay = defaultDelay,
           beforeNavigate,
-          // By default, skip delay for reduced-motion users
-          condition = !prefersReduced,
+          condition = true,
         } = options;
 
         // Respect modified/middle clicks for new tab/window behavior
@@ -60,7 +56,7 @@ export function useDelayedNavigation(defaultDelay = 300) {
           router.push(href);
         }, delay);
       },
-    [router, cancel, prefersReduced, defaultDelay]
+    [router, cancel, defaultDelay]
   );
 
   useEffect(() => {

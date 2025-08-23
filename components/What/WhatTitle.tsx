@@ -3,14 +3,12 @@ import { motion } from "motion/react";
 import { word, wordLine } from "../Hello/variants";
 
 interface WhatTitleProps {
-  prefersReduced: boolean;
   isExiting: boolean;
   text?: string;
   className?: string;
 }
 
 export const WhatTitle = ({
-  prefersReduced,
   isExiting,
   text = "Recent work",
   className = "",
@@ -19,8 +17,8 @@ export const WhatTitle = ({
   return (
     <motion.h1
       variants={wordLine}
-      initial={prefersReduced ? false : "hidden"}
-      animate={prefersReduced ? false : isExiting ? "exit" : "show"}
+      initial="hidden"
+      animate={isExiting ? "exit" : "show"}
       className={`text-4xl md:text-5xl lg:text-6xl select-none font-semibold text-white text-center pb-6 lg:pb-8 ${className}`}
     >
       <span className="inline-flex flex-wrap justify-center gap-x-[0.5ch] align-top">

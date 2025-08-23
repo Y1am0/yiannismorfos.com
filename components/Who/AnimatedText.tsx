@@ -1,6 +1,4 @@
 "use client";
-
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DelayedLink } from "../DelayedLink";
@@ -342,7 +340,6 @@ export const AnimatedText = ({
   rateCharsPerSecond = 60,
   animateWindow = 180,
 }: AnimatedTextProps) => {
-  const prefersReduced = usePrefersReducedMotion();
   // Stream smoothing: buffer incoming text and reveal at a steady rate
   const [visibleText, setVisibleText] = useState<string>("");
   const bufferRef = useRef<string>("");
@@ -375,7 +372,7 @@ export const AnimatedText = ({
   }, []);
 
   useEffect(() => {
-    if (prefersReduced || isComplete) {
+    if (isComplete) {
       setVisibleText(text);
       bufferRef.current = "";
       targetTextRef.current = text;
@@ -406,7 +403,7 @@ export const AnimatedText = ({
         rafRef.current = requestAnimationFrame(tick);
       }
     }
-  }, [text, prefersReduced, isComplete, tick]);
+  }, [text, isComplete, tick]);
 
   useEffect(
     () => () => {
@@ -420,147 +417,12 @@ export const AnimatedText = ({
     () => visibleText.replace(/\s/g, "").length,
     [visibleText]
   );
-  const shouldAnimateChars = !prefersReduced && !isComplete;
+  const shouldAnimateChars = !isComplete;
   const animateFromIndex = shouldAnimateChars
     ? Math.max(0, totalAnimatedChars - animateWindow)
     : totalAnimatedChars;
 
-  if (prefersReduced) {
-    return (
-      <div className={className}>
-        {elements.map((el, i) => {
-          switch (el.type) {
-            case "break":
-              return <br key={i} />;
-            case "ul":
-              return (
-                <div
-                  key={i}
-                  className="flex items-baseline gap-2"
-                  style={{ marginLeft: `${el.indent * 16}px` }}
-                >
-                  <span className="text-white/60 flex-shrink-0 select-none">
-                    •
-                  </span>
-                  <span>
-                    {parseInline(el.content).map((tok, j) => {
-                      if (tok.type === "bold")
-                        return (
-                          <strong
-                            key={j}
-                            className="font-semibold text-white/95"
-                          >
-                            {tok.content}
-                          </strong>
-                        );
-                      if (tok.type === "italic")
-                        return (
-                          <em key={j} className="italic text-white/90">
-                            {tok.content}
-                          </em>
-                        );
-                      if (tok.type === "link")
-                        return (
-                          <a
-                            key={j}
-                            href={tok.url}
-                            {...linkAttrs(tok.url)}
-                            className={LINK_CLASS}
-                          >
-                            {tok.content}
-                          </a>
-                        );
-                      return <span key={j}>{tok.content}</span>;
-                    })}
-                  </span>
-                </div>
-              );
-            case "ol":
-              return (
-                <div
-                  key={i}
-                  className="flex items-baseline gap-2"
-                  style={{ marginLeft: `${el.indent * 16}px` }}
-                >
-                  <span className="text-white/60 flex-shrink-0 select-none">
-                    {el.order}.
-                  </span>
-                  <span>
-                    {parseInline(el.content).map((tok, j) => {
-                      if (tok.type === "bold")
-                        return (
-                          <strong
-                            key={j}
-                            className="font-semibold text-white/95"
-                          >
-                            {tok.content}
-                          </strong>
-                        );
-                      if (tok.type === "italic")
-                        return (
-                          <em key={j} className="italic text-white/90">
-                            {tok.content}
-                          </em>
-                        );
-                      if (tok.type === "link")
-                        return (
-                          <a
-                            key={j}
-                            href={tok.url}
-                            {...linkAttrs(tok.url)}
-                            className={LINK_CLASS}
-                          >
-                            {tok.content}
-                          </a>
-                        );
-                      return <span key={j}>{tok.content}</span>;
-                    })}
-                  </span>
-                </div>
-              );
-            case "bold":
-              return (
-                <strong key={i} className="font-semibold text-white/95">
-                  {el.content}
-                </strong>
-              );
-            case "italic":
-              return (
-                <em key={i} className="italic text-white/90">
-                  {el.content}
-                </em>
-              );
-            case "link":
-              return isInternalConnectLink(el.url) ? (
-                <DelayedLink
-                  key={i}
-                  href={el.url || "/connect"}
-                  className={LINK_CLASS}
-                >
-                  {el.content}
-                </DelayedLink>
-              ) : (
-                <a
-                  key={i}
-                  href={el.url}
-                  {...linkAttrs(el.url)}
-                  className={LINK_CLASS}
-                >
-                  {el.content}
-                </a>
-              );
-            default: {
-              const inline = el as InlineEl; // safe: remaining inline variant
-              return <span key={i}>{inline.content}</span>;
-            }
-          }
-        })}
-        {!isComplete && (
-          <span className="inline-block ml-1 animate-pulse">|</span>
-        )}
-      </div>
-    );
-  }
+  // Always animate characters; no reduced-motion static path
 
   const charIndexRef = { current: 0 };
 
