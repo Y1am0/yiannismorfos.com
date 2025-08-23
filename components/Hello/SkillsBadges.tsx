@@ -5,7 +5,6 @@ import React, { useState } from "react";
 import Marquee from "react-fast-marquee";
 
 interface SkillsBadgesProps {
-  prefersReduced: boolean;
   variants?: Variants;
   className?: string;
   skills?: string[];
@@ -30,7 +29,6 @@ const DEFAULT_SKILLS = [
 ];
 
 export const SkillsBadges: React.FC<SkillsBadgesProps> = ({
-  prefersReduced,
   variants,
   className = "my-8 w-full",
   skills = DEFAULT_SKILLS,
@@ -60,91 +58,68 @@ export const SkillsBadges: React.FC<SkillsBadgesProps> = ({
 
   return (
     <motion.div variants={variants} className={className}>
-      {prefersReduced ? (
-        <>
-          <div className="overflow-x-auto scrollbar-hide">
-            <ul className="flex flex-nowrap gap-2.5 pr-4">
+      <>
+        <div
+          className="overflow-hidden w-full"
+          onMouseEnter={() => setIsHoveredRow1(true)}
+          onMouseLeave={() => setIsHoveredRow1(false)}
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(to right, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
+            maskImage:
+              "linear-gradient(to right, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
+          }}
+        >
+          <Marquee
+            gradient={false}
+            speed={topSpeed}
+            play={!isPaused}
+            pauseOnHover={false}
+            aria-label="Skills carousel row 1"
+            className="[--gap:10px] py-1"
+            direction="left"
+            autoFill
+          >
+            <ul className="flex flex-nowrap gap-2.5 mr-2.5">
               {firstRow.map((skill) => (
-                <li key={`reduced-1-${skill}`}>
+                <li key={`skills-1-${skill}`}>
                   <span className={chipClass}>{skill}</span>
                 </li>
               ))}
             </ul>
-          </div>
-          <div className="mt-1 overflow-x-auto scrollbar-hide">
-            <ul className="flex flex-nowrap gap-2.5 pr-4">
+          </Marquee>
+        </div>
+        <div
+          className="mt-1 overflow-hidden w-full"
+          onMouseEnter={() => setIsHoveredRow2(true)}
+          onMouseLeave={() => setIsHoveredRow2(false)}
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(to right, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
+            maskImage:
+              "linear-gradient(to right, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
+          }}
+        >
+          <Marquee
+            gradient={false}
+            speed={bottomSpeed}
+            play={!isPaused}
+            pauseOnHover={false}
+            aria-label="Skills carousel row 2"
+            className="[--gap:10px] py-1"
+            direction="right"
+            autoFill
+          >
+            <ul className="flex flex-nowrap gap-2.5 mr-2.5">
               {secondRow.map((skill) => (
-                <li key={`reduced-2-${skill}`}>
+                <li key={`skills-2-${skill}`}>
                   <span className={chipClass}>{skill}</span>
                 </li>
               ))}
             </ul>
-          </div>
-        </>
-      ) : (
-        <>
-          <div
-            className="overflow-hidden w-full"
-            onMouseEnter={() => setIsHoveredRow1(true)}
-            onMouseLeave={() => setIsHoveredRow1(false)}
-            style={{
-              WebkitMaskImage:
-                "linear-gradient(to right, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
-              maskImage:
-                "linear-gradient(to right, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
-            }}
-          >
-            <Marquee
-              gradient={false}
-              speed={topSpeed}
-              play={!isPaused}
-              pauseOnHover={false}
-              aria-label="Skills carousel row 1"
-              className="[--gap:10px] py-1"
-              direction="left"
-              autoFill
-            >
-              <ul className="flex flex-nowrap gap-2.5 mr-2.5">
-                {firstRow.map((skill) => (
-                  <li key={`skills-1-${skill}`}>
-                    <span className={chipClass}>{skill}</span>
-                  </li>
-                ))}
-              </ul>
-            </Marquee>
-          </div>
-          <div
-            className="mt-1 overflow-hidden w-full"
-            onMouseEnter={() => setIsHoveredRow2(true)}
-            onMouseLeave={() => setIsHoveredRow2(false)}
-            style={{
-              WebkitMaskImage:
-                "linear-gradient(to right, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
-              maskImage:
-                "linear-gradient(to right, rgba(0,0,0,0) 0%, #000 10%, #000 90%, rgba(0,0,0,0) 100%)",
-            }}
-          >
-            <Marquee
-              gradient={false}
-              speed={bottomSpeed}
-              play={!isPaused}
-              pauseOnHover={false}
-              aria-label="Skills carousel row 2"
-              className="[--gap:10px] py-1"
-              direction="right"
-              autoFill
-            >
-              <ul className="flex flex-nowrap gap-2.5 mr-2.5">
-                {secondRow.map((skill) => (
-                  <li key={`skills-2-${skill}`}>
-                    <span className={chipClass}>{skill}</span>
-                  </li>
-                ))}
-              </ul>
-            </Marquee>
-          </div>
-        </>
-      )}
+          </Marquee>
+        </div>
+      </>
     </motion.div>
   );
 };

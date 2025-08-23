@@ -2,11 +2,9 @@
 
 import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { motion } from "motion/react";
 
 export const HomeHero = () => {
-  const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const startExit = useRouteTransitionStore((s) => s.startExit);
 
@@ -92,8 +90,8 @@ export const HomeHero = () => {
     <motion.div
       className="w-full h-full flex items-center justify-center"
       variants={container}
-      initial={prefersReduced ? false : "hidden"}
-      animate={prefersReduced ? false : isExiting ? "exit" : "show"}
+      initial="hidden"
+      animate={isExiting ? "exit" : "show"}
       // Subtle vignette mask to blend edges with the mesh background
       style={{
         WebkitMaskImage:

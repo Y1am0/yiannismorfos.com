@@ -73,7 +73,6 @@ components/navigation/
 ### 4. Accessibility
 
 - Keyboard support – `NavigationItem` gains `tabIndex=0` (if not a link) and triggers hover logic on `focus`/`blur`.
-- `prefers-reduced-motion` respected via `lib/usePrefersReducedMotion.ts` — scale/bounce removed.
 - SVG icons have `aria-label` and `role="button"` where appropriate.
 
 ### 5. Dev-time utilities

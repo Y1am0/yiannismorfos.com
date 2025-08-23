@@ -9,7 +9,6 @@ import { fastLine, fastWord, item, word, wordLine } from "./variants";
 import { FramedImage } from "./FramedImage";
 // Reusable scrollable container
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { ScrollablePageContainer } from "../ScrollablePageContainer";
 import { SkillsBadges } from "./SkillsBadges";
 
@@ -20,7 +19,6 @@ const bodoni = Bodoni_Moda({
 });
 
 export const HelloContent = () => {
-  const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
 
   return (
@@ -65,7 +63,7 @@ export const HelloContent = () => {
           variants={item}
           className="relative select-none md:sticky md:top-8 md:self-start shrink-0"
         >
-          <FramedImage prefersReduced={prefersReduced} isExiting={isExiting} />
+          <FramedImage prefersReduced={false} isExiting={isExiting} />
         </motion.div>
 
         {/* TEXT PANEL */}
@@ -131,7 +129,7 @@ export const HelloContent = () => {
           </motion.div>
 
           {/* Skills Carousel */}
-          <SkillsBadges prefersReduced={prefersReduced} variants={item} />
+          <SkillsBadges variants={item} />
         </motion.div>
       </div>
     </ScrollablePageContainer>

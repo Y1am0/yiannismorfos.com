@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
-import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { motion, Variants } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -43,7 +42,6 @@ export const ScrollablePageContainer = ({
   centerWhenNotScrollable = true,
   addTopPadding = false,
 }: ScrollablePageContainerProps) => {
-  const prefersReduced = usePrefersReducedMotion();
   const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [segment, setSegment] = useState({ left: 0, width: 100 });
@@ -120,8 +118,8 @@ export const ScrollablePageContainer = ({
     <motion.div
       className={`relative w-full h-full min-h-0 flex flex-col overflow-hidden ${className}`}
       variants={containerVariants}
-      initial={prefersReduced ? false : "hidden"}
-      animate={prefersReduced ? false : isExiting ? "exit" : "show"}
+      initial="hidden"
+      animate={isExiting ? "exit" : "show"}
       style={{ WebkitMaskImage: maskGradient, maskImage: maskGradient }}
     >
       {/* Sticky top custom horizontal scroll indicator */}
@@ -157,7 +155,7 @@ export const ScrollablePageContainer = ({
             : "justify-start"
         } ${addTopPadding ? "pt-4" : ""} ${
           verticalFade ? "vertical-scroll-fade" : ""
-        } ${prefersReduced ? "reduce-motion" : ""}`}
+        } `}
         style={{
           WebkitOverflowScrolling: "touch",
           overscrollBehavior: "contain",
