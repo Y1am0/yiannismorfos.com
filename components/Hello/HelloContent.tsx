@@ -114,7 +114,7 @@ export const HelloContent = () => {
               className="block"
               variants={{ show: { transition: { staggerChildren: 0.012 } } }}
             >
-              {`Meraki. That's the bar. Whether I'm engineering your next high-value project, designing fluid animations that feel almost tactile, or educating over 100,000 curious minds through video, everything receives my obsessive craft. I'm Yiannis, and I work from the principle that beautiful design and powerful technology are inseparable. I don't take shortcuts; I deliver polished solutions that perform and are built to endure.`
+              {`Meraki. That's the bar. Whether I'm engineering your next high-value project, designing fluid animations that feel almost tactile, or educating over 100,000 curious minds through video, everything receives my obsessive attention to craft. I'm Yiannis, and I work on the principle that beautiful design and powerful technology are inseparable. I don't take shortcuts. I deliver polished solutions that perform and are built to endure.`
                 .split(" ")
                 .map((w, i, arr) => (
                   <Fragment key={`para-word-${i}-${w}`}>

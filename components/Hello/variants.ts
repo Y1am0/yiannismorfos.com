@@ -38,6 +38,25 @@ export const wordLine: Variants = {
   },
 };
 
+export const wordLineFaster: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.7,
+      ease: [0.22, 1, 0.36, 1],
+      delayChildren: 0.04,
+      staggerChildren: 0.015,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: 0,
+    transition: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+  },
+};
+
 export const word: Variants = {
   hidden: { opacity: 0, y: "0.5em", filter: "blur(8px)" },
   show: {

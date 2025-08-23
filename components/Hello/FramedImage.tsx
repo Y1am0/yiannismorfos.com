@@ -120,6 +120,7 @@ export const FramedImage = ({
           src="/me.png"
           alt="Yiannis Morfos portrait"
           fill
+          draggable={false}
           priority
           sizes="(min-width: 1024px) 300px, (min-width: 640px) 260px, 240px"
           className="object-cover object-center select-none"
