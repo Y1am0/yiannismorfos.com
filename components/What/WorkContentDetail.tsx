@@ -4,6 +4,7 @@ import { DelayedLink } from "@/components/DelayedLink";
 import { ScrollablePageContainer } from "@/components/ScrollablePageContainer";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { motion } from "motion/react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Arrow } from "./Arrow";
 import { tiktokData, youtubeData } from "./data";
 import type { TikTokContentData, YouTubeContentData } from "./types";
@@ -25,6 +26,40 @@ export default function WorkContentDetail({ id }: WorkContentDetailProps) {
   const content = getContentByIdOrSlug(id);
   const backHref = "/what?tab=content";
 
+  // Measure available space so the video can maintain 16:9 and shrink with height.
+  const contentAreaRef = useRef<HTMLDivElement | null>(null);
+  const [areaSize, setAreaSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const el = contentAreaRef.current;
+    if (!el) return;
+    const update = () =>
+      setAreaSize({ width: el.clientWidth, height: el.clientHeight });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("orientationchange", update);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("orientationchange", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  const computedPlayerSize = useMemo(() => {
+    if (!areaSize) return null;
+    const aspectRatio = 16 / 9;
+    // Width driven by the more restrictive dimension: container width vs height * AR
+    const maxWidthFromHeight = areaSize.height * aspectRatio;
+    const width = Math.min(areaSize.width, maxWidthFromHeight);
+    const height = width / aspectRatio;
+    return { width, height };
+  }, [areaSize]);
+
   if (!content) {
     return (
       <div className="w-full h-full flex items-center justify-center text-white/70">
@@ -37,28 +72,48 @@ export default function WorkContentDetail({ id }: WorkContentDetailProps) {
     if (content.platform === "youtube" && content.videoId) {
       const src = `https://www.youtube.com/embed/${content.videoId}`;
       return (
-        <div className="w-full h-full max-w-3xl mx-auto bg-black overflow-hidden rounded-xl">
-          <iframe
-            className="w-full h-full"
-            src={src}
-            title={content.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
+        <div
+          className="bg-black overflow-hidden flex rounded-xl"
+          style={{
+            // Cap by Tailwind's max-w-3xl via a wrapper below; we still compute inline size.
+            width: computedPlayerSize?.width,
+            height: computedPlayerSize?.height,
+          }}
+        >
+          {/* Fallback initial state before measurements: keep 16:9 and clamp width */}
+          {!computedPlayerSize && <div className="w-full" />}
+          {computedPlayerSize && (
+            <iframe
+              className="w-full h-full block"
+              src={src}
+              title={content.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          )}
         </div>
       );
     }
     if (content.platform === "tiktok" && content.videoId) {
       const src = `https://www.tiktok.com/player/v1/${content.videoId}?controls=1&description=0&loop=1&rel=0`;
       return (
-        <div className="w-full h-full max-w-xl mx-auto bg-black overflow-hidden rounded-xl">
-          <iframe
-            className="w-full h-full"
-            src={src}
-            title={content.title}
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-          />
+        <div
+          className="bg-black overflow-hidden flex rounded-xl"
+          style={{
+            width: computedPlayerSize?.width,
+            height: computedPlayerSize?.height,
+          }}
+        >
+          {!computedPlayerSize && <div className="w-full" />}
+          {computedPlayerSize && (
+            <iframe
+              className="w-full h-full block"
+              src={src}
+              title={content.title}
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          )}
         </div>
       );
     }
@@ -84,7 +139,15 @@ export default function WorkContentDetail({ id }: WorkContentDetailProps) {
           </DelayedLink>
         </motion.div>
 
-        <div className="flex-1 min-h-0">{renderEmbed()}</div>
+        <div
+          ref={contentAreaRef}
+          className="flex-1 min-h-0 grid place-items-center"
+        >
+          {/* Center the player and cap width to max-w-3xl */}
+          <div className="w-full mx-auto grid place-items-center">
+            {renderEmbed()}
+          </div>
+        </div>
       </div>
     </ScrollablePageContainer>
   );
