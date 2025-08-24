@@ -5,6 +5,7 @@ import { ScrollablePageContainer } from "@/components/ScrollablePageContainer";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { item } from "../Hello/variants";
 import { Arrow } from "./Arrow";
 import { tiktokData, youtubeData } from "./data";
 import type { TikTokContentData, YouTubeContentData } from "./types";
@@ -22,6 +23,7 @@ function getContentByIdOrSlug(idOrSlug: string) {
 }
 
 export default function WorkContentDetail({ id }: WorkContentDetailProps) {
+  const isExiting = useRouteTransitionStore((s) => s.isExiting);
   const startExit = useRouteTransitionStore((s) => s.startExit);
   const content = getContentByIdOrSlug(id);
   const backHref = "/what?tab=content";
@@ -127,7 +129,12 @@ export default function WorkContentDetail({ id }: WorkContentDetailProps) {
       centerWhenNotScrollable={false}
     >
       <div className="w-full max-w-5xl mx-auto h-full min-h-0 flex flex-col gap-6 pt-8">
-        <motion.div className="self-start">
+        <motion.div
+          variants={item}
+          initial="hidden"
+          animate={isExiting ? "exit" : "show"}
+          className="self-start"
+        >
           <DelayedLink
             href={backHref}
             beforeNavigate={startExit}
@@ -144,9 +151,15 @@ export default function WorkContentDetail({ id }: WorkContentDetailProps) {
           className="flex-1 min-h-0 grid place-items-center"
         >
           {/* Center the player and cap width to max-w-3xl */}
-          <div className="w-full mx-auto grid place-items-center">
+          <motion.div
+            variants={item}
+            initial="hidden"
+            animate={isExiting ? "exit" : "show"}
+            transition={{ delay: 0.1 }}
+            className="w-full mx-auto grid place-items-center"
+          >
             {renderEmbed()}
-          </div>
+          </motion.div>
         </div>
       </div>
     </ScrollablePageContainer>

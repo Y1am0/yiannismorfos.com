@@ -1,6 +1,6 @@
 "use client";
 import { AnimatePresence, motion } from "motion/react";
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useMemo } from "react";
 import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES,
@@ -18,26 +18,16 @@ interface GlassPillProps {
 }
 
 const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
-  const { glassPillStyle, glassPillVisible, pressedItem, activeItem } =
-    useNavigationSelectors();
-
-  // Detect touch / coarse pointer devices (post-mount to avoid hydration mismatch)
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const nav: Navigator & { maxTouchPoints?: number } =
-      navigator as Navigator & {
-        maxTouchPoints?: number;
-      };
-    const isTouch =
-      "ontouchstart" in window ||
-      (typeof nav.maxTouchPoints === "number" && nav.maxTouchPoints > 0) ||
-      window.matchMedia("(pointer: coarse)").matches;
-    setIsTouchDevice(isTouch);
-  }, []);
+  const {
+    glassPillStyle,
+    glassPillVisible,
+    pressedItem,
+    glassPillPositionMode,
+  } = useNavigationSelectors();
 
   // Viewport gating: use global store isMobile to mirror Navigation.tsx logic
-  const isSmallViewport = useMobileMenuState((s) => s.isMobile);
+  // Subscribe to mobile state for parity with Navigation.tsx; value unused here
+  useMobileMenuState((s) => s.isMobile);
 
   // Define which items should have circular glass pills
   const circularItems = useMemo(
@@ -57,9 +47,17 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
     if (!glassPillVisible) return null;
 
     const isCircular = displayedItem ? circularItems.has(displayedItem) : false;
-    const isMobileMenuItem = glassPillStyle.top > 100;
+    const isMobileMenuItem = glassPillPositionMode === "fixed";
+    const isNavOrBlog = displayedItem
+      ? NAVIGATION_CATEGORIES.navigationItems.includes(
+          displayedItem as NavigationItemId
+        ) || displayedItem === "blog"
+      : false;
+    // When mobile menu is open and we're showing a nav/blog item, force non-circular even if hovered a circular item elsewhere
+    const forceNonCircular = isMobileMenuItem && isNavOrBlog;
     const isBlogInMobileMenu = displayedItem === "blog" && isMobileMenuItem;
-    const shouldBeCircular = isCircular && !isBlogInMobileMenu;
+    const shouldBeCircular =
+      !forceNonCircular && isCircular && !isBlogInMobileMenu;
     const isPressed = pressedItem === displayedItem;
 
     // Use smaller size for external links, regular size for other circular items
@@ -110,47 +108,17 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
       positionStyle,
     };
   }, [
-    glassPillVisible, // Primary dependency for rendering
-    displayedItem, // Secondary dependency for configuration
+    glassPillVisible,
+    displayedItem,
     glassPillStyle,
     pressedItem,
     circularItems,
+    glassPillPositionMode,
   ]);
 
-  // Determine if pill should render (touch devices: only show for active item)
+  // Determine if pill should render – rely on centralized visibility logic
   const cfg = pillConfiguration;
-  const shouldRender = (() => {
-    if (!glassPillVisible || !cfg) return false;
-    // On touch: only for active item
-    if (isTouchDevice) return !!displayedItem && displayedItem === activeItem;
-    // On small viewport (desktop < md): behave like touch, but allow hover for mobile menu items
-    if (isSmallViewport) {
-      const isExternalLink = displayedItem
-        ? NAVIGATION_CATEGORIES.externalLinks.includes(
-            displayedItem as ExternalLinkId
-          )
-        : false;
-      const isMusicPlayerButton = displayedItem
-        ? NAVIGATION_CATEGORIES.musicPlayerButtons.includes(displayedItem)
-        : false;
-      const isNavigationItem = displayedItem
-        ? NAVIGATION_CATEGORIES.navigationItems.includes(
-            displayedItem as NavigationItemId
-          )
-        : false;
-      const isBlogItem = displayedItem === "blog";
-      // Allow hover only for mobile menu navigation items
-      if (cfg.isMobileMenuItem && (isNavigationItem || isBlogItem))
-        return !!displayedItem;
-      // Disallow hover for external links and music controls; active only
-      if (isExternalLink || isMusicPlayerButton)
-        return !!displayedItem && displayedItem === activeItem;
-      // Default: active only
-      return !!displayedItem && displayedItem === activeItem;
-    }
-    // Regular desktop: follow global visibility (hover/active) determined up the stack
-    return true;
-  })();
+  const shouldRender = glassPillVisible && !!cfg;
 
   // Always render AnimatePresence, let glassPillVisible control the animation
   return (
@@ -175,7 +143,16 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
               damping: cfg.isPressed ? 25 : 20,
               bounce: cfg.isPressed ? 0.3 : 0.8,
             },
-            layout: ANIMATION_CONFIG.glassPill.transition.layout,
+            layout: {
+              ...ANIMATION_CONFIG.glassPill.transition.layout,
+              // Slightly reduce duration on fixed mode to avoid perceptible lag during menu interactions
+              duration:
+                (
+                  ANIMATION_CONFIG.glassPill.transition.layout as {
+                    duration: number;
+                  }
+                ).duration * (cfg.isMobileMenuItem ? 0.8 : 1),
+            },
           }}
           layout
         />

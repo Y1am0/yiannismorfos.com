@@ -6,22 +6,23 @@ interface GlassPillState {
   // State
   backgroundStyle: BackgroundStyle;
   isVisible: boolean;
+  positionMode: "absolute" | "fixed";
 
   // Actions
   setBackgroundStyle: (style: BackgroundStyle) => void;
   setIsVisible: (visible: boolean) => void;
-  updatePosition: (element: Element, parentElement: Element | null) => void;
+  updatePosition: (
+    element: Element,
+    parentElement: Element | null,
+    positionModeOverride?: "absolute" | "fixed"
+  ) => void;
 
-  // Computed values
-  getCircularSize: (isCircular: boolean) => number;
-  getAdjustedPosition: (isCircular: boolean) => { left: number; top: number };
+  // (Intentionally no computed values here; keep logic in components/constants)
 }
-
-const CIRCULAR_PILL_SIZE = 80;
 
 export const useGlassPillState = create<GlassPillState>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       // Initial state
       backgroundStyle: {
         width: 0,
@@ -30,6 +31,7 @@ export const useGlassPillState = create<GlassPillState>()(
         top: 0,
       },
       isVisible: false,
+      positionMode: "absolute",
 
       // Actions
       setBackgroundStyle: (style) =>
@@ -42,7 +44,7 @@ export const useGlassPillState = create<GlassPillState>()(
         set({ isVisible: visible }, false, "setIsVisible");
       },
 
-      updatePosition: (element, parentElement) => {
+      updatePosition: (element, parentElement, positionModeOverride) => {
         if (!parentElement) return;
 
         const referenceRect = parentElement.getBoundingClientRect();
@@ -50,9 +52,10 @@ export const useGlassPillState = create<GlassPillState>()(
 
         // Check if the element is in a mobile menu by detecting if it's in a fixed positioned container
         // More robust check: if element is far from reference (mobile menu) or if top position is significantly different
-        const isInMobileMenu =
-          Math.abs(elementRect.top - referenceRect.top) > 100 ||
-          elementRect.top > window.innerHeight * 0.2; // Mobile menu items are typically in center/lower part of screen
+        const isInMobileMenu = positionModeOverride
+          ? positionModeOverride === "fixed"
+          : Math.abs(elementRect.top - referenceRect.top) > 100 ||
+            elementRect.top > window.innerHeight * 0.2; // Mobile menu items are typically in center/lower part of screen
 
         if (process.env.NODE_ENV === "development") {
           console.log(
@@ -61,22 +64,25 @@ export const useGlassPillState = create<GlassPillState>()(
         }
 
         let newStyle: BackgroundStyle;
+        const positionMode: "absolute" | "fixed" = isInMobileMenu
+          ? "fixed"
+          : "absolute";
 
         if (isInMobileMenu) {
           // For mobile menu items, use viewport coordinates directly since the glass pill will be fixed positioned
           newStyle = {
-            width: elementRect.width,
-            left: elementRect.left,
-            height: elementRect.height,
-            top: elementRect.top,
+            width: Math.round(elementRect.width),
+            left: Math.round(elementRect.left),
+            height: Math.round(elementRect.height),
+            top: Math.round(elementRect.top),
           };
         } else {
           // For navigation bar items, calculate relative to the navigation container
           newStyle = {
-            width: elementRect.width,
-            left: elementRect.left - referenceRect.left,
-            height: elementRect.height,
-            top: elementRect.top - referenceRect.top,
+            width: Math.round(elementRect.width),
+            left: Math.round(elementRect.left - referenceRect.left),
+            height: Math.round(elementRect.height),
+            top: Math.round(elementRect.top - referenceRect.top),
           };
         }
 
@@ -88,37 +94,11 @@ export const useGlassPillState = create<GlassPillState>()(
           {
             backgroundStyle: newStyle,
             isVisible: true,
+            positionMode,
           },
           false,
           "updatePosition"
         );
-      },
-
-      // Computed values
-      getCircularSize: (isCircular) => {
-        const state = get();
-        return isCircular
-          ? CIRCULAR_PILL_SIZE
-          : Math.max(state.backgroundStyle.width, state.backgroundStyle.height);
-      },
-
-      getAdjustedPosition: (isCircular) => {
-        const state = get();
-        const circularSize = state.getCircularSize(isCircular);
-
-        return isCircular
-          ? {
-              left:
-                state.backgroundStyle.left +
-                (state.backgroundStyle.width - circularSize) / 2,
-              top:
-                state.backgroundStyle.top +
-                (state.backgroundStyle.height - circularSize) / 2,
-            }
-          : {
-              left: state.backgroundStyle.left,
-              top: state.backgroundStyle.top,
-            };
       },
     }),
     {
@@ -131,9 +111,4 @@ export const useGlassPillState = create<GlassPillState>()(
 export const selectBackgroundStyle = (state: GlassPillState) =>
   state.backgroundStyle;
 export const selectIsVisible = (state: GlassPillState) => state.isVisible;
-export const selectCircularSize =
-  (isCircular: boolean) => (state: GlassPillState) =>
-    state.getCircularSize(isCircular);
-export const selectAdjustedPosition =
-  (isCircular: boolean) => (state: GlassPillState) =>
-    state.getAdjustedPosition(isCircular);
+export const selectPositionMode = (state: GlassPillState) => state.positionMode;

@@ -2,7 +2,7 @@
 
 import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigationActions } from "./stores";
 
 interface LogoProps {
@@ -20,6 +20,8 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
     handleMouseDown,
     handleMouseUp,
     handleElementMount,
+    setActiveItem,
+    setGlassPillVisible,
   } = useNavigationActions();
 
   // Register element on mount
@@ -66,6 +68,14 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
     </div>
   );
 
+  // Track a small timer to hide the pill after mouseup when navigating home
+  const [hideTimer, setHideTimer] = useState<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    return () => {
+      if (hideTimer) clearTimeout(hideTimer);
+    };
+  }, [hideTimer]);
+
   // Always wrap in Link-compatible component for consistent DOM structure
   return href ? (
     <DelayedLink
@@ -73,6 +83,13 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
       // Always close menu on click, even for same-route clicks
       onClick={() => {
         closeMenu();
+        // Immediately clear active item so hoverEnd won't jump back to previous
+        setActiveItem(null);
+        // Schedule pill exit shortly after mouseup animation
+        const t = setTimeout(() => {
+          setGlassPillVisible(false);
+        }, 160);
+        setHideTimer(t);
       }}
       // Only start exit when a real navigation will occur
       beforeNavigate={() => {

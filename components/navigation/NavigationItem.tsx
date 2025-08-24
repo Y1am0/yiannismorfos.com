@@ -51,6 +51,8 @@ const NavigationItemComponent = ({
     handleElementMount,
     handleMobileElementMount,
     closeMenu,
+    setActiveItem,
+    setLastClickedItem,
   } = useNavigationActions();
 
   // Memoized hover start handler
@@ -114,6 +116,10 @@ const NavigationItemComponent = ({
       // Only start exit when navigation will proceed
       beforeNavigate={() => {
         startExit();
+        // Set active item immediately on click to prevent glass pill from unmounting
+        setActiveItem(itemId);
+        // Track what we clicked for route validation
+        setLastClickedItem(itemId);
       }}
     >
       {content}
