@@ -13,6 +13,7 @@ interface WorkCardProps {
   cardWidth: number;
   onClick?: (id: string) => void; // now optional (no expansion currently)
   baseDelay?: number; // delay before starting stagger (e.g., wait for title)
+  disableStagger?: boolean; // disable stagger delays for immediate entry
 }
 
 export const WorkCard = ({
@@ -22,9 +23,10 @@ export const WorkCard = ({
   cardWidth,
   onClick,
   baseDelay = 0,
+  disableStagger = false,
 }: WorkCardProps) => {
   const stagger = 0.1;
-  const startDelay = baseDelay + index * stagger;
+  const startDelay = disableStagger ? 0 : baseDelay + index * stagger;
   const startExit = useRouteTransitionStore((s) => s.startExit);
   return (
     <motion.div

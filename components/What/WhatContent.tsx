@@ -210,14 +210,37 @@ export const WhatContent = ({
     // Run once per mount/responsive recalculation
     if (hasAutoCenteredRef.current) return;
     hasAutoCenteredRef.current = true;
-    const id = window.requestAnimationFrame(() => {
+
+    // Use multiple frame delay and retry logic for smartphones
+    const centerFirstCard = () => {
       const first = el.children.item(0) as HTMLElement | null;
-      if (!first) return;
+      if (!first || first.offsetWidth === 0) {
+        // Card not ready yet, retry
+        return false;
+      }
       const target =
         first.offsetLeft + first.clientWidth / 2 - el.clientWidth / 2;
       el.scrollTo({ left: Math.max(0, target), behavior: "auto" });
+      return true;
+    };
+
+    // Try immediately
+    if (centerFirstCard()) return;
+
+    // If not ready, use progressive delays
+    const timeouts: number[] = [];
+    [50, 150, 300, 500].forEach((delay) => {
+      timeouts.push(
+        window.setTimeout(() => {
+          if (centerFirstCard()) {
+            // Clear remaining timeouts
+            timeouts.forEach(clearTimeout);
+          }
+        }, delay)
+      );
     });
-    return () => cancelAnimationFrame(id);
+
+    return () => timeouts.forEach(clearTimeout);
   }, [isMobile]);
 
   // Helpers to detect current centered index and scroll to target index
@@ -334,7 +357,8 @@ export const WhatContent = ({
               active={activeSet}
               onSelect={async (next) => {
                 lastCenteredIndexRef.current = getCurrentCenteredIndex();
-                await centerToIndex(0);
+                // Start centering but don't block the dataset swap
+                void centerToIndex(0);
                 lastCenteredIndexRef.current = 0;
                 setActiveSet(next);
                 // Update URL query param without adding history entries
@@ -369,13 +393,11 @@ export const WhatContent = ({
                 msOverflowStyle: "none",
               }}
             >
-              <AnimatePresence
-                mode="popLayout"
-                initial={!hasMountedRef.current}
-              >
+              <AnimatePresence mode="sync" initial={!hasMountedRef.current}>
                 {(() => {
                   const cardWidth = computeCardWidth();
                   const baseDelayValue = hasMountedRef.current ? 0 : 0.7;
+                  const disableStagger = hasMountedRef.current; // No stagger on tab switches
                   return [
                     <NewIdeaCard
                       key="new-idea"
@@ -383,6 +405,7 @@ export const WhatContent = ({
                       isMobile={isMobile}
                       cardWidth={cardWidth}
                       baseDelay={baseDelayValue}
+                      disableStagger={disableStagger}
                     />,
                     ...cards.map((card: WorkCardData, index) => (
                       <WorkCard
@@ -392,6 +415,7 @@ export const WhatContent = ({
                         isMobile={isMobile}
                         cardWidth={cardWidth}
                         baseDelay={baseDelayValue}
+                        disableStagger={disableStagger}
                       />
                     )),
                   ];

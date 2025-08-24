@@ -4,7 +4,7 @@ export const workData: WorkItemData[] = [
   {
     id: "agale",
     title: "Agale Project",
-    short: "Mindful environmental learning, crafted slowly and with care.",
+    short: "Mindful environmental learning, crafted with care.",
     long: `Agále stands for ‘agáli’—slowly, serenely, patiently. Their ethos blends mindfulness, observation, gratitude, autonomy, and sustainability to ground how they approach education, growth, and connection with the world around us.
 
 They create experiential environmental education for students, families, adults, and companies. Through exploration, hands‑on experience, and quiet observation, learning is treated as a living, embodied process.

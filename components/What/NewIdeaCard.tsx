@@ -9,6 +9,7 @@ interface NewIdeaCardProps {
   isMobile: boolean;
   cardWidth: number;
   baseDelay?: number;
+  disableStagger?: boolean;
 }
 
 export const NewIdeaCard = ({
@@ -16,9 +17,10 @@ export const NewIdeaCard = ({
   isMobile,
   cardWidth,
   baseDelay = 0,
+  disableStagger = false,
 }: NewIdeaCardProps) => {
   const stagger = 0.1;
-  const startDelay = baseDelay + index * stagger;
+  const startDelay = disableStagger ? 0 : baseDelay + index * stagger;
   const startExit = useRouteTransitionStore((s) => s.startExit);
 
   return (
