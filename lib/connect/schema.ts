@@ -6,8 +6,11 @@ export const connectSchema = z.object({
   message: z.string().min(10, "Message must be at least 10 characters"),
   phone: z
     .string()
+    .transform((v) => {
+      const trimmed = typeof v === "string" ? v.trim() : v;
+      return trimmed === "" ? undefined : trimmed;
+    })
     .optional()
-    .transform((v) => (v && v.trim() === "" ? undefined : v?.trim()))
     .refine((v) => (v == null ? true : /^[+()\-.\s\d]+$/.test(v)), {
       message: "Only digits, spaces, +, -, (, ), and . are allowed",
     })
