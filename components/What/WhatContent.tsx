@@ -1,10 +1,22 @@
 "use client";
 
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
+import { useAutoCenterOnMobile } from "@/lib/What/useAutoCenterOnMobile";
+import { useCardsNavigation } from "@/lib/What/useCardsNavigation";
+import { useScrollEdges } from "@/lib/What/useScrollEdges";
 import { AnimatePresence, motion } from "motion/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { item } from "../Hello/variants";
 import { ScrollablePageContainer } from "../ScrollablePageContainer";
+import {
+  CARD_WIDTH,
+  DESKTOP_GAP,
+  MASK_MARGIN,
+  MOBILE_GAP,
+  MOBILE_SIDE_PADDING,
+  MOBILE_SINGLE_RATIO,
+} from "./constants";
 import { tiktokData, workData, youtubeData } from "./data";
 import { NewIdeaCard } from "./NewIdeaCard";
 import { SliderArrows } from "./SliderArrows";
@@ -31,22 +43,14 @@ export const WhatContent = ({
     return tab === "content" ? "content" : "dev";
   });
   const [isMobile, setIsMobile] = useState(false);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
   const [visibleCount, setVisibleCount] = useState(1);
   const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { scrollContainerRef, canScrollLeft, canScrollRight, maskVars } =
+    useScrollEdges();
   const hasAutoCenteredRef = useRef(false);
   const hasMountedRef = useRef(false);
   const lastCenteredIndexRef = useRef(0);
-
-  const CARD_WIDTH = 280;
-  const DESKTOP_GAP = 24;
-  const MOBILE_GAP = 16; // matches Tailwind gap-4
-  const MOBILE_SIDE_PADDING = 16; // px-4 on mobile track
-  const MASK_MARGIN = 8; // reduce width slightly so mask doesn't cover edges
-  const MOBILE_SINGLE_RATIO = 0.9; // narrow single card to 85% of inner width
   const cards = activeSet === "dev" ? initialWorkCards : initialContentCards;
   const TOTAL_CARDS = cards.length + 1; // include NewIdeaCard
 
@@ -97,110 +101,30 @@ export const WhatContent = ({
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
-  }, [isMobile, TOTAL_CARDS]);
+  }, [isMobile, TOTAL_CARDS, scrollContainerRef]);
 
   // Mark component as mounted to skip initial title delay on subsequent swaps
   useEffect(() => {
     hasMountedRef.current = true;
   }, []);
 
-  // Scroll position detection
-  useEffect(() => {
-    const check = () => {
-      const el = scrollContainerRef.current;
-      if (!el) return;
-      const { scrollLeft, scrollWidth, clientWidth } = el;
-      const tol = 2;
-      setCanScrollLeft(scrollLeft > tol);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - tol);
-    };
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", check, { passive: true });
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    check();
-    const tids = [50, 150, 300].map((d) => setTimeout(check, d));
-    return () => {
-      el.removeEventListener("scroll", check);
-      ro.disconnect();
-      tids.forEach(clearTimeout);
-    };
-  }, [isMobile]);
+  // mobile auto centering
+  useAutoCenterOnMobile(isMobile, scrollContainerRef);
 
-  const item = {
-    hidden: { opacity: 0, y: 20, filter: "blur(10px)" },
-    show: {
-      opacity: 1,
-      y: 0,
-      filter: "blur(0px)",
-      transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const },
-    },
-    exit: {
-      opacity: 0,
-      y: 0,
-      filter: "blur(10px)",
-      transition: { duration: 0.2, ease: [0.4, 0, 1, 1] as const },
-    },
-  } as const;
-
+  // cards navigation helpers
+  const nav = useCardsNavigation({
+    isMobile,
+    visibleCount,
+    totalCards: TOTAL_CARDS,
+    cardWidth: CARD_WIDTH,
+    desktopGap: DESKTOP_GAP,
+    mobileGap: MOBILE_GAP,
+    scrollContainerRef,
+  });
   const canGoNext = canScrollRight;
   const canGoPrev = canScrollLeft;
-
-  const handleNext = () => {
-    if (!canGoNext || !scrollContainerRef.current) return;
-    const el = scrollContainerRef.current;
-    if (visibleCount === 1) {
-      const children = Array.from(el.children) as HTMLElement[];
-      if (children.length === 0) return;
-      const containerCenter = el.scrollLeft + el.clientWidth / 2;
-      const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
-      let current = 0;
-      let minDist = Number.POSITIVE_INFINITY;
-      centers.forEach((cx, i) => {
-        const d = Math.abs(cx - containerCenter);
-        if (d < minDist) {
-          minDist = d;
-          current = i;
-        }
-      });
-      const next = Math.min(current + 1, children.length - 1);
-      const target = centers[next] - el.clientWidth / 2;
-      el.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
-      return;
-    }
-    const GAP = isMobile ? MOBILE_GAP : DESKTOP_GAP;
-    const move = Math.min(visibleCount, TOTAL_CARDS - 1);
-    const amount = move * (CARD_WIDTH + GAP);
-    el.scrollBy({ left: amount, behavior: "smooth" });
-  };
-  const handlePrev = () => {
-    if (!canGoPrev || !scrollContainerRef.current) return;
-    const el = scrollContainerRef.current;
-    if (visibleCount === 1) {
-      const children = Array.from(el.children) as HTMLElement[];
-      if (children.length === 0) return;
-      const containerCenter = el.scrollLeft + el.clientWidth / 2;
-      const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
-      let current = 0;
-      let minDist = Number.POSITIVE_INFINITY;
-      centers.forEach((cx, i) => {
-        const d = Math.abs(cx - containerCenter);
-        if (d < minDist) {
-          minDist = d;
-          current = i;
-        }
-      });
-      const prev = Math.max(current - 1, 0);
-      const target = centers[prev] - el.clientWidth / 2;
-      el.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
-      return;
-    }
-    const GAP = isMobile ? MOBILE_GAP : DESKTOP_GAP;
-    const move = Math.min(visibleCount, TOTAL_CARDS - 1);
-    const amount = move * (CARD_WIDTH + GAP);
-    el.scrollBy({ left: -amount, behavior: "smooth" });
-  };
+  const handleNext = nav.handleNext;
+  const handlePrev = nav.handlePrev;
 
   // Center the first card on mobile after layout to align with snap-center and padding
   useEffect(() => {
@@ -210,68 +134,43 @@ export const WhatContent = ({
     // Run once per mount/responsive recalculation
     if (hasAutoCenteredRef.current) return;
     hasAutoCenteredRef.current = true;
-    const id = window.requestAnimationFrame(() => {
+
+    // Use multiple frame delay and retry logic for smartphones
+    const centerFirstCard = () => {
       const first = el.children.item(0) as HTMLElement | null;
-      if (!first) return;
+      if (!first || first.offsetWidth === 0) {
+        // Card not ready yet, retry
+        return false;
+      }
       const target =
         first.offsetLeft + first.clientWidth / 2 - el.clientWidth / 2;
       el.scrollTo({ left: Math.max(0, target), behavior: "auto" });
+      return true;
+    };
+
+    // Try immediately
+    if (centerFirstCard()) return;
+
+    // If not ready, use progressive delays
+    const timeouts: number[] = [];
+    [50, 150, 300, 500].forEach((delay) => {
+      timeouts.push(
+        window.setTimeout(() => {
+          if (centerFirstCard()) {
+            // Clear remaining timeouts
+            timeouts.forEach(clearTimeout);
+          }
+        }, delay)
+      );
     });
-    return () => cancelAnimationFrame(id);
-  }, [isMobile]);
+
+    return () => timeouts.forEach(clearTimeout);
+  }, [isMobile, scrollContainerRef]);
 
   // Helpers to detect current centered index and scroll to target index
-  const getCurrentCenteredIndex = () => {
-    const el = scrollContainerRef.current;
-    if (!el) return 0;
-    const children = Array.from(el.children) as HTMLElement[];
-    if (children.length === 0) return 0;
-    const containerCenter = el.scrollLeft + el.clientWidth / 2;
-    const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
-    let current = 0;
-    let minDist = Number.POSITIVE_INFINITY;
-    centers.forEach((cx, i) => {
-      const d = Math.abs(cx - containerCenter);
-      if (d < minDist) {
-        minDist = d;
-        current = i;
-      }
-    });
-    return current; // includes NewIdeaCard at index 0
-  };
-
-  const scrollToIndex = (index: number) => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const children = Array.from(el.children) as HTMLElement[];
-    if (children.length === 0) return;
-    const clamped = Math.max(0, Math.min(index, children.length - 1));
-    const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
-    const target = centers[clamped] - el.clientWidth / 2;
-    el.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
-  };
-
-  // Smoothly center to a given index and resolve when close enough or timeout
-  const centerToIndex = (index: number) =>
-    new Promise<void>((resolve) => {
-      const el = scrollContainerRef.current;
-      if (!el) return resolve();
-      const children = Array.from(el.children) as HTMLElement[];
-      if (children.length === 0) return resolve();
-      const clamped = Math.max(0, Math.min(index, children.length - 1));
-      const centers = children.map((c) => c.offsetLeft + c.clientWidth / 2);
-      const targetLeft = Math.max(0, centers[clamped] - el.clientWidth / 2);
-      const tol = 2;
-      const start = performance.now();
-      const maxMs = 650;
-      const check = () => {
-        if (Math.abs(el.scrollLeft - targetLeft) <= tol) return resolve();
-        if (performance.now() - start > maxMs) return resolve();
-        requestAnimationFrame(check);
-      };
-      el.scrollTo({ left: targetLeft, behavior: "smooth" });
-      requestAnimationFrame(check);
-    });
+  const getCurrentCenteredIndex = nav.getCurrentCenteredIndex;
+  const scrollToIndex = nav.scrollToIndex;
+  const centerToIndex = nav.centerToIndex;
 
   // When switching dataset, preserve the approximate centered index
   useEffect(() => {
@@ -284,36 +183,27 @@ export const WhatContent = ({
       scrollToIndex(Math.min(prev, TOTAL_CARDS - 1));
     });
     return () => cancelAnimationFrame(id);
-  }, [activeSet, TOTAL_CARDS, isMobile, containerWidth]);
+  }, [activeSet, TOTAL_CARDS, isMobile, containerWidth, scrollToIndex]);
 
-  // Animated mask variables (fade) -------------------------------------------------
-  // We keep a single gradient mask and animate the edge transparency/width via CSS custom properties.
-  // Left/right fade active when we *can* scroll in that direction.
-  const leftFadeActive = canScrollLeft;
-  const rightFadeActive = canScrollRight;
-  // Widths chosen to match previous hard-coded 15% & 80% stops logic (15% per side)
-  const FADE_WIDTH = 15; // percent
-  // Custom property values
-  const maskVars = {
-    "--left-alpha": leftFadeActive ? "0" : "1",
-    "--left-width": leftFadeActive ? `${FADE_WIDTH}%` : "0%",
-    "--right-alpha": rightFadeActive ? "0" : "1",
-    "--right-width": rightFadeActive ? `${FADE_WIDTH}%` : "0%",
-  } as React.CSSProperties;
+  // nav already declared above
 
-  const computeCardWidth = () => {
-    const GAP = isMobile ? MOBILE_GAP : DESKTOP_GAP;
-    const innerWidth =
-      containerWidth - (isMobile ? MOBILE_SIDE_PADDING * 2 : 0);
-    const fullWidthSingle = visibleCount === 1 && innerWidth < CARD_WIDTH + GAP;
-    const baseWidth = CARD_WIDTH;
-    return fullWidthSingle
-      ? innerWidth * (isMobile ? MOBILE_SINGLE_RATIO : 1) - MASK_MARGIN
-      : visibleCount === 1
-      ? Math.min(baseWidth, innerWidth) * (isMobile ? MOBILE_SINGLE_RATIO : 1) -
-        MASK_MARGIN
-      : baseWidth;
-  };
+  const computeCardWidth = useMemo(() => {
+    return () => {
+      const GAP = isMobile ? MOBILE_GAP : DESKTOP_GAP;
+      const innerWidth =
+        containerWidth - (isMobile ? MOBILE_SIDE_PADDING * 2 : 0);
+      const fullWidthSingle =
+        visibleCount === 1 && innerWidth < CARD_WIDTH + GAP;
+      const baseWidth = CARD_WIDTH;
+      return fullWidthSingle
+        ? innerWidth * (isMobile ? MOBILE_SINGLE_RATIO : 1) - MASK_MARGIN
+        : visibleCount === 1
+        ? Math.min(baseWidth, innerWidth) *
+            (isMobile ? MOBILE_SINGLE_RATIO : 1) -
+          MASK_MARGIN
+        : baseWidth;
+    };
+  }, [isMobile, containerWidth, visibleCount]);
 
   return (
     <ScrollablePageContainer
@@ -334,7 +224,8 @@ export const WhatContent = ({
               active={activeSet}
               onSelect={async (next) => {
                 lastCenteredIndexRef.current = getCurrentCenteredIndex();
-                await centerToIndex(0);
+                // Start centering but don't block the dataset swap
+                void centerToIndex(0);
                 lastCenteredIndexRef.current = 0;
                 setActiveSet(next);
                 // Update URL query param without adding history entries
@@ -369,13 +260,11 @@ export const WhatContent = ({
                 msOverflowStyle: "none",
               }}
             >
-              <AnimatePresence
-                mode="popLayout"
-                initial={!hasMountedRef.current}
-              >
+              <AnimatePresence mode="sync" initial={!hasMountedRef.current}>
                 {(() => {
                   const cardWidth = computeCardWidth();
                   const baseDelayValue = hasMountedRef.current ? 0 : 0.7;
+                  const disableStagger = hasMountedRef.current;
                   return [
                     <NewIdeaCard
                       key="new-idea"
@@ -383,6 +272,7 @@ export const WhatContent = ({
                       isMobile={isMobile}
                       cardWidth={cardWidth}
                       baseDelay={baseDelayValue}
+                      disableStagger={disableStagger}
                     />,
                     ...cards.map((card: WorkCardData, index) => (
                       <WorkCard
@@ -392,6 +282,7 @@ export const WhatContent = ({
                         isMobile={isMobile}
                         cardWidth={cardWidth}
                         baseDelay={baseDelayValue}
+                        disableStagger={disableStagger}
                       />
                     )),
                   ];
