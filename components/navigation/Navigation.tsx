@@ -54,6 +54,7 @@ const NavigationComponent = () => {
     validateRouteChange,
     updateGlassPillPosition,
     setGlassPillVisible,
+    handleMouseUp,
   } = useNavigationActions();
 
   // Get element registry methods directly from the store
@@ -76,10 +77,14 @@ const NavigationComponent = () => {
 
   // Validate route change and set active item accordingly
   useEffect(() => {
-    // Check both navigation items and blog item for pathname match
+    const normalizePath = (path?: string) => (path ? path.split("?")[0] : null);
+
+    // Check both navigation items and blog item for pathname match (ignore query strings)
     const currentItem =
-      menuItems.navigation.find((item) => pathname === item.href) ||
-      (menuItems.blog && pathname === menuItems.blog.href
+      menuItems.navigation.find(
+        (item) => normalizePath(item.href) === pathname
+      ) ||
+      (menuItems.blog && normalizePath(menuItems.blog.href) === pathname
         ? menuItems.blog
         : null);
 
@@ -139,12 +144,30 @@ const NavigationComponent = () => {
   // Handle glass pill visibility and positioning based on mobile state and menu state
   useEffect(() => {
     const updateGlassPillState = () => {
-      // Use hoveredItem from selector
-      const currentDisplayedItem = hoveredItem || activeItem;
+      // Base displayed item prefers hover, falls back to active
+      const baseDisplayedItem = hoveredItem || activeItem;
 
-      if (!currentDisplayedItem || !parentElement) {
+      // Guard: need an item and a parent element to proceed
+      if (!baseDisplayedItem || !parentElement) {
         setGlassPillVisible(false);
         return;
+      }
+
+      // Small-viewport gating: ignore hover except for mobile-menu navigation/blog items
+      let currentDisplayedItem: NavigationItemId =
+        baseDisplayedItem as NavigationItemId;
+      if (isMobile && hoveredItem) {
+        const hovered = hoveredItem as NavigationItemId;
+        const isNav = NAVIGATION_CATEGORIES.navigationItems.includes(hovered);
+        const isBlog = hovered === "blog";
+        const allowHover = (isNav || isBlog) && isMobileMenuOpen;
+        if (!allowHover) {
+          if (!activeItem) {
+            setGlassPillVisible(false);
+            return;
+          }
+          currentDisplayedItem = activeItem as NavigationItemId;
+        }
       }
 
       // Hide glass pill during page load animations for better UX
@@ -234,8 +257,8 @@ const NavigationComponent = () => {
       if (activeItem && parentElement) {
         const isLogoOrHamburger =
           activeItem === "logo" || activeItem === "menu";
-        const isNavigationItem = ["hello", "who", "what", "connect"].includes(
-          activeItem
+        const isNavigationItem = NAVIGATION_CATEGORIES.navigationItems.includes(
+          activeItem as NavigationItemId
         );
         const isBlogItem = activeItem === "blog";
         const isExternalLink = NAVIGATION_CATEGORIES.externalLinks.includes(
@@ -308,14 +331,14 @@ const NavigationComponent = () => {
   // Global mouse up listener to reset pressed state
   useEffect(() => {
     const handleGlobalMouseUp = () => {
-      // Reset pressed state is handled automatically by Zustand stores
+      handleMouseUp();
     };
 
     document.addEventListener("mouseup", handleGlobalMouseUp);
     return () => {
       document.removeEventListener("mouseup", handleGlobalMouseUp);
     };
-  }, []);
+  }, [handleMouseUp]);
 
   return (
     <>

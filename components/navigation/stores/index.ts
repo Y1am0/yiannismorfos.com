@@ -9,6 +9,7 @@ export * from "./zustandMiddleware";
 
 // Convenience hooks that combine multiple stores
 import { useCallback } from "react";
+import { NAVIGATION_CATEGORIES } from "../constants";
 import { NavigationItemId } from "../types";
 import { useElementRegistryState } from "./elementRegistryState";
 import { useGlassPillState } from "./glassPillState";
@@ -78,6 +79,17 @@ export const useNavigationActions = () => {
           window.matchMedia("(pointer: coarse)").matches;
         if (isTouch) return; // Skip hover logic on touch devices
       }
+
+      // Small-viewport gating: ignore hover unless it's a nav/blog item while mobile menu is open
+      const { isMobile, isMobileMenuOpen } = getCurrentState();
+      if (isMobile) {
+        const isNav = NAVIGATION_CATEGORIES.navigationItems.includes(item);
+        const isBlog = item === "blog";
+        const allowHover = (isNav || isBlog) && isMobileMenuOpen;
+        if (!allowHover) {
+          return;
+        }
+      }
       if (process.env.NODE_ENV === "development") {
         console.log(
           `[Navigation] Hover START: ${item}, mobile: ${
@@ -92,7 +104,17 @@ export const useNavigationActions = () => {
       const { parentElement } = getCurrentState();
       setHoveredItem(item);
       if (parentElement) {
-        updateGlassPillPosition(element, parentElement);
+        // If hovering an item in mobile menu context, force positionMode to fixed
+        const positionOverride: "absolute" | "fixed" | undefined =
+          isMobileMenuOpen && isMobile ? "fixed" : undefined;
+        // Pass explicit override type to updatePosition
+        (
+          updateGlassPillPosition as unknown as (
+            e: Element,
+            p: Element,
+            m?: "absolute" | "fixed"
+          ) => void
+        )(element, parentElement, positionOverride);
       }
     },
     [setHoveredItem, updateGlassPillPosition, clearAllTimeouts]
@@ -139,8 +161,8 @@ export const useNavigationActions = () => {
       if (activeItem && parentElement) {
         const isLogoOrHamburger =
           activeItem === "logo" || activeItem === "menu";
-        const isNavigationItem = ["hello", "who", "what", "connect"].includes(
-          activeItem
+        const isNavigationItem = NAVIGATION_CATEGORIES.navigationItems.includes(
+          activeItem as NavigationItemId
         );
         const isBlogItem = activeItem === "blog";
 
@@ -167,7 +189,19 @@ export const useNavigationActions = () => {
 
         if (activeElement) {
           // Smoothly move pill back to active item
-          updateGlassPillPosition(activeElement, parentElement);
+          const positionOverride: "absolute" | "fixed" | undefined = isMobile
+            ? isMobileMenuOpen
+              ? "fixed"
+              : "absolute"
+            : undefined;
+          // Pass explicit override type to updatePosition
+          (
+            updateGlassPillPosition as unknown as (
+              e: Element,
+              p: Element,
+              m?: "absolute" | "fixed"
+            ) => void
+          )(activeElement, parentElement, positionOverride);
         } else {
           // Active element not found or not applicable - hide pill
           setGlassPillVisible(false);
@@ -291,6 +325,9 @@ export const useNavigationSelectors = () => {
 
   const glassPillStyle = useGlassPillState((state) => state.backgroundStyle);
   const glassPillVisible = useGlassPillState((state) => state.isVisible);
+  const glassPillPositionMode = useGlassPillState(
+    (state) => state.positionMode
+  );
 
   return {
     hoveredItem,
@@ -302,5 +339,6 @@ export const useNavigationSelectors = () => {
     animationsComplete,
     glassPillStyle,
     glassPillVisible,
+    glassPillPositionMode,
   };
 };

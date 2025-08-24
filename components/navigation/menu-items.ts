@@ -36,7 +36,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     id: "what",
     label: "what",
-    href: "/what",
+    href: "/what?tab=dev",
     type: "navigation",
   },
   {
