@@ -39,10 +39,21 @@ export const settings = {
         color4: { hex: "#0000ff" },
       },
       "/connect": {
-        color1: { hex: "#00c0ff" },
-        color2: { hex: "#0000ff" },
-        color3: { hex: "#00c0ff" },
-        color4: { hex: "#00c0ff" },
+        variants: {
+          base: {
+            color1: { hex: "#00c0ff" },
+            color2: { hex: "#0000ff" },
+            color3: { hex: "#0000ff" },
+            color4: { hex: "#00c0ff" },
+          },
+          success: {
+            color1: { hex: "#00ff00" },
+            color2: { hex: "#00b300" },
+            color3: { hex: "#003700" },
+            color4: { hex: "#00b300" },
+          },
+        },
+        defaultVariant: "base",
       },
       "/blog": {
         color1: { hex: "#0000ff" },

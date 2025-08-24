@@ -55,6 +55,7 @@ export const ScrollablePageContainer = ({
     const el = scrollRef.current;
     if (!el) return;
     let frame: number | null = null;
+    let mutationObserver: MutationObserver | null = null;
 
     const hideLater = () => {
       if (inactivityTimerRef.current)
@@ -98,6 +99,20 @@ export const ScrollablePageContainer = ({
 
     el.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
+
+    // Observe dynamic content mutations (e.g., expanding sections) to recalc scrollability immediately
+    try {
+      mutationObserver = new MutationObserver(() => {
+        if (frame != null) return;
+        frame = window.requestAnimationFrame(update);
+      });
+      mutationObserver.observe(el, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ["style", "class"],
+      });
+    } catch {}
     update();
     return () => {
       el.removeEventListener("scroll", onScroll);
@@ -105,6 +120,7 @@ export const ScrollablePageContainer = ({
       if (frame != null) cancelAnimationFrame(frame);
       if (inactivityTimerRef.current)
         window.clearTimeout(inactivityTimerRef.current);
+      if (mutationObserver) mutationObserver.disconnect();
     };
   }, [showScrollIndicator, isScrolling]);
 

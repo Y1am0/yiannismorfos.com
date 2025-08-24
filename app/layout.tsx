@@ -20,20 +20,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.BASE_URL || "https://yiannismorfos.com"),
   title: {
-    default: "Yiannis Morfos – Creative Full‑Stack & Animation Engineer",
+    default: "Yiannis Morfos – Full‑Stack Engineer & Content Creator",
     template: "%s | Yiannis Morfos",
   },
   description:
-    "Portfolio of Yiannis Morfos – full‑stack & animation-focused engineer crafting polished interactive experiences with TypeScript, Next.js, motion & 3D.",
+    "Portfolio of Yiannis Morfos – full‑stack engineer & content creator crafting polished interactive experiences with TypeScript, Next.js, motion & 3D.",
   openGraph: {
-    title: "Yiannis Morfos – Creative Full‑Stack & Animation Engineer",
+    title: "Yiannis Morfos – Full‑Stack Engineer & Content Creator",
     description:
-      "Explore projects, interactive experiments, and approach to high-quality product engineering & motion craftsmanship.",
+      "Portfolio of Yiannis Morfos – full‑stack engineer & content creator crafting polished interactive experiences with TypeScript, Next.js, motion & 3D.",
     url: "/",
     siteName: "Yiannis Morfos",
     images: [
       {
-        url: "/me.png",
+        url: "/shareymimage.jpg",
         width: 800,
         height: 800,
         alt: "Yiannis Morfos",
@@ -44,10 +44,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Yiannis Morfos – Creative Full‑Stack & Animation Engineer",
+    title: "Yiannis Morfos – Full‑Stack Engineer & Content Creator",
     description:
-      "Full‑stack & animation engineering portfolio: Next.js, TypeScript, motion, 3D & experience design.",
-    images: ["/me.png"],
+      "Portfolio of Yiannis Morfos – full‑stack engineer & content creator crafting polished interactive experiences with TypeScript, Next.js, motion & 3D.",
+    images: ["/shareymimage.jpg"],
   },
   icons: {
     icon: "/favicon.ico",
