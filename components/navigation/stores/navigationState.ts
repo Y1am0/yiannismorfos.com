@@ -9,6 +9,7 @@ interface NavigationState {
   hoveredItem: NavigationItemId | null;
   pressedItem: NavigationItemId | null;
   activeItem: NavigationItemId | null;
+  lastClickedItem: NavigationItemId | null; // Track what was clicked to validate route changes
 
   // Timeout management for hover exit delays
   exitTimeoutId: NodeJS.Timeout | null;
@@ -18,6 +19,10 @@ interface NavigationState {
   setHoveredItem: (item: NavigationItemId | null) => void;
   setPressedItem: (item: NavigationItemId | null) => void;
   setActiveItem: (item: NavigationItemId | null) => void;
+  setLastClickedItem: (item: NavigationItemId | null) => void;
+
+  // Route validation
+  validateRouteChange: (expectedItemId: NavigationItemId | null) => void;
 
   // Timeout management
   setExitTimeout: (timeoutId: NodeJS.Timeout) => void;
@@ -35,6 +40,7 @@ export const useNavigationState = create<NavigationState>()(
       hoveredItem: null,
       pressedItem: null,
       activeItem: null,
+      lastClickedItem: null,
       exitTimeoutId: null,
       clearHoverTimeoutId: null,
 
@@ -45,6 +51,30 @@ export const useNavigationState = create<NavigationState>()(
         set({ pressedItem: item }, false, "setPressedItem"),
       setActiveItem: (item) =>
         set({ activeItem: item }, false, "setActiveItem"),
+      setLastClickedItem: (item) =>
+        set({ lastClickedItem: item }, false, "setLastClickedItem"),
+
+      // Route validation
+      validateRouteChange: (actualRouteItemId) => {
+        const state = get();
+        if (state.lastClickedItem) {
+          // If we clicked an item but the route didn't change to match it, revert to actual route
+          if (actualRouteItemId !== state.lastClickedItem) {
+            // Route didn't change as expected (e.g., clicked same route), revert to actual route item
+            set(
+              { activeItem: actualRouteItemId },
+              false,
+              "revertToActualRoute"
+            );
+          }
+          // If route did change as expected, activeItem is already correct from the click
+        } else {
+          // No click happened, just a regular route change (e.g., browser back/forward)
+          set({ activeItem: actualRouteItemId }, false, "routeChangeOnly");
+        }
+        // Clear the last clicked item after validation
+        set({ lastClickedItem: null }, false, "clearLastClickedItem");
+      },
 
       // Timeout management
       setExitTimeout: (timeoutId) =>

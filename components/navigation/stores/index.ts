@@ -23,6 +23,12 @@ export const useNavigationActions = () => {
   const setHoveredItem = useNavigationState((state) => state.setHoveredItem);
   const setPressedItem = useNavigationState((state) => state.setPressedItem);
   const setActiveItem = useNavigationState((state) => state.setActiveItem);
+  const setLastClickedItem = useNavigationState(
+    (state) => state.setLastClickedItem
+  );
+  const validateRouteChange = useNavigationState(
+    (state) => state.validateRouteChange
+  );
 
   // Shared timeout management from store
   const setExitTimeout = useNavigationState((state) => state.setExitTimeout);
@@ -254,6 +260,8 @@ export const useNavigationActions = () => {
     // State setters
     setParentElement,
     setActiveItem,
+    setLastClickedItem,
+    validateRouteChange,
 
     // Direct store actions (for advanced use cases)
     setHoveredItem,

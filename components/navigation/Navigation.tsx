@@ -51,7 +51,7 @@ const NavigationComponent = () => {
 
   const {
     setParentElement,
-    setActiveItem,
+    validateRouteChange,
     updateGlassPillPosition,
     setGlassPillVisible,
   } = useNavigationActions();
@@ -74,7 +74,7 @@ const NavigationComponent = () => {
     []
   );
 
-  // Set up active item based on pathname
+  // Validate route change and set active item accordingly
   useEffect(() => {
     // Check both navigation items and blog item for pathname match
     const currentItem =
@@ -82,8 +82,12 @@ const NavigationComponent = () => {
       (menuItems.blog && pathname === menuItems.blog.href
         ? menuItems.blog
         : null);
-    setActiveItem((currentItem?.id as NavigationItemId) || null);
-  }, [pathname, setActiveItem, menuItems.navigation, menuItems.blog]);
+
+    const actualRouteItemId = (currentItem?.id as NavigationItemId) || null;
+
+    // Validate the route change - this will handle setting the correct active item
+    validateRouteChange(actualRouteItemId);
+  }, [pathname, validateRouteChange, menuItems.navigation, menuItems.blog]);
 
   // ---- Responsive breakpoint detection -------------------------------------------------
   // Guards against SSR and debounces the expensive resize handler.
