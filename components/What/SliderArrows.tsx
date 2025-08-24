@@ -23,7 +23,9 @@ export const SliderArrows = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className={`flex gap-3 ${isMobile ? "justify-center" : "justify-end"}`}
+      className={`flex px-4 gap-3 ${
+        isMobile ? "justify-center" : "justify-end"
+      }`}
     >
       <motion.button
         onClick={onPrev}
