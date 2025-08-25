@@ -127,10 +127,7 @@ export default function ConnectContent() {
   return (
     <ScrollablePageContainer>
       <div className="w-full max-w-2xl mx-auto pt-10 pb-16 relative">
-        <DevTriggerSuccess
-          onTrigger={() => setSuccess(true)}
-          className="absolute top-2 right-2 z-50"
-        />
+        <DevTriggerSuccess onTrigger={() => setSuccess(true)} />
 
         <AnimatePresence mode="wait">
           {!success ? (
