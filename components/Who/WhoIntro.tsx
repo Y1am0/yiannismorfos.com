@@ -86,7 +86,7 @@ export const WhoIntro = ({
           className="mt-5 text-white/60 max-w-xl mx-auto md:text-lg leading-relaxed text-center"
         >
           about Yiannis Morfos, but <span className="text-white/90">who</span>{" "}
-          exaclty can I be in{" "}
+          exactly can I be in{" "}
           <span className="text-white/90">your next big idea?</span>
         </motion.p>
 

@@ -171,7 +171,7 @@ export const WorkDetailContent = ({ id }: WorkDetailContentProps) => {
                 ))}
 
                 {work.link && (
-                  <motion.div variants={wordLine} className="mt-6">
+                  <motion.div variants={wordLine} className="mt-6 mb-12">
                     <a
                       href={work.link}
                       target="_blank"
