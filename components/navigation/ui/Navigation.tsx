@@ -1,43 +1,40 @@
 "use client";
 
-import { PAGE_LOAD_ANIMATIONS } from "@/components/PageLoadAnimationProvider";
-import { usePageLoadAnimationContext } from "@/components/PageLoadAnimationProvider";
+import {
+  PAGE_LOAD_ANIMATIONS,
+  usePageLoadAnimationContext,
+} from "@/components/PageLoadAnimationProvider";
 import { Quote } from "lucide-react";
 import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { memo, useEffect, useMemo } from "react";
+import { Z_INDEX } from "../config/constants";
+import { NavigationItemId } from "../model/types";
+import {
+  getBlogItem,
+  getLogoItem,
+  getNavigationItems,
+} from "../utils/menu-items";
 import { AbsoluteItem } from "./AbsoluteItem";
-import { Z_INDEX } from "./constants";
 import { Logo } from "./Logo";
-import { getBlogItem, getLogoItem, getNavigationItems } from "./menu-items";
 import { MenuToggle } from "./MenuToggle";
 import { MobileMenu } from "./MobileMenu";
-import { NavigationItemId } from "./types";
 
+import { useNavigationActions, useNavigationSelectors } from "../stores/index";
+import { useMobileMenuState } from "../stores/mobileMenuState";
 import { NavigationItem } from "./NavigationItem";
-import { useNavigationActions, useNavigationSelectors } from "./stores/index";
-import { useMobileMenuState } from "./stores/mobileMenuState";
 
 const NavigationComponent = () => {
   const pathname = usePathname();
 
   // Page load animation state
-  const {
-    isNavigationVisible,
-    shouldAnimate,
-  } = usePageLoadAnimationContext();
+  const { isNavigationVisible, shouldAnimate } = usePageLoadAnimationContext();
 
-  const {
-    isMobile,
-    isMobileMenuOpen,
-  } = useNavigationSelectors();
+  const { isMobile, isMobileMenuOpen } = useNavigationSelectors();
 
   const setIsMobile = useMobileMenuState((state) => state.setIsMobile);
-  const {
-    validateRouteChange,
-    handleMouseUp,
-    setHoveredItem,
-  } = useNavigationActions();
+  const { validateRouteChange, handleMouseUp, setHoveredItem } =
+    useNavigationActions();
 
   // Memoized menu items to prevent recreation
   const menuItems = useMemo(

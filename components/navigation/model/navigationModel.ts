@@ -2,12 +2,12 @@ import {
   EXTERNAL_LINKS,
   MENU_ITEMS,
   MUSIC_PLAYER_BUTTON_IDS,
-} from "./navigationConfig";
+} from "../config/navigationConfig";
 import type {
   ExternalLinkId,
   MenuItem,
-  NavigationItemId,
   MusicPlayerButtonId,
+  NavigationItemId,
 } from "./types";
 
 type NavigationMenuItem = Extract<MenuItem, { type: "navigation" }>;

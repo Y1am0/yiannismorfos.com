@@ -4,12 +4,12 @@ import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { motion } from "motion/react";
 import { memo, useCallback } from "react";
-import { ANIMATION_CONFIG, LAYOUT_CONSTANTS } from "./constants";
+import { ANIMATION_CONFIG, LAYOUT_CONSTANTS } from "../config/constants";
+import { useIsCoarsePointer } from "../hooks/useIsCoarsePointer";
+import { useNavigationPill } from "../hooks/useNavigationPill";
+import type { NavigationItemId } from "../model/types";
+import { useNavigationActions } from "../stores";
 import { GlassPill } from "./GlassPill";
-import { useIsCoarsePointer } from "./useIsCoarsePointer";
-import { useNavigationActions } from "./stores";
-import type { NavigationItemId } from "./types";
-import { useNavigationPill } from "./useNavigationPill";
 
 type BaseProps = {
   children: React.ReactNode;
@@ -57,7 +57,9 @@ const BaseNavigationItem = ({
   const content = (
     <motion.div
       data-nav-item-id={itemId}
-      className={`text-2xl font-thin ${LAYOUT_CONSTANTS.itemPadding} cursor-pointer relative focus-visible:outline-none ${className ?? ""}`}
+      className={`text-2xl font-thin ${
+        LAYOUT_CONSTANTS.itemPadding
+      } cursor-pointer relative focus-visible:outline-none ${className ?? ""}`}
       onHoverStart={enableHover ? handleHoverStartCallback : undefined}
       onHoverEnd={enableHover ? handleHoverEnd : undefined}
       onTouchStart={enableHover ? handleHoverStartCallback : undefined}

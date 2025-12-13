@@ -1,12 +1,12 @@
 "use client";
-import { motion } from "motion/react";
-import { useEffect, useLayoutEffect, useRef } from "react";
 import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES,
   TIMING,
-} from "./constants";
-import { usePillPresence } from "./PillPresenceProvider";
+} from "@/components/navigation/config/constants";
+import { usePillPresence } from "@/components/navigation/providers/PillPresenceProvider";
+import { motion } from "motion/react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 export type GlassPillVariant = "pill" | "circle";
 
@@ -30,9 +30,7 @@ export const GlassPill = ({
   const isCircle = variant === "circle";
   const presence = usePillPresence();
   const shouldRunEnterAnimation =
-    typeof window === "undefined"
-      ? false
-      : !presence.getWasPresentLastCommit();
+    typeof window === "undefined" ? false : !presence.getWasPresentLastCommit();
   const didNotifyExitRef = useRef(false);
 
   const useIsomorphicLayoutEffect =

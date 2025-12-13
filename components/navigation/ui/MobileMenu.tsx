@@ -1,13 +1,19 @@
 "use client";
 
+import { Z_INDEX } from "@/components/navigation/config/constants";
+import {
+  useNavigationActions,
+  useNavigationSelectors,
+} from "@/components/navigation/stores";
+import { useMobileMenuState } from "@/components/navigation/stores/mobileMenuState";
+import { MobileMenuPill } from "@/components/navigation/ui/MobileMenuPill";
+import { MobileNavigationItem } from "@/components/navigation/ui/NavigationItem";
+import {
+  getBlogItem,
+  getNavigationItems,
+} from "@/components/navigation/utils/menu-items";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useMemo, useRef } from "react";
-import { Z_INDEX } from "./constants";
-import { getBlogItem, getNavigationItems } from "./menu-items";
-import { MobileMenuPill } from "./MobileMenuPill";
-import { MobileNavigationItem } from "./NavigationItem";
-import { useNavigationActions, useNavigationSelectors } from "./stores";
-import { useMobileMenuState } from "./stores/mobileMenuState";
 
 const MobileMenuComponent = () => {
   const { isMobileMenuOpen } = useNavigationSelectors();
@@ -15,7 +21,9 @@ const MobileMenuComponent = () => {
   const mobileMenuAnimationsComplete = useMobileMenuState(
     (s) => s.animationsComplete
   );
-  const setAnimationsComplete = useMobileMenuState((s) => s.setAnimationsComplete);
+  const setAnimationsComplete = useMobileMenuState(
+    (s) => s.setAnimationsComplete
+  );
 
   // Memoized menu items to prevent recreation on each render
   const menuItems = useMemo(() => {

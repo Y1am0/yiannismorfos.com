@@ -2,8 +2,8 @@
  * Custom hooks for the Music Player system
  */
 
+import { NavigationItemId } from "@/components/navigation/model/types";
 import { useNavigationActions } from "@/components/navigation/stores";
-import { NavigationItemId } from "@/components/navigation/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CURRENT_SONG, PLAYER_CONFIG, YOUTUBE_PLAYER_VARS } from "./config";
 import type {
@@ -350,15 +350,9 @@ export const usePlayerState = () => {
  * Use this hook in button components to register with the glass pill system.
  * Automatically handles both mobile and desktop registration.
  */
-export const useMusicPlayerButton = (
-  buttonId: NavigationItemId,
-) => {
-  const {
-    handleHoverStart,
-    handleHoverEnd,
-    handleMouseDown,
-    handleMouseUp,
-  } = useNavigationActions();
+export const useMusicPlayerButton = (buttonId: NavigationItemId) => {
+  const { handleHoverStart, handleHoverEnd, handleMouseDown, handleMouseUp } =
+    useNavigationActions();
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { LAYOUT_CONSTANTS } from "./constants";
+import { LAYOUT_CONSTANTS } from "@/components/navigation/config/constants";
 
 interface AbsoluteItemProps {
   position: "left" | "right";

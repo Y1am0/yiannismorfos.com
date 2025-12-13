@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isCoarsePointerDevice } from "./pointer";
+import { isCoarsePointerDevice } from "../utils/pointer";
 
 export const useIsCoarsePointer = () => {
   const [isCoarse, setIsCoarse] = useState(false);
@@ -24,4 +24,3 @@ export const useIsCoarsePointer = () => {
 
   return isCoarse;
 };
-

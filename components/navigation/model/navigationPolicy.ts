@@ -1,12 +1,18 @@
 import { NAVIGATION_CATEGORIES } from "./navigationModel";
-import type { ExternalLinkId, MusicPlayerButtonId, NavigationItemId } from "./types";
+import type {
+  ExternalLinkId,
+  MusicPlayerButtonId,
+  NavigationItemId,
+} from "./types";
 
 export type NavigationHoverContext = {
   isMobileViewport: boolean;
   isMobileMenuOpen: boolean;
 };
 
-const externalLinkIdSet = new Set<ExternalLinkId>(NAVIGATION_CATEGORIES.externalLinks);
+const externalLinkIdSet = new Set<ExternalLinkId>(
+  NAVIGATION_CATEGORIES.externalLinks
+);
 const musicButtonIdSet = new Set<MusicPlayerButtonId>(
   NAVIGATION_CATEGORIES.musicPlayerButtons
 );
@@ -23,14 +29,12 @@ export const isExternalLinkId = (id: NavigationItemId): id is ExternalLinkId =>
 
 export const isMusicPlayerButtonId = (
   id: NavigationItemId
-): id is MusicPlayerButtonId =>
-  musicButtonIdSet.has(id as MusicPlayerButtonId);
+): id is MusicPlayerButtonId => musicButtonIdSet.has(id as MusicPlayerButtonId);
 
 export const isNavigationItemId = (id: NavigationItemId) =>
   navigationItemIdSet.has(id);
 
-export const isBlogItemId = (id: NavigationItemId) =>
-  blogItemIdSet.has(id);
+export const isBlogItemId = (id: NavigationItemId) => blogItemIdSet.has(id);
 
 export const isNavOrBlogId = (id: NavigationItemId) =>
   isNavigationItemId(id) || isBlogItemId(id);

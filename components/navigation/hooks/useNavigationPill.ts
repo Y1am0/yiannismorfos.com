@@ -1,16 +1,16 @@
 "use client";
 
 import { usePageLoadAnimationContext } from "@/components/PageLoadAnimationProvider";
-import { LAYOUT_CONSTANTS } from "./constants";
-import { NAVIGATION_CATEGORIES } from "./navigationModel";
+import { LAYOUT_CONSTANTS } from "../config/constants";
+import { NAVIGATION_CATEGORIES } from "../model/navigationModel";
 import {
   isExternalLinkId,
   isMusicPlayerButtonId,
   isNavOrBlogId,
-} from "./navigationPolicy";
-import { useMobileMenuState } from "./stores/mobileMenuState";
-import { useNavigationState } from "./stores/navigationState";
-import type { NavigationItemId } from "./types";
+} from "../model/navigationPolicy";
+import type { NavigationItemId } from "../model/types";
+import { useMobileMenuState } from "../stores/mobileMenuState";
+import { useNavigationState } from "../stores/navigationState";
 
 export type PillHostContext = "header" | "overlay" | "fixed";
 
@@ -29,7 +29,8 @@ export const useNavigationPill = (
     (s) => s.animationsComplete
   );
 
-  const { animationsComplete: pageLoadComplete } = usePageLoadAnimationContext();
+  const { animationsComplete: pageLoadComplete } =
+    usePageLoadAnimationContext();
 
   const displayedItem = hoveredItem || activeItem;
   const isDisplayed = displayedItem === id;
@@ -60,9 +61,10 @@ export const useNavigationPill = (
     isExternal ||
     isMusic;
 
-  const circleSizePx = isExternal || isMusic
-    ? LAYOUT_CONSTANTS.externalLinkPillSize
-    : LAYOUT_CONSTANTS.circularPillSize;
+  const circleSizePx =
+    isExternal || isMusic
+      ? LAYOUT_CONSTANTS.externalLinkPillSize
+      : LAYOUT_CONSTANTS.circularPillSize;
 
   // Sanity: nav/blog items should never render in fixed footer host.
   // We don't throw; we just avoid showing the pill.

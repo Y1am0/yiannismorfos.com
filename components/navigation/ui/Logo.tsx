@@ -3,9 +3,9 @@
 import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { useNavigationPill } from "../hooks/useNavigationPill";
+import { useNavigationActions } from "../stores";
 import { GlassPill } from "./GlassPill";
-import { useNavigationActions } from "./stores";
-import { useNavigationPill } from "./useNavigationPill";
 
 interface LogoProps {
   className?: string;
@@ -73,9 +73,9 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
   );
 
   // Track a small timer to hide the pill after mouseup when navigating home
-  const [hideTimer, setHideTimer] = useState<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  const [hideTimer, setHideTimer] = useState<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   useEffect(() => {
     return () => {
       if (hideTimer) clearTimeout(hideTimer);

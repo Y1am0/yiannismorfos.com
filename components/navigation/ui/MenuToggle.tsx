@@ -2,9 +2,9 @@
 
 import { motion } from "motion/react";
 import { memo, useCallback, useRef, useState } from "react";
+import { useNavigationPill } from "../hooks/useNavigationPill";
+import { useNavigationActions, useNavigationSelectors } from "../stores";
 import { GlassPill } from "./GlassPill";
-import { useNavigationActions, useNavigationSelectors } from "./stores";
-import { useNavigationPill } from "./useNavigationPill";
 
 const MenuToggleComponent = () => {
   const [isHovered, setIsHovered] = useState(false);

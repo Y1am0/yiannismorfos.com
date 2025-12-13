@@ -4,9 +4,9 @@ export * from "./navigationState";
 
 // Convenience hooks that combine multiple stores
 import { useCallback } from "react";
-import { isCoarsePointerDevice } from "../pointer";
-import { shouldAllowHover } from "../navigationPolicy";
-import { NavigationItemId } from "../types";
+import { shouldAllowHover } from "../model/navigationPolicy";
+import { NavigationItemId } from "../model/types";
+import { isCoarsePointerDevice } from "../utils/pointer";
 import { useMobileMenuState } from "./mobileMenuState";
 import { useNavigationState } from "./navigationState";
 
@@ -21,7 +21,9 @@ export const useNavigationActions = () => {
   const setLastClickedItem = useNavigationState(
     (state) => state.setLastClickedItem
   );
-  const clearExitingItem = useNavigationState((state) => state.clearExitingItem);
+  const clearExitingItem = useNavigationState(
+    (state) => state.clearExitingItem
+  );
   const validateRouteChange = useNavigationState(
     (state) => state.validateRouteChange
   );

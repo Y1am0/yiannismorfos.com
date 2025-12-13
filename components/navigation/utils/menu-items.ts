@@ -7,10 +7,10 @@ export {
   type MenuItem,
   type MenuItemId,
   type MenuItemType,
-} from "./navigationConfig";
+} from "../config/navigationConfig";
 
-import { EXTERNAL_LINKS, MENU_ITEMS } from "./navigationConfig";
-import type { MenuItem, MenuItemId } from "./navigationConfig";
+import type { MenuItem, MenuItemId } from "../config/navigationConfig";
+import { EXTERNAL_LINKS, MENU_ITEMS } from "../config/navigationConfig";
 
 type NavigationMenuItem = Extract<MenuItem, { type: "navigation" }>;
 type LogoMenuItem = Extract<MenuItem, { type: "logo" }>;
@@ -20,7 +20,8 @@ const isNavigationItem = (item: MenuItem): item is NavigationMenuItem =>
   item.type === "navigation";
 const isLogoItem = (item: MenuItem): item is LogoMenuItem =>
   item.type === "logo";
-const isBlogItem = (item: MenuItem): item is BlogMenuItem => item.type === "blog";
+const isBlogItem = (item: MenuItem): item is BlogMenuItem =>
+  item.type === "blog";
 
 // Helper functions to get specific menu items
 export const getNavigationItems = (): readonly NavigationMenuItem[] =>

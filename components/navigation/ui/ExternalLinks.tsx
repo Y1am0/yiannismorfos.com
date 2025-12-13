@@ -7,22 +7,22 @@ import {
   TikTokIcon,
 } from "@/components/icons";
 import {
+  ANIMATION_CONFIG,
+  EXTERNAL_LINK_ROTATION_INTERVAL,
+  LAYOUT_CONSTANTS,
+} from "@/components/navigation/config/constants";
+import { useNavigationPill } from "@/components/navigation/hooks/useNavigationPill";
+import { useRotatingLinkSet } from "@/components/navigation/hooks/useRotatingLinkSet";
+import { ExternalLinkId } from "@/components/navigation/model/types";
+import { useNavigationActions } from "@/components/navigation/stores";
+import { GlassPill } from "@/components/navigation/ui/GlassPill";
+import { getExternalLinks } from "@/components/navigation/utils/menu-items";
+import {
   PAGE_LOAD_ANIMATIONS,
   usePageLoadAnimationContext,
 } from "@/components/PageLoadAnimationProvider";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useMemo } from "react";
-import {
-  ANIMATION_CONFIG,
-  EXTERNAL_LINK_ROTATION_INTERVAL,
-  LAYOUT_CONSTANTS,
-} from "./constants";
-import { GlassPill } from "./GlassPill";
-import { getExternalLinks } from "./menu-items";
-import { useRotatingLinkSet } from "./useRotatingLinkSet";
-import { useNavigationActions } from "./stores";
-import { ExternalLinkId } from "./types";
-import { useNavigationPill } from "./useNavigationPill";
 
 interface ExternalLinkItemProps {
   id: ExternalLinkId;
@@ -130,7 +130,8 @@ const ExternalLinksComponent = () => {
   const allLinks = getExternalLinks();
 
   // Page load animation state
-  const { isExternalLinksVisible, shouldAnimate } = usePageLoadAnimationContext();
+  const { isExternalLinksVisible, shouldAnimate } =
+    usePageLoadAnimationContext();
 
   // Define rotating sets by id order
   const linkSets = useMemo(

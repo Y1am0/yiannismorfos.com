@@ -1,16 +1,16 @@
 "use client";
 
-import { animate, motion, useMotionValue } from "motion/react";
-import { useLayoutEffect, useMemo, useRef } from "react";
-import type { RefObject } from "react";
-import { useShallow } from "zustand/react/shallow";
 import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES_OVERLAY,
   SPRING_PRESETS,
-} from "./constants";
-import { isNavOrBlogId } from "./navigationPolicy";
-import { useNavigationState } from "./stores/navigationState";
+} from "@/components/navigation/config/constants";
+import { isNavOrBlogId } from "@/components/navigation/model/navigationPolicy";
+import { useNavigationState } from "@/components/navigation/stores/navigationState";
+import { animate, motion, useMotionValue } from "motion/react";
+import type { RefObject } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 type Props = {
   containerRef: RefObject<HTMLElement | null>;
@@ -116,8 +116,8 @@ export const MobileMenuPill = ({
         scale: isExiting
           ? ANIMATION_CONFIG.glassPill.exit.scale
           : isPressed
-            ? 1.1
-            : 1,
+          ? 1.1
+          : 1,
       }}
       transition={{
         opacity: { duration: 0.12 },

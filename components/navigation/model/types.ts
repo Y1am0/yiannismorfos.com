@@ -1,10 +1,10 @@
 export type {
-  ExternalLinkId,
   ExternalLink,
+  ExternalLinkId,
   MenuItem,
   MenuItemId,
   MenuItemType,
   MusicPlayerButtonId,
   NavigationControlId,
   NavigationItemId,
-} from "./navigationConfig";
+} from "../config/navigationConfig";

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { NavigationItemId } from "../types";
+import { NavigationItemId } from "../model/types";
 
 type TimeoutHandle = ReturnType<typeof setTimeout>;
 
@@ -154,11 +154,7 @@ export const useNavigationState = create<NavigationState>()(
           clearTimeout(state.exitTimeoutId);
         }
 
-        set(
-          { exitTimeoutId: null },
-          false,
-          "clearAllTimeouts"
-        );
+        set({ exitTimeoutId: null }, false, "clearAllTimeouts");
       },
 
       // Computed values
