@@ -1,7 +1,11 @@
 "use client";
 import { motion } from "motion/react";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { ANIMATION_CONFIG, GLASS_EFFECT_STYLES, TIMING } from "./constants";
+import {
+  ANIMATION_CONFIG,
+  GLASS_EFFECT_STYLES,
+  TIMING,
+} from "./constants";
 
 export type GlassPillVariant = "pill" | "circle";
 
