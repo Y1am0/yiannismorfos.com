@@ -4,7 +4,11 @@ import { RouteTransitionSync } from "@/components/RouteTransitionSync";
 import { settings } from "@/lib/settings";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ExternalLinks, Navigation } from "../components/navigation";
+import {
+  ExternalLinks,
+  Navigation,
+  NavigationRegistryProvider,
+} from "../components/navigation";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -82,20 +86,22 @@ export default function RootLayout({
         />
 
         {/* Main content container with max-width constraint */}
-        <main className="relative z-20 max-w-screen-2xl mx-auto h-dvh overflow-hidden flex flex-col">
-          <div className="shrink-0">
-            <Navigation />
-          </div>
-          <div className="text-white px-6 sm:px-10 lg:px-18 flex-1 min-h-0">
-            {children}
-          </div>
+        <NavigationRegistryProvider>
+          <main className="relative z-20 max-w-screen-2xl mx-auto h-dvh overflow-hidden flex flex-col">
+            <div className="shrink-0">
+              <Navigation />
+            </div>
+            <div className="text-white px-6 sm:px-10 lg:px-18 flex-1 min-h-0">
+              {children}
+            </div>
 
-          {/* Global footer bar: music player on the left, external links on the right */}
-          <div className="px-6 sm:px-10 lg:px-18 py-4 flex items-center justify-between shrink-0">
-            <MusicPlayer />
-            <ExternalLinks />
-          </div>
-        </main>
+            {/* Global footer bar: music player on the left, external links on the right */}
+            <div className="px-6 sm:px-10 lg:px-18 py-4 flex items-center justify-between shrink-0">
+              <MusicPlayer />
+              <ExternalLinks />
+            </div>
+          </main>
+        </NavigationRegistryProvider>
       </body>
     </html>
   );

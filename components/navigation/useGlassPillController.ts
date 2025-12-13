@@ -6,7 +6,10 @@ import {
   resolvePillTarget,
   shouldHidePillForPageLoad,
 } from "./navigationPolicy";
-import { useElementRegistryState } from "./stores/elementRegistryState";
+import {
+  useNavigationRegistry,
+  useNavigationRegistryVersion,
+} from "./NavigationRegistryProvider";
 import { useGlassPillState } from "./stores/glassPillState";
 import { useMobileMenuState } from "./stores/mobileMenuState";
 import { useNavigationState } from "./stores/navigationState";
@@ -21,14 +24,8 @@ export const useGlassPillController = (pageLoadComplete: boolean) => {
     (s) => s.animationsComplete
   );
 
-  const parentElement = useElementRegistryState((s) => s.parentElement);
-  const headerRevision = useElementRegistryState((s) => s.headerRevision);
-  const overlayRevision = useElementRegistryState((s) => s.overlayRevision);
-  const fixedRevision = useElementRegistryState((s) => s.fixedRevision);
-
-  const getHeaderElement = useElementRegistryState((s) => s.getHeaderElement);
-  const getOverlayElement = useElementRegistryState((s) => s.getOverlayElement);
-  const getFixedElement = useElementRegistryState((s) => s.getFixedElement);
+  const registry = useNavigationRegistry();
+  const registryVersion = useNavigationRegistryVersion();
 
   const updatePosition = useGlassPillState((s) => s.updatePosition);
   const setIsVisible = useGlassPillState((s) => s.setIsVisible);
@@ -62,10 +59,10 @@ export const useGlassPillController = (pageLoadComplete: boolean) => {
     }
 
     const target = resolvePillTarget(displayedItem, viewport, {
-      parentElement,
-      getHeaderElement,
-      getOverlayElement,
-      getFixedElement,
+      parentElement: registry.getParentElement(),
+      getHeaderElement: registry.getHeaderElement,
+      getOverlayElement: registry.getOverlayElement,
+      getFixedElement: registry.getFixedElement,
     });
 
     if (!target.element || !target.mode) {
@@ -76,15 +73,12 @@ export const useGlassPillController = (pageLoadComplete: boolean) => {
     updatePosition(target.element, target.parentElement, target.mode);
   }, [
     activeItem,
-    getFixedElement,
-    getHeaderElement,
-    getOverlayElement,
     hoveredItem,
     isMobileMenuOpen,
     isMobileViewport,
     mobileMenuAnimationsComplete,
     pageLoadComplete,
-    parentElement,
+    registry,
     setIsVisible,
     updatePosition,
   ]);
@@ -92,7 +86,7 @@ export const useGlassPillController = (pageLoadComplete: boolean) => {
   // Sync after layout changes (hover/active/menu state, and registry mounts/unmounts).
   useLayoutEffect(() => {
     sync();
-  }, [sync, headerRevision, overlayRevision, fixedRevision]);
+  }, [sync, registryVersion]);
 
   // Re-sync on viewport resizes (rAF-throttled).
   useEffect(() => {

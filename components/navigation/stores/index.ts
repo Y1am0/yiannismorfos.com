@@ -1,5 +1,4 @@
 // Export all stores
-export * from "./elementRegistryState";
 export * from "./glassPillState";
 export * from "./mobileMenuState";
 export * from "./navigationState";
@@ -15,7 +14,7 @@ import {
   shouldAllowHover,
 } from "../navigationPolicy";
 import { NavigationItemId } from "../types";
-import { useElementRegistryState } from "./elementRegistryState";
+import { useNavigationRegistry } from "../NavigationRegistryProvider";
 import { useGlassPillState } from "./glassPillState";
 import { useMobileMenuState } from "./mobileMenuState";
 import { useNavigationState } from "./navigationState";
@@ -46,18 +45,7 @@ export const useNavigationActions = () => {
 
   const setGlassPillVisible = useGlassPillState((state) => state.setIsVisible);
 
-  const registerHeaderElement = useElementRegistryState(
-    (state) => state.registerHeaderElement
-  );
-  const registerOverlayElement = useElementRegistryState(
-    (state) => state.registerOverlayElement
-  );
-  const registerFixedElement = useElementRegistryState(
-    (state) => state.registerFixedElement
-  );
-  const setParentElement = useElementRegistryState(
-    (state) => state.setParentElement
-  );
+  const registry = useNavigationRegistry();
 
   // Get current state values without subscribing
   const getCurrentState = () => ({
@@ -138,19 +126,19 @@ export const useNavigationActions = () => {
   const handleElementMount = useCallback(
     (item: NavigationItemId, element: Element) => {
       if (isExternalLinkId(item) || isMusicPlayerButtonId(item)) {
-        registerFixedElement(item, element);
+        registry.registerFixedElement(item, element);
       } else {
-        registerHeaderElement(item, element);
+        registry.registerHeaderElement(item, element);
       }
     },
-    [registerFixedElement, registerHeaderElement]
+    [registry]
   );
 
   const handleMobileElementMount = useCallback(
     (item: NavigationItemId, element: Element) => {
-      registerOverlayElement(item, element);
+      registry.registerOverlayElement(item, element);
     },
-    [registerOverlayElement]
+    [registry]
   );
 
   const handleLogoClick = useCallback(() => {
@@ -175,7 +163,7 @@ export const useNavigationActions = () => {
     closeMenu,
 
     // State setters
-    setParentElement,
+    setParentElement: registry.setParentElement,
     setActiveItem,
     setLastClickedItem,
     validateRouteChange,
@@ -184,9 +172,9 @@ export const useNavigationActions = () => {
     setHoveredItem,
     setPressedItem,
     setGlassPillVisible,
-    registerHeaderElement,
-    registerOverlayElement,
-    registerFixedElement,
+    registerHeaderElement: registry.registerHeaderElement,
+    registerOverlayElement: registry.registerOverlayElement,
+    registerFixedElement: registry.registerFixedElement,
   };
 };
 

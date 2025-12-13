@@ -18,10 +18,10 @@ import { MobileMenu } from "./MobileMenu";
 import { NavigationItemId } from "./types";
 
 import { NavigationItem } from "./NavigationItem";
-import { useElementRegistryState } from "./stores/elementRegistryState";
 import { useNavigationActions, useNavigationSelectors } from "./stores/index";
 import { useMobileMenuState } from "./stores/mobileMenuState";
 import { useGlassPillController } from "./useGlassPillController";
+import { useNavigationRegistry } from "./NavigationRegistryProvider";
 
 const NavigationComponent = () => {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -41,9 +41,7 @@ const NavigationComponent = () => {
   } = useNavigationSelectors();
 
   const setIsMobile = useMobileMenuState((state) => state.setIsMobile);
-  const clearOverlayRegistry = useElementRegistryState(
-    (state) => state.clearOverlayRegistry
-  );
+  const registry = useNavigationRegistry();
 
   const { setParentElement, validateRouteChange, setGlassPillVisible, handleMouseUp } =
     useNavigationActions();
@@ -119,11 +117,11 @@ const NavigationComponent = () => {
   // Clear mobile registry when mobile menu closes
   useEffect(() => {
     if (!isMobileMenuOpen) {
-      clearOverlayRegistry();
+      registry.clearOverlayElements();
       // Hide glass pill when mobile menu closes for a clean state.
       if (isMobile) setGlassPillVisible(false);
     }
-  }, [isMobileMenuOpen, clearOverlayRegistry, isMobile, setGlassPillVisible]);
+  }, [isMobileMenuOpen, registry, isMobile, setGlassPillVisible]);
 
   // Set up parent element reference
   useEffect(() => {

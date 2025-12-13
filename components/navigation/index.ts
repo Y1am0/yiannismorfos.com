@@ -11,13 +11,19 @@ export { NavigationItem } from "./NavigationItem";
 
 // Zustand stores and hooks
 export {
-  useElementRegistryState,
   useGlassPillState,
   useMobileMenuState,
   useNavigationActions,
   useNavigationSelectors,
   useNavigationState,
 } from "./stores";
+
+// Registry provider (DOM references live here, not in Zustand)
+export {
+  NavigationRegistryProvider,
+  useNavigationRegistry,
+  useNavigationRegistryVersion,
+} from "./NavigationRegistryProvider";
 
 // Menu items and helpers
 export {

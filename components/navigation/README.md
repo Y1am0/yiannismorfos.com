@@ -43,14 +43,18 @@ The goal is to keep **IDs + data** centralized, and keep **interaction rules** e
   - Also manages the short hover-exit timeout
 - `components/navigation/stores/mobileMenuState.ts`
   - `isOpen`, `isMobile`, `animationsComplete`
-- `components/navigation/stores/elementRegistryState.ts`
-  - Maps IDs → DOM elements in three contexts:
-    - `headerElements` (`absolute` positioning)
-    - `overlayElements` (`fixed`, mobile menu)
-    - `fixedElements` (`fixed`, footer)
-  - Revision counters trigger pill sync after mounts/unmounts
 - `components/navigation/stores/glassPillState.ts`
   - The computed pill rectangle + visibility + `positionMode`
+
+### DOM registry (Context)
+
+- `components/navigation/NavigationRegistryProvider.tsx`
+  - Stores IDs → DOM elements in three contexts:
+    - header (`absolute`, top nav)
+    - overlay (`fixed`, mobile menu)
+    - fixed (`fixed`, footer)
+  - Exposes a small API for registration + lookups and a subscription version for controllers.
+  - Must wrap the UI that uses navigation interactions (header + footer); see `app/layout.tsx`.
 
 ### Pill controller (one place that moves/hides the pill)
 
@@ -74,4 +78,3 @@ The goal is to keep **IDs + data** centralized, and keep **interaction rules** e
 
 1. Add its ID to `components/navigation/navigationConfig.ts` in `MUSIC_PLAYER_BUTTON_IDS`.
 2. Use `useMusicPlayerButton()` in the button component.
-
