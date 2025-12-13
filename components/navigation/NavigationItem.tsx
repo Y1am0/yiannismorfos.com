@@ -57,9 +57,7 @@ const NavigationItemComponent = ({
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {
-    if (itemRef.current) {
-      handleHoverStart(itemId, itemRef.current);
-    }
+    handleHoverStart(itemId);
   }, [handleHoverStart, itemId]);
 
   // Memoized mouse down handler

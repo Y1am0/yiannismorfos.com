@@ -246,7 +246,9 @@ export const useProgressTracking = (
     percentage: number
   ) => void
 ): UseProgressTrackingReturn => {
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
 
   const updateProgress = useCallback(() => {
     if (!playerRef.current) return;
@@ -358,25 +360,19 @@ export const useMusicPlayerButton = (
     handleMouseDown,
     handleMouseUp,
     handleElementMount,
-    handleMobileElementMount,
   } = useNavigationActions();
 
-  // Register element on mount for both desktop and mobile
+  // Register element on mount (fixed registry; supports pill positioning)
   useEffect(() => {
     if (buttonRef.current) {
-      // Register for desktop
       handleElementMount(buttonId, buttonRef.current);
-      // Also register for mobile
-      handleMobileElementMount(buttonId, buttonRef.current);
     }
-  }, [buttonId, handleElementMount, handleMobileElementMount, buttonRef]);
+  }, [buttonId, handleElementMount, buttonRef]);
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {
-    if (buttonRef.current) {
-      handleHoverStart(buttonId, buttonRef.current);
-    }
-  }, [handleHoverStart, buttonId, buttonRef]);
+    handleHoverStart(buttonId);
+  }, [handleHoverStart, buttonId]);
 
   // Memoized hover end handler
   const handleHoverEndCallback = useCallback(() => {

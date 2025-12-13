@@ -5,13 +5,14 @@ import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES,
   LAYOUT_CONSTANTS,
-  NAVIGATION_CATEGORIES,
   Z_INDEX,
 } from "./constants";
+import { NAVIGATION_CATEGORIES } from "./navigationModel";
+import { isExternalLinkId, isMusicPlayerButtonId } from "./navigationPolicy";
 import { useNavigationSelectors } from "./stores";
 import { useMobileMenuState } from "./stores/mobileMenuState";
 
-import { ExternalLinkId, NavigationItemId } from "./types";
+import { NavigationItemId } from "./types";
 
 interface GlassPillProps {
   displayedItem?: NavigationItemId | null;
@@ -61,13 +62,9 @@ const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
     const isPressed = pressedItem === displayedItem;
 
     // Use smaller size for external links, regular size for other circular items
-    const isExternalLink = displayedItem
-      ? NAVIGATION_CATEGORIES.externalLinks.includes(
-          displayedItem as ExternalLinkId
-        )
-      : false;
+    const isExternalLink = displayedItem ? isExternalLinkId(displayedItem) : false;
     const isMusicPlayerButton = displayedItem
-      ? NAVIGATION_CATEGORIES.musicPlayerButtons.includes(displayedItem)
+      ? isMusicPlayerButtonId(displayedItem)
       : false;
     const circularSize = shouldBeCircular
       ? isExternalLink || isMusicPlayerButton

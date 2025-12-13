@@ -19,10 +19,10 @@ import {
 } from "./constants";
 import { getExternalLinks } from "./menu-items";
 import { useNavigationActions } from "./stores";
-import { ExternalLinkId, NavigationItemId } from "./types";
+import { ExternalLinkId } from "./types";
 
 interface ExternalLinkItemProps {
-  id: NavigationItemId;
+  id: ExternalLinkId;
   href: string;
   iconType: ExternalLinkId;
   label: string;
@@ -58,9 +58,7 @@ const ExternalLinkItem = ({
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {
-    if (itemRef.current) {
-      handleHoverStart(id, itemRef.current);
-    }
+    handleHoverStart(id);
     onHoverChange?.(true);
   }, [handleHoverStart, id, onHoverChange]);
 
@@ -141,7 +139,7 @@ const ExternalLinksComponent = () => {
   const [setIndex, setSetIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   // Hover state removed for simplified horizontal-only variant
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Cycle through sets on interval, pause if hovered
   useEffect(() => {

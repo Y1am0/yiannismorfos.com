@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { BackgroundStyle } from "../types";
+import type { PillPositionMode } from "../navigationPolicy";
 
 interface GlassPillState {
   // State
   backgroundStyle: BackgroundStyle;
   isVisible: boolean;
-  positionMode: "absolute" | "fixed";
+  positionMode: PillPositionMode;
 
   // Actions
   setBackgroundStyle: (style: BackgroundStyle) => void;
@@ -14,7 +15,7 @@ interface GlassPillState {
   updatePosition: (
     element: Element,
     parentElement: Element | null,
-    positionModeOverride?: "absolute" | "fixed"
+    positionMode: PillPositionMode
   ) => void;
 
   // (Intentionally no computed values here; keep logic in components/constants)
@@ -41,26 +42,10 @@ export const useGlassPillState = create<GlassPillState>()(
         set({ isVisible: visible }, false, "setIsVisible");
       },
 
-      updatePosition: (element, parentElement, positionModeOverride) => {
-        if (!parentElement) return;
-
-        const referenceRect = parentElement.getBoundingClientRect();
+      updatePosition: (element, parentElement, positionMode) => {
         const elementRect = element.getBoundingClientRect();
-
-        // Check if the element is in a mobile menu by detecting if it's in a fixed positioned container
-        // More robust check: if element is far from reference (mobile menu) or if top position is significantly different
-        const isInMobileMenu = positionModeOverride
-          ? positionModeOverride === "fixed"
-          : Math.abs(elementRect.top - referenceRect.top) > 100 ||
-            elementRect.top > window.innerHeight * 0.2; // Mobile menu items are typically in center/lower part of screen
-
         let newStyle: BackgroundStyle;
-        const positionMode: "absolute" | "fixed" = isInMobileMenu
-          ? "fixed"
-          : "absolute";
-
-        if (isInMobileMenu) {
-          // For mobile menu items, use viewport coordinates directly since the glass pill will be fixed positioned
+        if (positionMode === "fixed") {
           newStyle = {
             width: Math.round(elementRect.width),
             left: Math.round(elementRect.left),
@@ -68,7 +53,8 @@ export const useGlassPillState = create<GlassPillState>()(
             top: Math.round(elementRect.top),
           };
         } else {
-          // For navigation bar items, calculate relative to the navigation container
+          if (!parentElement) return;
+          const referenceRect = parentElement.getBoundingClientRect();
           newStyle = {
             width: Math.round(elementRect.width),
             left: Math.round(elementRect.left - referenceRect.left),

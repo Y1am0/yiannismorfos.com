@@ -33,9 +33,7 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {
-    if (logoRef.current) {
-      handleHoverStart("logo", logoRef.current);
-    }
+    handleHoverStart("logo");
   }, [handleHoverStart]);
 
   // Memoized mouse down handler
@@ -69,7 +67,9 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
   );
 
   // Track a small timer to hide the pill after mouseup when navigating home
-  const [hideTimer, setHideTimer] = useState<NodeJS.Timeout | null>(null);
+  const [hideTimer, setHideTimer] = useState<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   useEffect(() => {
     return () => {
       if (hideTimer) clearTimeout(hideTimer);

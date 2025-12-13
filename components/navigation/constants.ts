@@ -114,23 +114,6 @@ export const Z_INDEX = {
   glassPill: 10,
 } as const;
 
-import { ExternalLinkId, NavigationItemId } from "./types";
-
-// Navigation item categories for glass pill logic
-export const NAVIGATION_CATEGORIES: {
-  alwaysVisible: ReadonlyArray<NavigationItemId>;
-  externalLinks: ReadonlyArray<ExternalLinkId>;
-  navigationItems: ReadonlyArray<NavigationItemId>;
-  blogItem: ReadonlyArray<NavigationItemId>;
-  musicPlayerButtons: ReadonlyArray<NavigationItemId>;
-} = {
-  alwaysVisible: ["logo", "menu"],
-  externalLinks: ["github", "linkedin", "instagram", "tiktok"],
-  navigationItems: ["hello", "who", "what", "connect"],
-  blogItem: ["blog"],
-  musicPlayerButtons: ["music-play-pause", "music-restart", "music-volume"],
-} as const;
-
 // Animation timing constants
 export const TIMING = {
   glassPillExitDuration: 400, // Duration to wait for glass pill exit animation

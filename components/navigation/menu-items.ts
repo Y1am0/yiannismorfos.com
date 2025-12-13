@@ -1,91 +1,35 @@
-import { ExternalLinkId, NavigationItemId } from "./types";
+export {
+  EXTERNAL_LINKS,
+  MENU_ITEMS,
+  MUSIC_PLAYER_BUTTON_IDS,
+  type ExternalLink,
+  type ExternalLinkId,
+  type MenuItem,
+  type MenuItemId,
+  type MenuItemType,
+} from "./navigationConfig";
 
-export interface MenuItem {
-  id: NavigationItemId;
-  label: string;
-  href: string;
-  type: "logo" | "navigation" | "blog" | "external";
-}
+import { EXTERNAL_LINKS, MENU_ITEMS } from "./navigationConfig";
+import type { MenuItem, MenuItemId } from "./navigationConfig";
 
-export interface ExternalLink {
-  id: NavigationItemId;
-  label: string;
-  href: string;
-  iconType: ExternalLinkId;
-}
+type NavigationMenuItem = Extract<MenuItem, { type: "navigation" }>;
+type LogoMenuItem = Extract<MenuItem, { type: "logo" }>;
+type BlogMenuItem = Extract<MenuItem, { type: "blog" }>;
 
-export const MENU_ITEMS: MenuItem[] = [
-  {
-    id: "logo",
-    label: "Home",
-    href: "/",
-    type: "logo",
-  },
-  {
-    id: "hello",
-    label: "hello",
-    href: "/hello",
-    type: "navigation",
-  },
-  {
-    id: "who",
-    label: "who",
-    href: "/who",
-    type: "navigation",
-  },
-  {
-    id: "what",
-    label: "what",
-    href: "/what?tab=dev",
-    type: "navigation",
-  },
-  {
-    id: "connect",
-    label: "connect",
-    href: "/connect",
-    type: "navigation",
-  },
-  {
-    id: "blog",
-    label: "blog",
-    href: "/blog",
-    type: "blog",
-  },
-];
-
-// External links for social/professional platforms
-export const EXTERNAL_LINKS: ExternalLink[] = [
-  {
-    id: "github",
-    label: "GitHub",
-    href: "https://github.com/y1am0",
-    iconType: "github",
-  },
-  {
-    id: "linkedin",
-    label: "LinkedIn",
-    href: "https://linkedin.com/in/yiannismorfos",
-    iconType: "linkedin",
-  },
-  {
-    id: "instagram",
-    label: "Instagram",
-    href: "https://instagram.com/yiannismorfos",
-    iconType: "instagram",
-  },
-  {
-    id: "tiktok",
-    label: "TikTok",
-    href: "https://tiktok.com/@yiannismorfos",
-    iconType: "tiktok",
-  },
-];
+const isNavigationItem = (item: MenuItem): item is NavigationMenuItem =>
+  item.type === "navigation";
+const isLogoItem = (item: MenuItem): item is LogoMenuItem =>
+  item.type === "logo";
+const isBlogItem = (item: MenuItem): item is BlogMenuItem => item.type === "blog";
 
 // Helper functions to get specific menu items
-export const getNavigationItems = () =>
-  MENU_ITEMS.filter((item) => item.type === "navigation");
-export const getLogoItem = () =>
-  MENU_ITEMS.find((item) => item.type === "logo");
-export const getBlogItem = () =>
-  MENU_ITEMS.find((item) => item.type === "blog");
+export const getNavigationItems = (): readonly NavigationMenuItem[] =>
+  MENU_ITEMS.filter(isNavigationItem);
+export const getLogoItem = (): LogoMenuItem | null =>
+  MENU_ITEMS.find(isLogoItem) ?? null;
+export const getBlogItem = (): BlogMenuItem | null =>
+  MENU_ITEMS.find(isBlogItem) ?? null;
 export const getExternalLinks = () => EXTERNAL_LINKS;
+
+export const getMenuItemById = (id: MenuItemId) =>
+  MENU_ITEMS.find((item) => item.id === id) ?? null;

@@ -39,3 +39,6 @@ export {
   TIMING,
   Z_INDEX,
 } from "./constants";
+
+// Interaction model
+export { NAVIGATION_CATEGORIES } from "./navigationModel";

@@ -9,18 +9,20 @@ import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { memo, useEffect, useMemo, useRef } from "react";
 import { AbsoluteItem } from "./AbsoluteItem";
-import { NAVIGATION_CATEGORIES, Z_INDEX } from "./constants";
+import { Z_INDEX } from "./constants";
 import { GlassPill } from "./GlassPill";
 import { Logo } from "./Logo";
 import { getBlogItem, getLogoItem, getNavigationItems } from "./menu-items";
 import { MenuToggle } from "./MenuToggle";
 import { MobileMenu } from "./MobileMenu";
-import { ExternalLinkId, NavigationItemId } from "./types";
+import { getEffectiveDisplayedItem } from "./navigationPolicy";
+import { NavigationItemId } from "./types";
 
 import { NavigationItem } from "./NavigationItem";
 import { useElementRegistryState } from "./stores/elementRegistryState";
 import { useNavigationActions, useNavigationSelectors } from "./stores/index";
 import { useMobileMenuState } from "./stores/mobileMenuState";
+import { useGlassPillController } from "./useGlassPillController";
 
 const NavigationComponent = () => {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -35,7 +37,6 @@ const NavigationComponent = () => {
   } = usePageLoadAnimation();
 
   const {
-    displayedItem,
     isMobile,
     activeItem,
     isMobileMenuOpen,
@@ -44,26 +45,12 @@ const NavigationComponent = () => {
   } = useNavigationSelectors();
 
   const setIsMobile = useMobileMenuState((state) => state.setIsMobile);
-  const parentElement = useElementRegistryState((state) => state.parentElement);
-  const clearMobileRegistry = useElementRegistryState(
-    (state) => state.clearMobileRegistry
+  const clearOverlayRegistry = useElementRegistryState(
+    (state) => state.clearOverlayRegistry
   );
 
-  const {
-    setParentElement,
-    validateRouteChange,
-    updateGlassPillPosition,
-    setGlassPillVisible,
-    handleMouseUp,
-  } = useNavigationActions();
-
-  // Get element registry methods directly from the store
-  const getDesktopElement = useElementRegistryState(
-    (state) => state.getDesktopElement
-  );
-  const getMobileElement = useElementRegistryState(
-    (state) => state.getMobileElement
-  );
+  const { setParentElement, validateRouteChange, setGlassPillVisible, handleMouseUp } =
+    useNavigationActions();
 
   // Memoized menu items to prevent recreation
   const menuItems = useMemo(
@@ -88,11 +75,14 @@ const NavigationComponent = () => {
         ? menuItems.blog
         : null);
 
-    const actualRouteItemId = (currentItem?.id as NavigationItemId) || null;
+    const actualRouteItemId: NavigationItemId | null = currentItem?.id ?? null;
 
     // Validate the route change - this will handle setting the correct active item
     validateRouteChange(actualRouteItemId);
   }, [pathname, validateRouteChange, menuItems.navigation, menuItems.blog]);
+
+  // Centralized pill controller (positions/hides the pill based on state + registry).
+  useGlassPillController(pageLoadComplete);
 
   // ---- Responsive breakpoint detection -------------------------------------------------
   // Guards against SSR and debounces the expensive resize handler.
@@ -114,7 +104,7 @@ const NavigationComponent = () => {
     };
 
     // Debounce via setTimeout (50 ms) to avoid firing on every pixel change
-    let resizeTimer: NodeJS.Timeout | null = null;
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const debounced = () => {
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeTimer = setTimeout(checkMobile, 50);
@@ -133,193 +123,11 @@ const NavigationComponent = () => {
   // Clear mobile registry when mobile menu closes
   useEffect(() => {
     if (!isMobileMenuOpen) {
-      clearMobileRegistry();
-      // Hide glass pill when mobile menu closes
-      if (isMobile) {
-        setGlassPillVisible(false);
-      }
+      clearOverlayRegistry();
+      // Hide glass pill when mobile menu closes for a clean state.
+      if (isMobile) setGlassPillVisible(false);
     }
-  }, [isMobileMenuOpen, clearMobileRegistry, isMobile, setGlassPillVisible]);
-
-  // Handle glass pill visibility and positioning based on mobile state and menu state
-  useEffect(() => {
-    const updateGlassPillState = () => {
-      // Base displayed item prefers hover, falls back to active
-      const baseDisplayedItem = hoveredItem || activeItem;
-
-      // Guard: need an item and a parent element to proceed
-      if (!baseDisplayedItem || !parentElement) {
-        setGlassPillVisible(false);
-        return;
-      }
-
-      // Small-viewport gating: ignore hover except for mobile-menu navigation/blog items
-      let currentDisplayedItem: NavigationItemId =
-        baseDisplayedItem as NavigationItemId;
-      if (isMobile && hoveredItem) {
-        const hovered = hoveredItem as NavigationItemId;
-        const isNav = NAVIGATION_CATEGORIES.navigationItems.includes(hovered);
-        const isBlog = hovered === "blog";
-        const allowHover = (isNav || isBlog) && isMobileMenuOpen;
-        if (!allowHover) {
-          if (!activeItem) {
-            setGlassPillVisible(false);
-            return;
-          }
-          currentDisplayedItem = activeItem as NavigationItemId;
-        }
-      }
-
-      // Hide glass pill during page load animations for better UX
-      // Exception: if user is actively hovering, show immediately
-      if (!pageLoadComplete && !hoveredItem) {
-        setGlassPillVisible(false);
-        return;
-      }
-
-      // Desktop: Show pill on any displayed desktop element
-      if (!isMobile) {
-        const displayedDesktopElement = getDesktopElement(currentDisplayedItem);
-        if (displayedDesktopElement) {
-          updateGlassPillPosition(displayedDesktopElement, parentElement);
-        } else {
-          setGlassPillVisible(false);
-        }
-        return;
-      }
-
-      // Mobile: Different rules for different elements
-      if (isMobile) {
-        const isLogoOrHamburger =
-          currentDisplayedItem === "logo" || currentDisplayedItem === "menu";
-        const isNavigationItem = NAVIGATION_CATEGORIES.navigationItems.includes(
-          currentDisplayedItem as NavigationItemId
-        );
-        const isBlogItem = currentDisplayedItem === "blog";
-        const isExternalLink = NAVIGATION_CATEGORIES.externalLinks.includes(
-          currentDisplayedItem as ExternalLinkId
-        );
-        const isMusicPlayerButton =
-          NAVIGATION_CATEGORIES.musicPlayerButtons.includes(
-            currentDisplayedItem
-          );
-        if (isLogoOrHamburger || isExternalLink || isMusicPlayerButton) {
-          // Logo, hamburger, external links, and music player buttons are always visible on mobile - use desktop elements
-          const displayedDesktopElement =
-            getDesktopElement(currentDisplayedItem);
-          if (displayedDesktopElement) {
-            updateGlassPillPosition(displayedDesktopElement, parentElement);
-          } else {
-            setGlassPillVisible(false);
-          }
-        } else if ((isNavigationItem || isBlogItem) && isMobileMenuOpen) {
-          // Navigation items and blog are ONLY visible when mobile menu is open - use mobile elements
-          // Page load check already handled above, so just check mobile menu animations
-          if (animationsComplete) {
-            const displayedMobileElement =
-              getMobileElement(currentDisplayedItem);
-            if (displayedMobileElement) {
-              updateGlassPillPosition(displayedMobileElement, parentElement);
-            } else {
-              setGlassPillVisible(false);
-            }
-          } else {
-            setGlassPillVisible(false);
-          }
-        } else {
-          // Mobile menu is closed and item is a navigation item, or unknown item - hide pill
-          setGlassPillVisible(false);
-        }
-      }
-    };
-
-    updateGlassPillState();
-  }, [
-    hoveredItem,
-    activeItem,
-    parentElement,
-    isMobile,
-    isMobileMenuOpen,
-    animationsComplete,
-    pageLoadComplete,
-    getDesktopElement,
-    getMobileElement,
-    updateGlassPillPosition,
-    setGlassPillVisible,
-  ]);
-
-  // ---- Re-position glass pill on viewport resize ---------------------------------------
-  useEffect(() => {
-    if (typeof window === "undefined") return; // SSR guard
-
-    const reposition = () => {
-      // Only reposition if pill should be visible
-      if (activeItem && parentElement) {
-        const isLogoOrHamburger =
-          activeItem === "logo" || activeItem === "menu";
-        const isNavigationItem = NAVIGATION_CATEGORIES.navigationItems.includes(
-          activeItem as NavigationItemId
-        );
-        const isBlogItem = activeItem === "blog";
-        const isExternalLink = NAVIGATION_CATEGORIES.externalLinks.includes(
-          activeItem as ExternalLinkId
-        );
-
-        if (!isMobile) {
-          // Desktop: reposition on desktop element
-          const activeElement = getDesktopElement(activeItem);
-          if (activeElement) {
-            updateGlassPillPosition(activeElement, parentElement);
-          }
-        } else {
-          // Mobile: different logic based on item type
-          if (isLogoOrHamburger || isExternalLink) {
-            // Logo/hamburger/external links always use desktop elements (always visible)
-            const activeElement = getDesktopElement(activeItem);
-            if (activeElement) {
-              updateGlassPillPosition(activeElement, parentElement);
-            }
-          } else if (
-            (isNavigationItem || isBlogItem) &&
-            isMobileMenuOpen &&
-            animationsComplete
-          ) {
-            // Navigation items only work when mobile menu is open and mobile animations are complete (use mobile elements)
-            const activeElement = getMobileElement(activeItem);
-            if (activeElement) {
-              updateGlassPillPosition(activeElement, parentElement);
-            }
-          }
-          // If mobile menu is closed and it's a navigation item, do nothing (pill should be hidden)
-        }
-      }
-    };
-
-    // rAF throttle – keeps updates in sync with paint
-    let frameId: number | null = null;
-    const onResize = () => {
-      if (frameId !== null) return; // already queued
-      frameId = window.requestAnimationFrame(() => {
-        reposition();
-        frameId = null;
-      });
-    };
-
-    window.addEventListener("resize", onResize);
-    return () => {
-      if (frameId !== null) cancelAnimationFrame(frameId);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [
-    activeItem,
-    parentElement,
-    isMobile,
-    isMobileMenuOpen,
-    animationsComplete,
-    getMobileElement,
-    getDesktopElement,
-    updateGlassPillPosition,
-  ]);
+  }, [isMobileMenuOpen, clearOverlayRegistry, isMobile, setGlassPillVisible]);
 
   // Set up parent element reference
   useEffect(() => {
@@ -394,7 +202,13 @@ const NavigationComponent = () => {
         </AbsoluteItem>
 
         {/* Glass pill effect */}
-        <GlassPill displayedItem={displayedItem} />
+        <GlassPill
+          displayedItem={getEffectiveDisplayedItem(hoveredItem, activeItem, {
+            isMobileViewport: isMobile,
+            isMobileMenuOpen,
+            mobileMenuAnimationsComplete: animationsComplete,
+          })}
+        />
       </motion.div>
 
       {/* Mobile Menu Modal */}

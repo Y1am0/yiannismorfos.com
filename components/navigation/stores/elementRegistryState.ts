@@ -1,132 +1,156 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import type { NavigationItemId } from "../types";
 
 interface ElementRegistryState {
   // State
-  desktopElements: Map<string, Element>;
-  mobileElements: Map<string, Element>;
-  registeredDesktopItems: Set<string>;
-  registeredMobileItems: Set<string>;
+  headerElements: Map<NavigationItemId, Element>; // absolute-positioned (top nav)
+  overlayElements: Map<NavigationItemId, Element>; // fixed-positioned (mobile menu)
+  fixedElements: Map<NavigationItemId, Element>; // fixed-positioned (footer: external links, music)
   parentElement: Element | null;
 
+  // Revision counters (used to trigger pill sync when elements mount/unmount)
+  headerRevision: number;
+  overlayRevision: number;
+  fixedRevision: number;
+
   // Actions
-  registerDesktopElement: (item: string, element: Element) => void;
-  registerMobileElement: (item: string, element: Element) => void;
+  registerHeaderElement: (item: NavigationItemId, element: Element) => void;
+  registerOverlayElement: (item: NavigationItemId, element: Element) => void;
+  registerFixedElement: (item: NavigationItemId, element: Element) => void;
   setParentElement: (element: Element | null) => void;
-  clearMobileRegistry: () => void;
-  clearDesktopRegistry: () => void;
+  clearOverlayRegistry: () => void;
+  clearHeaderRegistry: () => void;
+  clearFixedRegistry: () => void;
   clearAllRegistries: () => void;
 
   // Getters
-  getDesktopElement: (item: string) => Element | null;
-  getMobileElement: (item: string) => Element | null;
-  isDesktopElementRegistered: (item: string) => boolean;
-  isMobileElementRegistered: (item: string) => boolean;
+  getHeaderElement: (item: NavigationItemId) => Element | null;
+  getOverlayElement: (item: NavigationItemId) => Element | null;
+  getFixedElement: (item: NavigationItemId) => Element | null;
 }
 
 export const useElementRegistryState = create<ElementRegistryState>()(
   devtools(
     (set, get) => ({
       // Initial state
-      desktopElements: new Map(),
-      mobileElements: new Map(),
-      registeredDesktopItems: new Set(),
-      registeredMobileItems: new Set(),
+      headerElements: new Map(),
+      overlayElements: new Map(),
+      fixedElements: new Map(),
       parentElement: null,
+      headerRevision: 0,
+      overlayRevision: 0,
+      fixedRevision: 0,
 
       // Actions
-      registerDesktopElement: (item, element) => {
+      registerHeaderElement: (item, element) => {
         const state = get();
 
-        const newDesktopElements = new Map(state.desktopElements);
-        const newRegisteredDesktopItems = new Set(state.registeredDesktopItems);
-
-        newDesktopElements.set(item, element);
-        newRegisteredDesktopItems.add(item);
+        const newHeaderElements = new Map(state.headerElements);
+        newHeaderElements.set(item, element);
 
         set(
           {
-            desktopElements: newDesktopElements,
-            registeredDesktopItems: newRegisteredDesktopItems,
+            headerElements: newHeaderElements,
+            headerRevision: state.headerRevision + 1,
           },
           false,
-          "registerDesktopElement"
+          "registerHeaderElement"
         );
       },
 
-      registerMobileElement: (item, element) => {
+      registerOverlayElement: (item, element) => {
         const state = get();
 
-        const newMobileElements = new Map(state.mobileElements);
-        const newRegisteredMobileItems = new Set(state.registeredMobileItems);
-
-        newMobileElements.set(item, element);
-        newRegisteredMobileItems.add(item);
+        const newOverlayElements = new Map(state.overlayElements);
+        newOverlayElements.set(item, element);
 
         set(
           {
-            mobileElements: newMobileElements,
-            registeredMobileItems: newRegisteredMobileItems,
+            overlayElements: newOverlayElements,
+            overlayRevision: state.overlayRevision + 1,
           },
           false,
-          "registerMobileElement"
+          "registerOverlayElement"
+        );
+      },
+
+      registerFixedElement: (item, element) => {
+        const state = get();
+        const newFixedElements = new Map(state.fixedElements);
+        newFixedElements.set(item, element);
+
+        set(
+          {
+            fixedElements: newFixedElements,
+            fixedRevision: state.fixedRevision + 1,
+          },
+          false,
+          "registerFixedElement"
         );
       },
 
       setParentElement: (element) =>
         set({ parentElement: element }, false, "setParentElement"),
 
-      clearMobileRegistry: () =>
+      clearOverlayRegistry: () =>
         set(
           {
-            mobileElements: new Map(),
-            registeredMobileItems: new Set(),
+            overlayElements: new Map(),
+            overlayRevision: get().overlayRevision + 1,
           },
           false,
-          "clearMobileRegistry"
+          "clearOverlayRegistry"
         ),
 
-      clearDesktopRegistry: () =>
+      clearHeaderRegistry: () =>
         set(
           {
-            desktopElements: new Map(),
-            registeredDesktopItems: new Set(),
+            headerElements: new Map(),
+            headerRevision: get().headerRevision + 1,
           },
           false,
-          "clearDesktopRegistry"
+          "clearHeaderRegistry"
+        ),
+
+      clearFixedRegistry: () =>
+        set(
+          {
+            fixedElements: new Map(),
+            fixedRevision: get().fixedRevision + 1,
+          },
+          false,
+          "clearFixedRegistry"
         ),
 
       clearAllRegistries: () =>
         set(
           {
-            desktopElements: new Map(),
-            mobileElements: new Map(),
-            registeredDesktopItems: new Set(),
-            registeredMobileItems: new Set(),
+            headerElements: new Map(),
+            overlayElements: new Map(),
+            fixedElements: new Map(),
+            headerRevision: get().headerRevision + 1,
+            overlayRevision: get().overlayRevision + 1,
+            fixedRevision: get().fixedRevision + 1,
           },
           false,
           "clearAllRegistries"
         ),
 
       // Getters
-      getDesktopElement: (item) => {
+      getHeaderElement: (item) => {
         const state = get();
-        return state.desktopElements.get(item) || null;
+        return state.headerElements.get(item) || null;
       },
 
-      getMobileElement: (item) => {
+      getOverlayElement: (item) => {
         const state = get();
-        return state.mobileElements.get(item) || null;
+        return state.overlayElements.get(item) || null;
       },
 
-      isDesktopElementRegistered: (item) => {
+      getFixedElement: (item) => {
         const state = get();
-        return state.registeredDesktopItems.has(item);
-      },
-
-      isMobileElementRegistered: (item) => {
-        const state = get();
-        return state.registeredMobileItems.has(item);
+        return state.fixedElements.get(item) || null;
       },
     }),
     {
@@ -136,17 +160,14 @@ export const useElementRegistryState = create<ElementRegistryState>()(
 );
 
 // Selectors for performance optimization
-export const selectDesktopElement =
-  (item: string) => (state: ElementRegistryState) =>
-    state.getDesktopElement(item);
-export const selectMobileElement =
-  (item: string) => (state: ElementRegistryState) =>
-    state.getMobileElement(item);
+export const selectHeaderElement =
+  (item: NavigationItemId) => (state: ElementRegistryState) =>
+    state.getHeaderElement(item);
+export const selectOverlayElement =
+  (item: NavigationItemId) => (state: ElementRegistryState) =>
+    state.getOverlayElement(item);
+export const selectFixedElement =
+  (item: NavigationItemId) => (state: ElementRegistryState) =>
+    state.getFixedElement(item);
 export const selectParentElement = (state: ElementRegistryState) =>
   state.parentElement;
-export const selectIsDesktopElementRegistered =
-  (item: string) => (state: ElementRegistryState) =>
-    state.isDesktopElementRegistered(item);
-export const selectIsMobileElementRegistered =
-  (item: string) => (state: ElementRegistryState) =>
-    state.isMobileElementRegistered(item);

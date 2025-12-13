@@ -28,9 +28,7 @@ const MenuToggleComponent = () => {
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {
     setIsHovered(true);
-    if (iconRef.current) {
-      handleHoverStart("menu", iconRef.current);
-    }
+    handleHoverStart("menu");
   }, [handleHoverStart]);
 
   // Memoized hover end handler
