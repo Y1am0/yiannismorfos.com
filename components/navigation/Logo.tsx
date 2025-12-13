@@ -3,7 +3,9 @@
 import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { GlassPill } from "./GlassPill";
 import { useNavigationActions } from "./stores";
+import { useNavigationPill } from "./useNavigationPill";
 
 interface LogoProps {
   className?: string;
@@ -19,23 +21,14 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    handleElementMount,
+    clearExitingItem,
     setActiveItem,
-    setGlassPillVisible,
+    setHoveredItem,
   } = useNavigationActions();
-
-  // Register element on mount
-  useEffect(() => {
-    if (logoRef.current) {
-      handleElementMount("logo", logoRef.current);
-    }
-  }, [handleElementMount]);
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {
-    if (logoRef.current) {
-      handleHoverStart("logo", logoRef.current);
-    }
+    handleHoverStart("logo");
   }, [handleHoverStart]);
 
   // Memoized mouse down handler
@@ -43,18 +36,29 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
     handleMouseDown("logo");
   }, [handleMouseDown]);
 
+  const pill = useNavigationPill("logo", "header");
+
   const content = (
     <div
       ref={logoRef}
-      className={`px-2 sm:px-6 py-2 cursor-pointer select-none`}
+      className={`px-2 sm:px-6 py-2 cursor-pointer select-none relative`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEnd}
       onTouchStart={handleHoverStartCallback}
       onMouseDown={handleMouseDownCallback}
       onMouseUp={handleMouseUp}
     >
+      {pill.shouldRender && (
+        <GlassPill
+          variant={pill.variant}
+          circleSizePx={pill.circleSizePx}
+          isPressed={pill.isPressed}
+          isExiting={pill.isExiting}
+          onExitComplete={clearExitingItem}
+        />
+      )}
       <svg
-        className={className}
+        className={`${className} relative`}
         width="65"
         height="23"
         viewBox="0 0 268.74 93.37"
@@ -69,7 +73,9 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
   );
 
   // Track a small timer to hide the pill after mouseup when navigating home
-  const [hideTimer, setHideTimer] = useState<NodeJS.Timeout | null>(null);
+  const [hideTimer, setHideTimer] = useState<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   useEffect(() => {
     return () => {
       if (hideTimer) clearTimeout(hideTimer);
@@ -85,9 +91,9 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
         closeMenu();
         // Immediately clear active item so hoverEnd won't jump back to previous
         setActiveItem(null);
-        // Schedule pill exit shortly after mouseup animation
+        // Schedule pill exit shortly after mouseup animation (even if cursor stays over logo)
         const t = setTimeout(() => {
-          setGlassPillVisible(false);
+          setHoveredItem(null);
         }, 160);
         setHideTimer(t);
       }}

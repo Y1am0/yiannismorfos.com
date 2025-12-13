@@ -8,21 +8,24 @@ import {
 } from "@/components/icons";
 import {
   PAGE_LOAD_ANIMATIONS,
-  usePageLoadAnimation,
-} from "@/lib/usePageLoadAnimation";
+  usePageLoadAnimationContext,
+} from "@/components/PageLoadAnimationProvider";
 import { AnimatePresence, motion } from "motion/react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo } from "react";
 import {
   ANIMATION_CONFIG,
   EXTERNAL_LINK_ROTATION_INTERVAL,
   LAYOUT_CONSTANTS,
 } from "./constants";
+import { GlassPill } from "./GlassPill";
 import { getExternalLinks } from "./menu-items";
+import { useRotatingLinkSet } from "./useRotatingLinkSet";
 import { useNavigationActions } from "./stores";
-import { ExternalLinkId, NavigationItemId } from "./types";
+import { ExternalLinkId } from "./types";
+import { useNavigationPill } from "./useNavigationPill";
 
 interface ExternalLinkItemProps {
-  id: NavigationItemId;
+  id: ExternalLinkId;
   href: string;
   iconType: ExternalLinkId;
   label: string;
@@ -31,7 +34,6 @@ interface ExternalLinkItemProps {
 
 /**
  * Individual external link item with hover states and icon rendering
- * Registers itself with the navigation system for glass pill positioning
  */
 const ExternalLinkItem = ({
   id,
@@ -40,27 +42,19 @@ const ExternalLinkItem = ({
   label,
   onHoverChange,
 }: ExternalLinkItemProps) => {
-  const itemRef = useRef<HTMLAnchorElement>(null);
   const {
     handleHoverStart,
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    handleElementMount,
+    clearExitingItem,
   } = useNavigationActions();
 
-  // Register element on mount
-  useEffect(() => {
-    if (itemRef.current) {
-      handleElementMount(id, itemRef.current);
-    }
-  }, [id, handleElementMount]);
+  const pill = useNavigationPill(id, "fixed");
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {
-    if (itemRef.current) {
-      handleHoverStart(id, itemRef.current);
-    }
+    handleHoverStart(id);
     onHoverChange?.(true);
   }, [handleHoverStart, id, onHoverChange]);
 
@@ -98,12 +92,11 @@ const ExternalLinkItem = ({
 
   return (
     <motion.a
-      ref={itemRef}
       {...ANIMATION_CONFIG.externalLink}
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`${LAYOUT_CONSTANTS.itemPadding} cursor-pointer select-none block`}
+      className={`${LAYOUT_CONSTANTS.itemPadding} cursor-pointer select-none block relative`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEndCallback}
       onTouchStart={handleHoverStartCallback}
@@ -111,6 +104,15 @@ const ExternalLinkItem = ({
       onMouseUp={handleMouseUp}
       aria-label={label}
     >
+      {pill.shouldRender && (
+        <GlassPill
+          variant={pill.variant}
+          circleSizePx={pill.circleSizePx}
+          isPressed={pill.isPressed}
+          isExiting={pill.isExiting}
+          onExitComplete={clearExitingItem}
+        />
+      )}
       {renderIcon()}
     </motion.a>
   );
@@ -128,7 +130,7 @@ const ExternalLinksComponent = () => {
   const allLinks = getExternalLinks();
 
   // Page load animation state
-  const { isExternalLinksVisible, shouldAnimate } = usePageLoadAnimation();
+  const { isExternalLinksVisible, shouldAnimate } = usePageLoadAnimationContext();
 
   // Define rotating sets by id order
   const linkSets = useMemo(
@@ -138,59 +140,27 @@ const ExternalLinksComponent = () => {
     ],
     []
   );
-  const [setIndex, setSetIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  // Hover state removed for simplified horizontal-only variant
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const { setIndex, setIsPaused, next, resetTimer } = useRotatingLinkSet(
+    linkSets,
+    EXTERNAL_LINK_ROTATION_INTERVAL
+  );
 
-  // Cycle through sets on interval, pause if hovered
-  useEffect(() => {
-    if (isPaused) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      return;
-    }
-    timerRef.current = setInterval(() => {
-      setSetIndex((prev) => (prev + 1) % linkSets.length);
-    }, EXTERNAL_LINK_ROTATION_INTERVAL);
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [isPaused, linkSets.length]);
-
-  // Pause timer on hover
-  const handleHoverChange = useCallback((hovered: boolean) => {
-    setIsPaused(hovered);
-  }, []);
+  const handleHoverChange = useCallback(
+    (hovered: boolean) => {
+      setIsPaused(hovered);
+      if (hovered) resetTimer();
+    },
+    [resetTimer, setIsPaused]
+  );
 
   // Handle line hover to pause timer and animate width
   // Hover handlers removed; no hover UI for the indicator
 
   // Handle line click to manually change set and reset timer
   const handleLineClick = useCallback(() => {
-    // Change to next set
-    setSetIndex((prev) => (prev + 1) % linkSets.length);
-
-    // Reset the timer by clearing current one and restarting
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    // Restart timer after a brief delay to allow the transition to play
-    setTimeout(() => {
-      if (!isPaused) {
-        timerRef.current = setInterval(() => {
-          setSetIndex((prev) => (prev + 1) % linkSets.length);
-        }, EXTERNAL_LINK_ROTATION_INTERVAL);
-      }
-    }, 100);
-  }, [linkSets.length, isPaused]);
+    resetTimer();
+    next();
+  }, [next, resetTimer]);
 
   const visibleLinks = allLinks.filter((l) =>
     linkSets[setIndex].includes(l.id as ExternalLinkId)

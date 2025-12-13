@@ -7,17 +7,23 @@ export { MenuToggle } from "./MenuToggle";
 export { MobileMenu } from "./MobileMenu";
 
 export { Navigation } from "./Navigation";
-export { NavigationItem } from "./NavigationItem";
+export { MobileNavigationItem, NavigationItem } from "./NavigationItem";
+export { useNavigationPill } from "./useNavigationPill";
 
 // Zustand stores and hooks
 export {
-  useElementRegistryState,
-  useGlassPillState,
   useMobileMenuState,
   useNavigationActions,
   useNavigationSelectors,
   useNavigationState,
 } from "./stores";
+
+// Motion provider (enables shared layout for the glass pill)
+export { NavigationMotionProvider } from "./NavigationMotionProvider";
+
+// Pointer utilities
+export { isCoarsePointerDevice } from "./pointer";
+export { useIsCoarsePointer } from "./useIsCoarsePointer";
 
 // Menu items and helpers
 export {
@@ -29,7 +35,7 @@ export {
 } from "./menu-items";
 
 // Types
-export type { BackgroundStyle, MenuItem } from "./types";
+export type { MenuItem } from "./types";
 
 // Constants
 export {
@@ -39,3 +45,6 @@ export {
   TIMING,
   Z_INDEX,
 } from "./constants";
+
+// Interaction model
+export { NAVIGATION_CATEGORIES } from "./navigationModel";

@@ -4,6 +4,9 @@ import { NavigationItemId } from "@/components/navigation/types";
 import React, { useRef } from "react";
 import { BUTTON_STYLES, ICONS } from "../constants";
 import { useMusicPlayerButton } from "../hooks";
+import { GlassPill } from "@/components/navigation/GlassPill";
+import { useNavigationPill } from "@/components/navigation/useNavigationPill";
+import { useNavigationState } from "@/components/navigation/stores/navigationState";
 
 interface IconButtonProps {
   onClick: () => void;
@@ -22,22 +25,33 @@ const IconButton: React.FC<IconButtonProps> = ({
   buttonId,
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const clearExitingItem = useNavigationState((s) => s.clearExitingItem);
 
   // Always call the hook, but only use the result if buttonId is provided
   const glassPillProps = useMusicPlayerButton(
-    buttonId || "music-play-pause", // fallback to prevent undefined
-    buttonRef
+    buttonId || "music-play-pause" // fallback to prevent undefined
   );
+
+  const pill = useNavigationPill(buttonId || "music-play-pause", "fixed");
 
   return (
     <button
       ref={buttonRef}
-      className={BUTTON_STYLES.base}
+      className={`${BUTTON_STYLES.base} relative`}
       onClick={onClick}
       aria-label={ariaLabel}
       {...(buttonId ? glassPillProps : {})}
     >
-      {children}
+      {buttonId && pill.shouldRender && (
+        <GlassPill
+          variant={pill.variant}
+          circleSizePx={pill.circleSizePx}
+          isPressed={pill.isPressed}
+          isExiting={pill.isExiting}
+          onExitComplete={clearExitingItem}
+        />
+      )}
+      <span className="relative">{children}</span>
     </button>
   );
 };

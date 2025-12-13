@@ -1,162 +1,82 @@
-# `@/components/navigation`
+# Navigation System
 
-A self-contained, animated navigation system built with **Next.js App Router**, **motion/react** (Framer-Motion v12+), **Zustand**, and **Tailwind CSS**.
+This folder implements the site navigation + the “glass pill” highlight that follows hover/active/press across:
 
-Its goals:
+- Header navigation (desktop + mobile)
+- Mobile menu overlay
+- Footer external links
+- Music player buttons
 
-1. Provide a silky-smooth, delightfully animated nav bar that scales from mobile to desktop.
-2. Keep all state colocated in lightweight stores for testability & isolation.
-3. Offer an easy extension surface – new items, new effects, alternate layouts – without touching unrelated code.
+The goal is to keep **IDs + data** centralized, and keep **interaction rules** explicit and shared (so adding a new menu item doesn’t require updating multiple files).
 
----
+## Files that matter
 
-## 📂 Directory layout
+### Data + IDs (single source of truth)
 
-```
-components/navigation/
-├─ AbsoluteItem.tsx        // Utility wrapper for absolute-positioned children
-├─ ExternalLinks.tsx       // Rotating vertical social links (GitHub/LinkedIn & Instagram/TikTok)
-├─ GlassPill.tsx           // Shared animated background highlight
-├─ Logo.tsx                // SVG/site logo with hover/press behaviour
-├─ MenuToggle.tsx          // Mobile hamburger ↔︎ cross toggle
-├─ MobileMenu.tsx          // Full-screen modal housing nav items on < 768 px
-├─ Navigation.tsx          // Orchestrator – renders everything & wires stores
-├─ NavigationItem.tsx      // Single text/SVG nav entry
-├─ constants.ts            // Layout, z-index & animation presets
-├─ menu-items.ts           // Source-of-truth item list
-├─ stores/                 // Zustand state modules (see below)
-├─ types.ts                // Shared literal unions + helper types
-└─ README.md               // ← you are here
-```
+- `components/navigation/navigationConfig.ts`
+  - Defines `MENU_ITEMS`, `EXTERNAL_LINKS`, `MUSIC_PLAYER_BUTTON_IDS`, `NAVIGATION_CONTROL_IDS`
+  - Derives the literal-union types (`NavigationItemId`, `ExternalLinkId`, …) from the data above
 
-### Zustand stores (`./stores`)
+### Helpers
 
-| File                      | Responsibility                                                    |
-| ------------------------- | ----------------------------------------------------------------- |
-| `elementRegistryState.ts` | Maps _item id ➜ DOM element_ for desktop & mobile lists.          |
-| `navigationState.ts`      | Transient UI state: hovered/pressed/active item, exit timers.     |
-| `mobileMenuState.ts`      | Open/close toggles, _isMobile_ flag & animation-completion latch. |
-| `glassPillState.ts`       | Position & visibility of the translucent pill background.         |
+- `components/navigation/menu-items.ts`
+  - Thin typed helpers like `getNavigationItems()`, `getBlogItem()`, `getExternalLinks()`
 
-`index.ts` re-exports everything and defines two convenience hooks:
+### Interaction model (derived categories)
 
-- **`useNavigationActions()`** – bundled callbacks (hover start/end, toggle menu, etc.) that coordinate multiple stores.
-- **`useNavigationSelectors()`** – memoised selectors for components.
+- `components/navigation/navigationModel.ts`
+  - Defines `NAVIGATION_CATEGORIES`
+  - `navigationItems` / `blogItem` / `externalLinks` are derived from config to avoid drift
 
----
+### Interaction policy (the rules)
 
-## ✨ Feature tour
+- `components/navigation/navigationPolicy.ts`
+  - Centralized rules used by hover handlers and pill rendering:
+    - which items allow hover on mobile viewport
+    - type guards/helpers for ID categories (external links, music buttons, nav/blog)
 
-### 1. Animated “Glass Pill” highlight
+### Stores (Zustand)
 
-- Appears under the currently **hovered**, **focused** or **active** menu item.
-- Derived from `glassPillState.backgroundStyle` (width/height + x/y), updated via `updateGlassPillPosition()`.
-- Recognises five visual modes:
-  1. **Circular** (logo / hamburger / blog icon / external links)
-  2. **Rectangular** (text items)
-  3. **Fixed** (mobile modal – uses viewport coords)
-  4. **Pressed** (scale ↑ on mousedown)
-  5. **Reduced-motion** (opacity fade only)
-- Motion settings live in `constants.ts → ANIMATION_CONFIG.glassPill`.
+- `components/navigation/stores/navigationState.ts`
+  - Interaction state: `hoveredItem`, `pressedItem`, `activeItem`, `lastClickedItem`
+  - Also manages the short hover-exit timeout
+- `components/navigation/stores/mobileMenuState.ts`
+  - `isOpen`, `isMobile`, `animationsComplete`
+  - `animationsComplete` is set by `MobileMenu` when the stagger finishes
 
-### 2. Responsive breakpoints & resize flow
+### Glass pill (declarative)
 
-- `<768px` is considered **mobile**. A debounced checker (50 ms) sets `mobileMenuState.isMobile` and auto-closes the modal when switching back to desktop.
-- Glass-pill **repositions** on every resize frame via an `requestAnimationFrame` throttle to keep in sync with the paint loop.
+On desktop header + footer, the glass pill is rendered **inside the currently displayed item** using Motion shared layout (`layoutId`), so there is:
 
-### 3. Mobile menu modal
+- no DOM element registry
+- no rectangle measurement logic
+- no “controller” effect that repositions a global overlay
 
-- Full-screen **backdrop-blur** overlay (`Z_INDEX.mobileMenu = 30`).
-- Children rendered with a staggered slide-up animation (`motion.div` + delay trail).
-- Closing the modal resets the mobile element registry & hides the pill.
+### Mobile menu overlay (buttery smooth + stable color)
 
-### 4. Accessibility
+The mobile menu overlay is a special case:
 
-- Keyboard support – `NavigationItem` gains `tabIndex=0` (if not a link) and triggers hover logic on `focus`/`blur`.
-- SVG icons have `aria-label` and `role="button"` where appropriate.
+- We render a single fixed overlay pill (`components/navigation/MobileMenuPill.tsx`) and animate its `x/y/width/height` to match the hovered item.
+- Mobile menu items render via `MobileNavigationItem` (no per-item shared-layout pill in the overlay).
+- The overlay pill uses `GLASS_EFFECT_STYLES_OVERLAY` (same look, but **no `backdrop-filter`**) to prevent color flicker during movement.
+- `mobileMenuState.animationsComplete` is driven by **real Motion animation completion** (no hardcoded timeouts).
 
-### 5. Dev-time utilities
+The shared-layout boundary is provided by `components/navigation/NavigationMotionProvider.tsx` (wired in `app/layout.tsx`).
+Page-load gating is provided by `components/PageLoadAnimationProvider.tsx` (also wired in `app/layout.tsx`).
 
-- **Console logs** are gated behind `process.env.NODE_ENV === "development"`.
-- Placeholder helpers (`createDevLogger`, `createPerfMonitor`) demonstrate how to subscribe to store changes if deeper debugging is desired.
+## Adding / changing items
 
----
+### Add a new header + mobile menu item
 
-## ⚙️ How it works
+1. Add it to `components/navigation/navigationConfig.ts` in `MENU_ITEMS` with `type: "navigation"` (or `"blog"`).
+2. Done — mobile hover/pill gating uses derived categories.
 
-1. **Mount phase**
-   - `Navigation` sets the **parentRef** for positioning math and registers it via `setParentElement()`.
-   - Each interactive component (`Logo`, `NavigationItem`, `MenuToggle`, external links) registers its DOM element in **`elementRegistryState`**.
-2. **Interaction phase**
-   - Hover/Focus → `handleHoverStart(id, el)` → updates `hoveredItem` + pill position.
-   - Mouse down → sets `pressedItem` for subtle scale-up.
-   - Mouse leave / blur → `handleHoverEnd()` schedules pill exit (100 ms) via timeout.
-3. **Navigation change**
-   - On route change (`usePathname`), active item is recalculated → pill snaps to new item.
-4. **Resize**
-   - rAF-throttled listener re-computes pill target every frame.
+### Add a new external link icon
 
----
+1. Add it to `components/navigation/navigationConfig.ts` in `EXTERNAL_LINKS`.
+2. Add an icon render case in `components/navigation/ExternalLinks.tsx` if it’s a new icon type.
 
-## ➕ Extending / Modifying
+### Add a new music player button that participates in the pill system
 
-### Add a new navigation entry
-
-1. Edit `menu-items.ts` and append a new `MenuItem` object.
-2. If it’s a _brand-new category_ (e.g. `docs`), update `types.ts → NavigationItemId`.
-3. Update `constants.ts → NAVIGATION_CATEGORIES` if its behaviour differs (always-visible, etc.).
-4. If it has an icon, add it to `Navigation` render tree using `<NavigationItem itemId="docs" href="/docs">…</NavigationItem>`.
-
-### Change animation behaviour
-
-- Tweak or add a preset in `SPRING_PRESETS` then reference it from `ANIMATION_CONFIG`.
-- For one-off variants pass `transition` props directly to `<motion.div>`.
-
-### Alter breakpoints
-
-- Update hard-coded `768` in `Navigation.tsx → checkMobile()`.
-
-### Listen to state for another feature
-
-- Import the relevant Zustand store and subscribe with a selector:
-  ```ts
-  const active = useNavigationState((s) => s.activeItem);
-  ```
-
-### Type Safety
-
-The navigation system is fully type-safe with TypeScript:
-
-- `NavigationItemId` type in `types.ts` defines all valid navigation item IDs
-- `ExternalLinkId` type defines the subset of IDs valid for social links
-- State management uses these types to ensure type safety across component boundaries
-- `NAVIGATION_CATEGORIES` in `constants.ts` provides runtime grouping of these typed IDs
-
----
-
-## 🗂️ Glossary of Item IDs
-
-| ID                                             | Type       | Notes                                |
-| ---------------------------------------------- | ---------- | ------------------------------------ |
-| `logo`                                         | logo       | Home page link, always shown         |
-| `menu`                                         | control    | Mobile hamburger / close icon        |
-| `hello` / `who` / `what` / `connect`           | navigation | Middle text links                    |
-| `blog`                                         | blog       | Renders as a `Quote` icon on desktop |
-| `github` / `linkedin` / `instagram` / `tiktok` | external   | Rotating vertical social bar         |
-
-These strings are centralised in `types.ts → NavigationItemId` so refactor tools will catch rename errors.
-
----
-
-## 🔋 Dependencies
-
-- **Next.js 15** (App Router) – Client components only.
-- **motion/react 12** – successor to Framer-Motion.
-- **Zustand 5** – global stores.
-- **Tailwind CSS 4** – Utility classes.
-
----
-
-### Author’s note
-
-This README is kept inside the module to stay co-located with the code it documents. If you spot missing details or decide to refactor significant logic, please update this file accordingly – future you (and other contributors) will thank you! 🎉
+1. Add its ID to `components/navigation/navigationConfig.ts` in `MUSIC_PLAYER_BUTTON_IDS`.
+2. Wire hover/press via `useMusicPlayerButton()` and render the pill via `useNavigationPill()` (see `components/MusicPlayer/components/ControlButtons.tsx`).

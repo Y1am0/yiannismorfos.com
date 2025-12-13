@@ -1,8 +1,35 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { MENU_ITEMS } from "../menu-items";
-
 import { NavigationItemId } from "../types";
+
+type TimeoutHandle = ReturnType<typeof setTimeout>;
+
+const computePillTracking = (
+  prev: {
+    hoveredItem: NavigationItemId | null;
+    activeItem: NavigationItemId | null;
+    lastDisplayedItem: NavigationItemId | null;
+    exitingItem: NavigationItemId | null;
+  },
+  next: {
+    hoveredItem?: NavigationItemId | null;
+    activeItem?: NavigationItemId | null;
+  }
+) => {
+  const hoveredItem =
+    typeof next.hoveredItem !== "undefined"
+      ? next.hoveredItem
+      : prev.hoveredItem;
+  const activeItem =
+    typeof next.activeItem !== "undefined" ? next.activeItem : prev.activeItem;
+  const displayedItem = hoveredItem || activeItem;
+  const lastDisplayedItem = displayedItem ?? prev.lastDisplayedItem;
+  const exitingItem = displayedItem
+    ? null
+    : prev.exitingItem ?? lastDisplayedItem;
+
+  return { hoveredItem, activeItem, lastDisplayedItem, exitingItem };
+};
 
 interface NavigationState {
   // State
@@ -10,23 +37,24 @@ interface NavigationState {
   pressedItem: NavigationItemId | null;
   activeItem: NavigationItemId | null;
   lastClickedItem: NavigationItemId | null; // Track what was clicked to validate route changes
+  lastDisplayedItem: NavigationItemId | null; // Last non-null displayed (hovered or active)
+  exitingItem: NavigationItemId | null; // Item that is currently animating pill exit
 
   // Timeout management for hover exit delays
-  exitTimeoutId: NodeJS.Timeout | null;
-  clearHoverTimeoutId: NodeJS.Timeout | null;
+  exitTimeoutId: TimeoutHandle | null;
 
   // Actions
   setHoveredItem: (item: NavigationItemId | null) => void;
   setPressedItem: (item: NavigationItemId | null) => void;
   setActiveItem: (item: NavigationItemId | null) => void;
   setLastClickedItem: (item: NavigationItemId | null) => void;
+  clearExitingItem: () => void;
 
   // Route validation
   validateRouteChange: (expectedItemId: NavigationItemId | null) => void;
 
   // Timeout management
-  setExitTimeout: (timeoutId: NodeJS.Timeout) => void;
-  setClearHoverTimeout: (timeoutId: NodeJS.Timeout) => void;
+  setExitTimeout: (timeoutId: TimeoutHandle) => void;
   clearAllTimeouts: () => void;
 
   // Computed values with selectors
@@ -41,46 +69,83 @@ export const useNavigationState = create<NavigationState>()(
       pressedItem: null,
       activeItem: null,
       lastClickedItem: null,
+      lastDisplayedItem: null,
+      exitingItem: null,
       exitTimeoutId: null,
-      clearHoverTimeoutId: null,
 
       // Actions
       setHoveredItem: (item) =>
-        set({ hoveredItem: item }, false, "setHoveredItem"),
+        set(
+          (state) => {
+            const tracking = computePillTracking(state, { hoveredItem: item });
+            return {
+              hoveredItem: tracking.hoveredItem,
+              activeItem: tracking.activeItem,
+              lastDisplayedItem: tracking.lastDisplayedItem,
+              exitingItem: tracking.exitingItem,
+            };
+          },
+          false,
+          "setHoveredItem"
+        ),
       setPressedItem: (item) =>
         set({ pressedItem: item }, false, "setPressedItem"),
       setActiveItem: (item) =>
-        set({ activeItem: item }, false, "setActiveItem"),
+        set(
+          (state) => {
+            const tracking = computePillTracking(state, { activeItem: item });
+            return {
+              hoveredItem: tracking.hoveredItem,
+              activeItem: tracking.activeItem,
+              lastDisplayedItem: tracking.lastDisplayedItem,
+              exitingItem: tracking.exitingItem,
+            };
+          },
+          false,
+          "setActiveItem"
+        ),
       setLastClickedItem: (item) =>
         set({ lastClickedItem: item }, false, "setLastClickedItem"),
+      clearExitingItem: () =>
+        set({ exitingItem: null }, false, "clearExitingItem"),
 
       // Route validation
       validateRouteChange: (actualRouteItemId) => {
-        const state = get();
-        if (state.lastClickedItem) {
-          // If we clicked an item but the route didn't change to match it, revert to actual route
-          if (actualRouteItemId !== state.lastClickedItem) {
-            // Route didn't change as expected (e.g., clicked same route), revert to actual route item
-            set(
-              { activeItem: actualRouteItemId },
-              false,
-              "revertToActualRoute"
-            );
-          }
-          // If route did change as expected, activeItem is already correct from the click
-        } else {
-          // No click happened, just a regular route change (e.g., browser back/forward)
-          set({ activeItem: actualRouteItemId }, false, "routeChangeOnly");
-        }
-        // Clear the last clicked item after validation
-        set({ lastClickedItem: null }, false, "clearLastClickedItem");
+        set(
+          (state) => {
+            let nextActiveItem = state.activeItem;
+
+            if (state.lastClickedItem) {
+              // If we clicked an item but the route didn't change to match it, revert to actual route
+              if (actualRouteItemId !== state.lastClickedItem) {
+                nextActiveItem = actualRouteItemId;
+              }
+              // If route did change as expected, activeItem is already correct from the click
+            } else {
+              // No click happened, just a regular route change (e.g., browser back/forward)
+              nextActiveItem = actualRouteItemId;
+            }
+
+            const tracking = computePillTracking(state, {
+              activeItem: nextActiveItem,
+            });
+
+            return {
+              hoveredItem: tracking.hoveredItem,
+              activeItem: tracking.activeItem,
+              lastClickedItem: null,
+              lastDisplayedItem: tracking.lastDisplayedItem,
+              exitingItem: tracking.exitingItem,
+            };
+          },
+          false,
+          "validateRouteChange"
+        );
       },
 
       // Timeout management
       setExitTimeout: (timeoutId) =>
         set({ exitTimeoutId: timeoutId }, false, "setExitTimeout"),
-      setClearHoverTimeout: (timeoutId) =>
-        set({ clearHoverTimeoutId: timeoutId }, false, "setClearHoverTimeout"),
 
       clearAllTimeouts: () => {
         const state = get();
@@ -88,12 +153,9 @@ export const useNavigationState = create<NavigationState>()(
         if (state.exitTimeoutId) {
           clearTimeout(state.exitTimeoutId);
         }
-        if (state.clearHoverTimeoutId) {
-          clearTimeout(state.clearHoverTimeoutId);
-        }
 
         set(
-          { exitTimeoutId: null, clearHoverTimeoutId: null },
+          { exitTimeoutId: null },
           false,
           "clearAllTimeouts"
         );
@@ -117,16 +179,3 @@ export const selectPressedItem = (state: NavigationState) => state.pressedItem;
 export const selectActiveItem = (state: NavigationState) => state.activeItem;
 export const selectDisplayedItem = (state: NavigationState) =>
   state.getDisplayedItem();
-
-// Helper to initialize active item based on pathname
-export const useActiveItemFromPathname = (pathname: string) => {
-  const setActiveItem = useNavigationState((state) => state.setActiveItem);
-
-  const currentItem = MENU_ITEMS.find((item) => {
-    // Exclude homepage (logo) from active state
-    if (item.type === "logo") return false;
-    return pathname === item.href;
-  });
-
-  setActiveItem((currentItem?.id as NavigationItemId) || null);
-};

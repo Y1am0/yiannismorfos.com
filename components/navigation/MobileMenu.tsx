@@ -1,15 +1,21 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import { Z_INDEX } from "./constants";
 import { getBlogItem, getNavigationItems } from "./menu-items";
-import { NavigationItem } from "./NavigationItem";
+import { MobileMenuPill } from "./MobileMenuPill";
+import { MobileNavigationItem } from "./NavigationItem";
 import { useNavigationActions, useNavigationSelectors } from "./stores";
+import { useMobileMenuState } from "./stores/mobileMenuState";
 
 const MobileMenuComponent = () => {
   const { isMobileMenuOpen } = useNavigationSelectors();
-  const { closeMenu } = useNavigationActions();
+  const { closeMenu, clearExitingItem } = useNavigationActions();
+  const mobileMenuAnimationsComplete = useMobileMenuState(
+    (s) => s.animationsComplete
+  );
+  const setAnimationsComplete = useMobileMenuState((s) => s.setAnimationsComplete);
 
   // Memoized menu items to prevent recreation on each render
   const menuItems = useMemo(() => {
@@ -17,6 +23,7 @@ const MobileMenuComponent = () => {
     const blogItem = getBlogItem();
     return [...navigationItems, ...(blogItem ? [blogItem] : [])];
   }, []);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Memoized backdrop click handler
   const handleBackdropClick = useCallback(() => {
@@ -40,8 +47,15 @@ const MobileMenuComponent = () => {
           transition={{ duration: 0.3 }}
           onClick={handleBackdropClick}
         >
+          <MobileMenuPill
+            containerRef={contentRef}
+            isOpen={isMobileMenuOpen}
+            animationsComplete={mobileMenuAnimationsComplete}
+            onExitComplete={clearExitingItem}
+          />
           <motion.div
-            className="text-white flex flex-col items-center space-y-4 relative"
+            ref={contentRef}
+            className="text-white flex flex-col items-center space-y-4 relative z-10"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
@@ -62,17 +76,22 @@ const MobileMenuComponent = () => {
                 transition={{
                   delay: 0.2 + index * 0.1,
                 }}
+                onAnimationComplete={() => {
+                  const isLast = index === menuItems.length - 1;
+                  if (!isLast) return;
+                  if (!useMobileMenuState.getState().isOpen) return;
+                  setAnimationsComplete(true);
+                }}
               >
-                <NavigationItem
+                <MobileNavigationItem
                   itemId={item.id}
                   href={item.href}
                   onClick={closeMenu}
-                  isMobile={true}
                 >
                   <span className="text-4xl font-thin text-center">
                     {item.label}
                   </span>
-                </NavigationItem>
+                </MobileNavigationItem>
               </motion.div>
             ))}
           </motion.div>
