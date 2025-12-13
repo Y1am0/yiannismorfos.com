@@ -42,31 +42,11 @@ export const useMobileMenuState = create<MobileMenuState>()(
           false,
           "toggleMenu"
         );
-
-        // Set animations complete after stagger animation finishes
-        if (newIsOpen) {
-          // Wait for the last item's animation (0.2 + 4 * 0.1 = 0.6s) plus a small buffer
-          setTimeout(() => {
-            const currentState = get();
-            if (currentState.isOpen) {
-              // Only set if menu is still open
-              set({ animationsComplete: true }, false, "setAnimationsComplete");
-            }
-          }, 700);
-        }
       },
       closeMenu: () =>
         set({ isOpen: false, animationsComplete: true }, false, "closeMenu"),
       openMenu: () => {
         set({ isOpen: true, animationsComplete: false }, false, "openMenu");
-        // Set animations complete after stagger animation finishes
-        setTimeout(() => {
-          const currentState = get();
-          if (currentState.isOpen) {
-            // Only set if menu is still open
-            set({ animationsComplete: true }, false, "setAnimationsComplete");
-          }
-        }, 700);
       },
       setIsMobile: (isMobile) => set({ isMobile }, false, "setIsMobile"),
       setAnimationsComplete: (complete) =>

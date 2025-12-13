@@ -4,12 +4,11 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES,
-  GLASS_EFFECT_STYLES_OVERLAY,
   TIMING,
 } from "./constants";
+import { usePillPresence } from "./PillPresenceProvider";
 
 export type GlassPillVariant = "pill" | "circle";
-export type GlassPillTone = "default" | "overlay";
 
 type Props = {
   variant: GlassPillVariant;
@@ -18,11 +17,7 @@ type Props = {
   circleSizePx?: number;
   layoutId?: string;
   onExitComplete?: () => void;
-  tone?: GlassPillTone;
 };
-
-let mountedPillCount = 0;
-let wasPillPresentLastCommit = false;
 
 export const GlassPill = ({
   variant,
@@ -31,27 +26,25 @@ export const GlassPill = ({
   circleSizePx,
   layoutId = "glass-pill",
   onExitComplete,
-  tone = "default",
 }: Props) => {
   const isCircle = variant === "circle";
+  const presence = usePillPresence();
   const shouldRunEnterAnimation =
-    typeof window === "undefined" ? false : !wasPillPresentLastCommit;
+    typeof window === "undefined"
+      ? false
+      : !presence.getWasPresentLastCommit();
   const didNotifyExitRef = useRef(false);
-  const glassStyles =
-    tone === "overlay" ? GLASS_EFFECT_STYLES_OVERLAY : GLASS_EFFECT_STYLES;
 
   const useIsomorphicLayoutEffect =
     typeof window === "undefined" ? useEffect : useLayoutEffect;
 
   useIsomorphicLayoutEffect(() => {
-    mountedPillCount += 1;
-    wasPillPresentLastCommit = true;
+    presence.register();
 
     return () => {
-      mountedPillCount = Math.max(0, mountedPillCount - 1);
-      wasPillPresentLastCommit = mountedPillCount > 0;
+      presence.unregister();
     };
-  }, []);
+  }, [presence]);
 
   useEffect(() => {
     if (!isExiting) didNotifyExitRef.current = false;
@@ -85,7 +78,7 @@ export const GlassPill = ({
         ...(isCircle && circleSizePx
           ? { width: circleSizePx, height: circleSizePx }
           : null),
-        ...glassStyles,
+        ...GLASS_EFFECT_STYLES,
       }}
       animate={{
         opacity: isExiting ? ANIMATION_CONFIG.glassPill.exit.opacity : 1,

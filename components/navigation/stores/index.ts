@@ -7,6 +7,7 @@ export * from "./zustandMiddleware";
 
 // Convenience hooks that combine multiple stores
 import { useCallback } from "react";
+import { isCoarsePointerDevice } from "../pointer";
 import { shouldAllowHover } from "../navigationPolicy";
 import { NavigationItemId } from "../types";
 import { useMobileMenuState } from "./mobileMenuState";
@@ -46,17 +47,7 @@ export const useNavigationActions = () => {
   // Combined handlers that coordinate multiple stores
   const handleHoverStart = useCallback(
     (item: NavigationItemId) => {
-      if (typeof window !== "undefined") {
-        const nav: Navigator & { maxTouchPoints?: number } =
-          navigator as Navigator & {
-            maxTouchPoints?: number;
-          };
-        const isTouch =
-          "ontouchstart" in window ||
-          (typeof nav.maxTouchPoints === "number" && nav.maxTouchPoints > 0) ||
-          window.matchMedia("(pointer: coarse)").matches;
-        if (isTouch) return; // Skip hover logic on touch devices
-      }
+      if (isCoarsePointerDevice()) return; // Skip hover logic on coarse pointers/touch
 
       // Small-viewport gating: ignore hover unless it's a nav/blog item while mobile menu is open
       const { isMobile, isMobileMenuOpen } = getCurrentState();
@@ -79,17 +70,7 @@ export const useNavigationActions = () => {
   );
 
   const handleHoverEnd = useCallback(() => {
-    if (typeof window !== "undefined") {
-      const nav: Navigator & { maxTouchPoints?: number } =
-        navigator as Navigator & {
-          maxTouchPoints?: number;
-        };
-      const isTouch =
-        "ontouchstart" in window ||
-        (typeof nav.maxTouchPoints === "number" && nav.maxTouchPoints > 0) ||
-        window.matchMedia("(pointer: coarse)").matches;
-      if (isTouch) return; // Skip hover end logic on touch devices
-    }
+    if (isCoarsePointerDevice()) return; // Skip hover end logic on coarse pointers/touch
 
     // Clear any existing timeouts
     clearAllTimeouts();

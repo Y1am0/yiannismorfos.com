@@ -5,7 +5,7 @@ import { memo, useCallback, useMemo, useRef } from "react";
 import { Z_INDEX } from "./constants";
 import { getBlogItem, getNavigationItems } from "./menu-items";
 import { MobileMenuPill } from "./MobileMenuPill";
-import { NavigationItem } from "./NavigationItem";
+import { MobileNavigationItem } from "./NavigationItem";
 import { useNavigationActions, useNavigationSelectors } from "./stores";
 import { useMobileMenuState } from "./stores/mobileMenuState";
 
@@ -15,6 +15,7 @@ const MobileMenuComponent = () => {
   const mobileMenuAnimationsComplete = useMobileMenuState(
     (s) => s.animationsComplete
   );
+  const setAnimationsComplete = useMobileMenuState((s) => s.setAnimationsComplete);
 
   // Memoized menu items to prevent recreation on each render
   const menuItems = useMemo(() => {
@@ -75,17 +76,22 @@ const MobileMenuComponent = () => {
                 transition={{
                   delay: 0.2 + index * 0.1,
                 }}
+                onAnimationComplete={() => {
+                  const isLast = index === menuItems.length - 1;
+                  if (!isLast) return;
+                  if (!useMobileMenuState.getState().isOpen) return;
+                  setAnimationsComplete(true);
+                }}
               >
-                <NavigationItem
+                <MobileNavigationItem
                   itemId={item.id}
                   href={item.href}
                   onClick={closeMenu}
-                  isMobile={true}
                 >
                   <span className="text-4xl font-thin text-center">
                     {item.label}
                   </span>
-                </NavigationItem>
+                </MobileNavigationItem>
               </motion.div>
             ))}
           </motion.div>

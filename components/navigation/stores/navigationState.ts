@@ -4,6 +4,33 @@ import { NavigationItemId } from "../types";
 
 type TimeoutHandle = ReturnType<typeof setTimeout>;
 
+const computePillTracking = (
+  prev: {
+    hoveredItem: NavigationItemId | null;
+    activeItem: NavigationItemId | null;
+    lastDisplayedItem: NavigationItemId | null;
+    exitingItem: NavigationItemId | null;
+  },
+  next: {
+    hoveredItem?: NavigationItemId | null;
+    activeItem?: NavigationItemId | null;
+  }
+) => {
+  const hoveredItem =
+    typeof next.hoveredItem !== "undefined"
+      ? next.hoveredItem
+      : prev.hoveredItem;
+  const activeItem =
+    typeof next.activeItem !== "undefined" ? next.activeItem : prev.activeItem;
+  const displayedItem = hoveredItem || activeItem;
+  const lastDisplayedItem = displayedItem ?? prev.lastDisplayedItem;
+  const exitingItem = displayedItem
+    ? null
+    : prev.exitingItem ?? lastDisplayedItem;
+
+  return { hoveredItem, activeItem, lastDisplayedItem, exitingItem };
+};
+
 interface NavigationState {
   // State
   hoveredItem: NavigationItemId | null;
@@ -50,18 +77,12 @@ export const useNavigationState = create<NavigationState>()(
       setHoveredItem: (item) =>
         set(
           (state) => {
-            const nextHoveredItem = item;
-            const nextLastDisplayedItem =
-              nextHoveredItem ?? state.lastDisplayedItem;
-            const nextDisplayedItem = nextHoveredItem ?? state.activeItem;
-            const nextExitingItem = nextDisplayedItem
-              ? null
-              : state.exitingItem ?? nextLastDisplayedItem;
-
+            const tracking = computePillTracking(state, { hoveredItem: item });
             return {
-              hoveredItem: nextHoveredItem,
-              lastDisplayedItem: nextLastDisplayedItem,
-              exitingItem: nextExitingItem,
+              hoveredItem: tracking.hoveredItem,
+              activeItem: tracking.activeItem,
+              lastDisplayedItem: tracking.lastDisplayedItem,
+              exitingItem: tracking.exitingItem,
             };
           },
           false,
@@ -72,18 +93,12 @@ export const useNavigationState = create<NavigationState>()(
       setActiveItem: (item) =>
         set(
           (state) => {
-            const nextActiveItem = item;
-            const nextLastDisplayedItem =
-              nextActiveItem ?? state.lastDisplayedItem;
-            const nextDisplayedItem = state.hoveredItem ?? nextActiveItem;
-            const nextExitingItem = nextDisplayedItem
-              ? null
-              : state.exitingItem ?? nextLastDisplayedItem;
-
+            const tracking = computePillTracking(state, { activeItem: item });
             return {
-              activeItem: nextActiveItem,
-              lastDisplayedItem: nextLastDisplayedItem,
-              exitingItem: nextExitingItem,
+              hoveredItem: tracking.hoveredItem,
+              activeItem: tracking.activeItem,
+              lastDisplayedItem: tracking.lastDisplayedItem,
+              exitingItem: tracking.exitingItem,
             };
           },
           false,
@@ -111,18 +126,16 @@ export const useNavigationState = create<NavigationState>()(
               nextActiveItem = actualRouteItemId;
             }
 
-            const nextLastDisplayedItem =
-              nextActiveItem ?? state.lastDisplayedItem;
-            const nextDisplayedItem = state.hoveredItem ?? nextActiveItem;
-            const nextExitingItem = nextDisplayedItem
-              ? null
-              : state.exitingItem ?? nextLastDisplayedItem;
+            const tracking = computePillTracking(state, {
+              activeItem: nextActiveItem,
+            });
 
             return {
-              activeItem: nextActiveItem,
+              hoveredItem: tracking.hoveredItem,
+              activeItem: tracking.activeItem,
               lastClickedItem: null,
-              lastDisplayedItem: nextLastDisplayedItem,
-              exitingItem: nextExitingItem,
+              lastDisplayedItem: tracking.lastDisplayedItem,
+              exitingItem: tracking.exitingItem,
             };
           },
           false,

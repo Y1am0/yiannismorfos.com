@@ -6,25 +6,37 @@ export type NavigationHoverContext = {
   isMobileMenuOpen: boolean;
 };
 
+const externalLinkIdSet = new Set<ExternalLinkId>(NAVIGATION_CATEGORIES.externalLinks);
+const musicButtonIdSet = new Set<MusicPlayerButtonId>(
+  NAVIGATION_CATEGORIES.musicPlayerButtons
+);
+const navigationItemIdSet = new Set<NavigationItemId>(
+  NAVIGATION_CATEGORIES.navigationItems
+);
+const blogItemIdSet = new Set<NavigationItemId>(NAVIGATION_CATEGORIES.blogItem);
+const alwaysVisibleHeaderIdSet = new Set<NavigationItemId>(
+  NAVIGATION_CATEGORIES.alwaysVisible
+);
+
 export const isExternalLinkId = (id: NavigationItemId): id is ExternalLinkId =>
-  NAVIGATION_CATEGORIES.externalLinks.includes(id as ExternalLinkId);
+  externalLinkIdSet.has(id as ExternalLinkId);
 
 export const isMusicPlayerButtonId = (
   id: NavigationItemId
 ): id is MusicPlayerButtonId =>
-  NAVIGATION_CATEGORIES.musicPlayerButtons.includes(id as MusicPlayerButtonId);
+  musicButtonIdSet.has(id as MusicPlayerButtonId);
 
 export const isNavigationItemId = (id: NavigationItemId) =>
-  NAVIGATION_CATEGORIES.navigationItems.includes(id);
+  navigationItemIdSet.has(id);
 
 export const isBlogItemId = (id: NavigationItemId) =>
-  NAVIGATION_CATEGORIES.blogItem.includes(id);
+  blogItemIdSet.has(id);
 
 export const isNavOrBlogId = (id: NavigationItemId) =>
   isNavigationItemId(id) || isBlogItemId(id);
 
 export const isAlwaysVisibleHeaderId = (id: NavigationItemId) =>
-  NAVIGATION_CATEGORIES.alwaysVisible.includes(id);
+  alwaysVisibleHeaderIdSet.has(id);
 
 export const shouldAllowHover = (
   id: NavigationItemId,

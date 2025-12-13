@@ -11,7 +11,7 @@ import {
   usePageLoadAnimationContext,
 } from "@/components/PageLoadAnimationProvider";
 import { AnimatePresence, motion } from "motion/react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo } from "react";
 import {
   ANIMATION_CONFIG,
   EXTERNAL_LINK_ROTATION_INTERVAL,
@@ -19,6 +19,7 @@ import {
 } from "./constants";
 import { GlassPill } from "./GlassPill";
 import { getExternalLinks } from "./menu-items";
+import { useRotatingLinkSet } from "./useRotatingLinkSet";
 import { useNavigationActions } from "./stores";
 import { ExternalLinkId } from "./types";
 import { useNavigationPill } from "./useNavigationPill";
@@ -33,7 +34,6 @@ interface ExternalLinkItemProps {
 
 /**
  * Individual external link item with hover states and icon rendering
- * Registers itself with the navigation system for glass pill positioning
  */
 const ExternalLinkItem = ({
   id,
@@ -140,59 +140,27 @@ const ExternalLinksComponent = () => {
     ],
     []
   );
-  const [setIndex, setSetIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  // Hover state removed for simplified horizontal-only variant
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { setIndex, setIsPaused, next, resetTimer } = useRotatingLinkSet(
+    linkSets,
+    EXTERNAL_LINK_ROTATION_INTERVAL
+  );
 
-  // Cycle through sets on interval, pause if hovered
-  useEffect(() => {
-    if (isPaused) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      return;
-    }
-    timerRef.current = setInterval(() => {
-      setSetIndex((prev) => (prev + 1) % linkSets.length);
-    }, EXTERNAL_LINK_ROTATION_INTERVAL);
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [isPaused, linkSets.length]);
-
-  // Pause timer on hover
-  const handleHoverChange = useCallback((hovered: boolean) => {
-    setIsPaused(hovered);
-  }, []);
+  const handleHoverChange = useCallback(
+    (hovered: boolean) => {
+      setIsPaused(hovered);
+      if (hovered) resetTimer();
+    },
+    [resetTimer, setIsPaused]
+  );
 
   // Handle line hover to pause timer and animate width
   // Hover handlers removed; no hover UI for the indicator
 
   // Handle line click to manually change set and reset timer
   const handleLineClick = useCallback(() => {
-    // Change to next set
-    setSetIndex((prev) => (prev + 1) % linkSets.length);
-
-    // Reset the timer by clearing current one and restarting
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    // Restart timer after a brief delay to allow the transition to play
-    setTimeout(() => {
-      if (!isPaused) {
-        timerRef.current = setInterval(() => {
-          setSetIndex((prev) => (prev + 1) % linkSets.length);
-        }, EXTERNAL_LINK_ROTATION_INTERVAL);
-      }
-    }, 100);
-  }, [linkSets.length, isPaused]);
+    resetTimer();
+    next();
+  }, [next, resetTimer]);
 
   const visibleLinks = allLinks.filter((l) =>
     linkSets[setIndex].includes(l.id as ExternalLinkId)

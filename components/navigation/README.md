@@ -42,14 +42,24 @@ The goal is to keep **IDs + data** centralized, and keep **interaction rules** e
   - Also manages the short hover-exit timeout
 - `components/navigation/stores/mobileMenuState.ts`
   - `isOpen`, `isMobile`, `animationsComplete`
+  - `animationsComplete` is set by `MobileMenu` when the stagger finishes
 
 ### Glass pill (declarative)
 
-The glass pill is rendered **inside the currently displayed item** using Motion shared layout (`layoutId`), so there is:
+On desktop header + footer, the glass pill is rendered **inside the currently displayed item** using Motion shared layout (`layoutId`), so there is:
 
 - no DOM element registry
 - no rectangle measurement logic
 - no “controller” effect that repositions a global overlay
+
+### Mobile menu overlay (buttery smooth + stable color)
+
+The mobile menu overlay is a special case:
+
+- We render a single fixed overlay pill (`components/navigation/MobileMenuPill.tsx`) and animate its `x/y/width/height` to match the hovered item.
+- Mobile menu items render via `MobileNavigationItem` (no per-item shared-layout pill in the overlay).
+- The overlay pill uses `GLASS_EFFECT_STYLES_OVERLAY` (same look, but **no `backdrop-filter`**) to prevent color flicker during movement.
+- `mobileMenuState.animationsComplete` is driven by **real Motion animation completion** (no hardcoded timeouts).
 
 The shared-layout boundary is provided by `components/navigation/NavigationMotionProvider.tsx` (wired in `app/layout.tsx`).
 Page-load gating is provided by `components/PageLoadAnimationProvider.tsx` (also wired in `app/layout.tsx`).
