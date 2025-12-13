@@ -7,8 +7,10 @@ import { motion } from "motion/react";
 import { DelayedLink } from "@/components/DelayedLink";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { ANIMATION_CONFIG, LAYOUT_CONSTANTS } from "./constants";
+import { GlassPill } from "./GlassPill";
 import { useNavigationActions } from "./stores";
 import { NavigationItemId } from "./types";
+import { useNavigationPill } from "./useNavigationPill";
 
 interface NavigationItemProps {
   children: React.ReactNode;
@@ -48,9 +50,8 @@ const NavigationItemComponent = ({
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    handleElementMount,
-    handleMobileElementMount,
     closeMenu,
+    clearExitingItem,
     setActiveItem,
     setLastClickedItem,
   } = useNavigationActions();
@@ -70,16 +71,7 @@ const NavigationItemComponent = ({
     onClick?.();
   }, [onClick]);
 
-  // Register element on mount
-  useEffect(() => {
-    if (itemRef.current) {
-      if (isMobile) {
-        handleMobileElementMount(itemId, itemRef.current);
-      } else {
-        handleElementMount(itemId, itemRef.current);
-      }
-    }
-  }, [itemId, isMobile, handleElementMount, handleMobileElementMount]);
+  const pill = useNavigationPill(itemId, isMobile ? "overlay" : "header");
 
   const content = (
     <motion.div
@@ -97,6 +89,15 @@ const NavigationItemComponent = ({
       {...ANIMATION_CONFIG.navigationItem}
       tabIndex={href ? undefined : 0}
     >
+      {pill.shouldRender && (
+        <GlassPill
+          variant={pill.variant}
+          circleSizePx={pill.circleSizePx}
+          isPressed={pill.isPressed}
+          isExiting={pill.isExiting}
+          onExitComplete={clearExitingItem}
+        />
+      )}
       {children}
     </motion.div>
   );

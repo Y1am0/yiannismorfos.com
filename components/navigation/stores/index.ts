@@ -1,5 +1,4 @@
 // Export all stores
-export * from "./glassPillState";
 export * from "./mobileMenuState";
 export * from "./navigationState";
 
@@ -8,14 +7,8 @@ export * from "./zustandMiddleware";
 
 // Convenience hooks that combine multiple stores
 import { useCallback } from "react";
-import {
-  isExternalLinkId,
-  isMusicPlayerButtonId,
-  shouldAllowHover,
-} from "../navigationPolicy";
+import { shouldAllowHover } from "../navigationPolicy";
 import { NavigationItemId } from "../types";
-import { useNavigationRegistry } from "../NavigationRegistryProvider";
-import { useGlassPillState } from "./glassPillState";
 import { useMobileMenuState } from "./mobileMenuState";
 import { useNavigationState } from "./navigationState";
 
@@ -30,6 +23,7 @@ export const useNavigationActions = () => {
   const setLastClickedItem = useNavigationState(
     (state) => state.setLastClickedItem
   );
+  const clearExitingItem = useNavigationState((state) => state.clearExitingItem);
   const validateRouteChange = useNavigationState(
     (state) => state.validateRouteChange
   );
@@ -42,10 +36,6 @@ export const useNavigationActions = () => {
 
   const closeMenu = useMobileMenuState((state) => state.closeMenu);
   const toggleMenu = useMobileMenuState((state) => state.toggleMenu);
-
-  const setGlassPillVisible = useGlassPillState((state) => state.setIsVisible);
-
-  const registry = useNavigationRegistry();
 
   // Get current state values without subscribing
   const getCurrentState = () => ({
@@ -123,58 +113,26 @@ export const useNavigationActions = () => {
     setPressedItem(null);
   }, [setPressedItem]);
 
-  const handleElementMount = useCallback(
-    (item: NavigationItemId, element: Element) => {
-      if (isExternalLinkId(item) || isMusicPlayerButtonId(item)) {
-        registry.registerFixedElement(item, element);
-      } else {
-        registry.registerHeaderElement(item, element);
-      }
-    },
-    [registry]
-  );
-
-  const handleMobileElementMount = useCallback(
-    (item: NavigationItemId, element: Element) => {
-      registry.registerOverlayElement(item, element);
-    },
-    [registry]
-  );
-
-  const handleLogoClick = useCallback(() => {
-    const { isMobileMenuOpen } = getCurrentState();
-    if (isMobileMenuOpen) {
-      closeMenu();
-    }
-  }, [closeMenu]);
-
   return {
     // Basic actions
     handleHoverStart,
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    handleElementMount,
-    handleMobileElementMount,
-    handleLogoClick,
 
     // Menu actions
     toggleMenu,
     closeMenu,
 
     // State setters
-    setParentElement: registry.setParentElement,
     setActiveItem,
     setLastClickedItem,
     validateRouteChange,
+    clearExitingItem,
 
     // Direct store actions (for advanced use cases)
     setHoveredItem,
     setPressedItem,
-    setGlassPillVisible,
-    registerHeaderElement: registry.registerHeaderElement,
-    registerOverlayElement: registry.registerOverlayElement,
-    registerFixedElement: registry.registerFixedElement,
   };
 };
 
@@ -193,12 +151,6 @@ export const useNavigationSelectors = () => {
     (state) => state.animationsComplete
   );
 
-  const glassPillStyle = useGlassPillState((state) => state.backgroundStyle);
-  const glassPillVisible = useGlassPillState((state) => state.isVisible);
-  const glassPillPositionMode = useGlassPillState(
-    (state) => state.positionMode
-  );
-
   return {
     hoveredItem,
     pressedItem,
@@ -206,8 +158,5 @@ export const useNavigationSelectors = () => {
     isMobileMenuOpen,
     isMobile,
     animationsComplete,
-    glassPillStyle,
-    glassPillVisible,
-    glassPillPositionMode,
   };
 };

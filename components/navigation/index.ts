@@ -8,22 +8,18 @@ export { MobileMenu } from "./MobileMenu";
 
 export { Navigation } from "./Navigation";
 export { NavigationItem } from "./NavigationItem";
+export { useNavigationPill } from "./useNavigationPill";
 
 // Zustand stores and hooks
 export {
-  useGlassPillState,
   useMobileMenuState,
   useNavigationActions,
   useNavigationSelectors,
   useNavigationState,
 } from "./stores";
 
-// Registry provider (DOM references live here, not in Zustand)
-export {
-  NavigationRegistryProvider,
-  useNavigationRegistry,
-  useNavigationRegistryVersion,
-} from "./NavigationRegistryProvider";
+// Motion provider (enables shared layout for the glass pill)
+export { NavigationMotionProvider } from "./NavigationMotionProvider";
 
 // Menu items and helpers
 export {
@@ -35,7 +31,7 @@ export {
 } from "./menu-items";
 
 // Types
-export type { BackgroundStyle, MenuItem } from "./types";
+export type { MenuItem } from "./types";
 
 // Constants
 export {

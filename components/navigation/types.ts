@@ -1,5 +1,4 @@
 export type {
-  BackgroundStyle,
   ExternalLinkId,
   ExternalLink,
   MenuItem,

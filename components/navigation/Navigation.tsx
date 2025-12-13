@@ -1,16 +1,13 @@
 "use client";
 
-import {
-  PAGE_LOAD_ANIMATIONS,
-  usePageLoadAnimation,
-} from "@/lib/usePageLoadAnimation";
+import { PAGE_LOAD_ANIMATIONS } from "@/components/PageLoadAnimationProvider";
+import { usePageLoadAnimationContext } from "@/components/PageLoadAnimationProvider";
 import { Quote } from "lucide-react";
 import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo } from "react";
 import { AbsoluteItem } from "./AbsoluteItem";
 import { Z_INDEX } from "./constants";
-import { GlassPill } from "./GlassPill";
 import { Logo } from "./Logo";
 import { getBlogItem, getLogoItem, getNavigationItems } from "./menu-items";
 import { MenuToggle } from "./MenuToggle";
@@ -20,20 +17,15 @@ import { NavigationItemId } from "./types";
 import { NavigationItem } from "./NavigationItem";
 import { useNavigationActions, useNavigationSelectors } from "./stores/index";
 import { useMobileMenuState } from "./stores/mobileMenuState";
-import { useGlassPillController } from "./useGlassPillController";
-import { useNavigationRegistry } from "./NavigationRegistryProvider";
 
 const NavigationComponent = () => {
-  const parentRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   // Page load animation state
   const {
     isNavigationVisible,
     shouldAnimate,
-    animationsComplete: pageLoadComplete,
-  } = usePageLoadAnimation();
+  } = usePageLoadAnimationContext();
 
   const {
     isMobile,
@@ -41,10 +33,11 @@ const NavigationComponent = () => {
   } = useNavigationSelectors();
 
   const setIsMobile = useMobileMenuState((state) => state.setIsMobile);
-  const registry = useNavigationRegistry();
-
-  const { setParentElement, validateRouteChange, setGlassPillVisible, handleMouseUp } =
-    useNavigationActions();
+  const {
+    validateRouteChange,
+    handleMouseUp,
+    setHoveredItem,
+  } = useNavigationActions();
 
   // Memoized menu items to prevent recreation
   const menuItems = useMemo(
@@ -74,9 +67,6 @@ const NavigationComponent = () => {
     // Validate the route change - this will handle setting the correct active item
     validateRouteChange(actualRouteItemId);
   }, [pathname, validateRouteChange, menuItems.navigation, menuItems.blog]);
-
-  // Centralized pill controller (positions/hides the pill based on state + registry).
-  useGlassPillController(pageLoadComplete);
 
   // ---- Responsive breakpoint detection -------------------------------------------------
   // Guards against SSR and debounces the expensive resize handler.
@@ -117,18 +107,10 @@ const NavigationComponent = () => {
   // Clear mobile registry when mobile menu closes
   useEffect(() => {
     if (!isMobileMenuOpen) {
-      registry.clearOverlayElements();
-      // Hide glass pill when mobile menu closes for a clean state.
-      if (isMobile) setGlassPillVisible(false);
+      // Clear hover state when the mobile menu closes to avoid "stuck" highlights.
+      if (isMobile) setHoveredItem(null);
     }
-  }, [isMobileMenuOpen, registry, isMobile, setGlassPillVisible]);
-
-  // Set up parent element reference
-  useEffect(() => {
-    if (parentRef.current) {
-      setParentElement(parentRef.current);
-    }
-  }, [setParentElement]);
+  }, [isMobileMenuOpen, isMobile, setHoveredItem]);
 
   // Global mouse up listener to reset pressed state
   useEffect(() => {
@@ -145,7 +127,6 @@ const NavigationComponent = () => {
   return (
     <>
       <motion.div
-        ref={parentRef}
         className="w-full text-white max-w-screen-2xl mx-auto flex justify-center px-6 lg:px-12 py-8 relative nav-area"
         style={{ zIndex: Z_INDEX.navigationOverlay }}
         initial={
@@ -170,10 +151,7 @@ const NavigationComponent = () => {
         </AbsoluteItem>
 
         {/* Centered navigation - Responsive visibility */}
-        <div
-          ref={containerRef}
-          className="flex items-center relative min-h-[3rem] md:min-h-0"
-        >
+        <div className="flex items-center relative min-h-[3rem] md:min-h-0">
           <div className="md:flex hidden">
             {menuItems.navigation.map((item) => (
               <NavigationItem key={item.id} itemId={item.id} href={item.href}>
@@ -194,9 +172,6 @@ const NavigationComponent = () => {
         <AbsoluteItem position="right" className="md:hidden">
           <MenuToggle />
         </AbsoluteItem>
-
-        {/* Glass pill effect */}
-        <GlassPill />
       </motion.div>
 
       {/* Mobile Menu Modal */}

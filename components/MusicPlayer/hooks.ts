@@ -352,22 +352,13 @@ export const usePlayerState = () => {
  */
 export const useMusicPlayerButton = (
   buttonId: NavigationItemId,
-  buttonRef: React.RefObject<HTMLElement | null>
 ) => {
   const {
     handleHoverStart,
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    handleElementMount,
   } = useNavigationActions();
-
-  // Register element on mount (fixed registry; supports pill positioning)
-  useEffect(() => {
-    if (buttonRef.current) {
-      handleElementMount(buttonId, buttonRef.current);
-    }
-  }, [buttonId, handleElementMount, buttonRef]);
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {

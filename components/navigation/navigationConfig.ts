@@ -117,10 +117,3 @@ export type NavigationItemId =
   | ExternalLinkId
   | MusicPlayerButtonId
   | NavigationControlId;
-
-export interface BackgroundStyle {
-  width: number;
-  left: number;
-  height: number;
-  top: number;
-}

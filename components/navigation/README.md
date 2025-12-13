@@ -31,10 +31,9 @@ The goal is to keep **IDs + data** centralized, and keep **interaction rules** e
 ### Interaction policy (the rules)
 
 - `components/navigation/navigationPolicy.ts`
-  - Centralized rules used by hover handlers + the pill controller:
+  - Centralized rules used by hover handlers and pill rendering:
     - which items allow hover on mobile viewport
-    - which item is *effectively* displayed (hover vs active, with mobile gating)
-    - which element registry + position mode to use for the pill (`absolute` vs `fixed`)
+    - type guards/helpers for ID categories (external links, music buttons, nav/blog)
 
 ### Stores (Zustand)
 
@@ -43,24 +42,17 @@ The goal is to keep **IDs + data** centralized, and keep **interaction rules** e
   - Also manages the short hover-exit timeout
 - `components/navigation/stores/mobileMenuState.ts`
   - `isOpen`, `isMobile`, `animationsComplete`
-- `components/navigation/stores/glassPillState.ts`
-  - The computed pill rectangle + visibility + `positionMode`
 
-### DOM registry (Context)
+### Glass pill (declarative)
 
-- `components/navigation/NavigationRegistryProvider.tsx`
-  - Stores IDs → DOM elements in three contexts:
-    - header (`absolute`, top nav)
-    - overlay (`fixed`, mobile menu)
-    - fixed (`fixed`, footer)
-  - Exposes a small API for registration + lookups and a subscription version for controllers.
-  - Must wrap the UI that uses navigation interactions (header + footer); see `app/layout.tsx`.
+The glass pill is rendered **inside the currently displayed item** using Motion shared layout (`layoutId`), so there is:
 
-### Pill controller (one place that moves/hides the pill)
+- no DOM element registry
+- no rectangle measurement logic
+- no “controller” effect that repositions a global overlay
 
-- `components/navigation/useGlassPillController.ts`
-  - Watches state + registry and calls `glassPillState.updatePosition(...)`
-  - Responsible for page-load gating and resize re-sync
+The shared-layout boundary is provided by `components/navigation/NavigationMotionProvider.tsx` (wired in `app/layout.tsx`).
+Page-load gating is provided by `components/PageLoadAnimationProvider.tsx` (also wired in `app/layout.tsx`).
 
 ## Adding / changing items
 
@@ -77,4 +69,4 @@ The goal is to keep **IDs + data** centralized, and keep **interaction rules** e
 ### Add a new music player button that participates in the pill system
 
 1. Add its ID to `components/navigation/navigationConfig.ts` in `MUSIC_PLAYER_BUTTON_IDS`.
-2. Use `useMusicPlayerButton()` in the button component.
+2. Wire hover/press via `useMusicPlayerButton()` and render the pill via `useNavigationPill()` (see `components/MusicPlayer/components/ControlButtons.tsx`).

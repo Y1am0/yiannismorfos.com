@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "motion/react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
+import { GlassPill } from "./GlassPill";
 import { useNavigationActions, useNavigationSelectors } from "./stores";
+import { useNavigationPill } from "./useNavigationPill";
 
 const MenuToggleComponent = () => {
   const [isHovered, setIsHovered] = useState(false);
@@ -14,16 +16,11 @@ const MenuToggleComponent = () => {
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    handleElementMount,
     toggleMenu,
+    clearExitingItem,
   } = useNavigationActions();
 
-  // Register element on mount
-  useEffect(() => {
-    if (iconRef.current) {
-      handleElementMount("menu", iconRef.current);
-    }
-  }, [handleElementMount]);
+  const pill = useNavigationPill("menu", "header");
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {
@@ -45,7 +42,7 @@ const MenuToggleComponent = () => {
   return (
     <div
       ref={iconRef}
-      className={`px-2 sm:px-6 py-2 cursor-pointer select-none`}
+      className={`px-2 sm:px-6 py-2 cursor-pointer select-none relative`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEndCallback}
       onTouchStart={handleHoverStartCallback}
@@ -55,6 +52,15 @@ const MenuToggleComponent = () => {
       role="button"
       aria-label={isMobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
     >
+      {pill.shouldRender && (
+        <GlassPill
+          variant={pill.variant}
+          circleSizePx={pill.circleSizePx}
+          isPressed={pill.isPressed}
+          isExiting={pill.isExiting}
+          onExitComplete={clearExitingItem}
+        />
+      )}
       <div className="w-6 h-6 flex flex-col justify-center items-center relative">
         {/* Top line */}
         <motion.div

@@ -1,5 +1,6 @@
 import { MeshGradientComponent } from "@/components/MeshGradient";
 import { MusicPlayer } from "@/components/MusicPlayer";
+import { PageLoadAnimationProvider } from "@/components/PageLoadAnimationProvider";
 import { RouteTransitionSync } from "@/components/RouteTransitionSync";
 import { settings } from "@/lib/settings";
 import type { Metadata } from "next";
@@ -7,7 +8,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import {
   ExternalLinks,
   Navigation,
-  NavigationRegistryProvider,
+  NavigationMotionProvider,
 } from "../components/navigation";
 import "./globals.css";
 
@@ -86,22 +87,24 @@ export default function RootLayout({
         />
 
         {/* Main content container with max-width constraint */}
-        <NavigationRegistryProvider>
-          <main className="relative z-20 max-w-screen-2xl mx-auto h-dvh overflow-hidden flex flex-col">
-            <div className="shrink-0">
-              <Navigation />
-            </div>
-            <div className="text-white px-6 sm:px-10 lg:px-18 flex-1 min-h-0">
-              {children}
-            </div>
+        <PageLoadAnimationProvider>
+          <NavigationMotionProvider>
+            <main className="relative z-20 max-w-screen-2xl mx-auto h-dvh overflow-hidden flex flex-col">
+              <div className="shrink-0">
+                <Navigation />
+              </div>
+              <div className="text-white px-6 sm:px-10 lg:px-18 flex-1 min-h-0">
+                {children}
+              </div>
 
-            {/* Global footer bar: music player on the left, external links on the right */}
-            <div className="px-6 sm:px-10 lg:px-18 py-4 flex items-center justify-between shrink-0">
-              <MusicPlayer />
-              <ExternalLinks />
-            </div>
-          </main>
-        </NavigationRegistryProvider>
+              {/* Global footer bar: music player on the left, external links on the right */}
+              <div className="px-6 sm:px-10 lg:px-18 py-4 flex items-center justify-between shrink-0">
+                <MusicPlayer />
+                <ExternalLinks />
+              </div>
+            </main>
+          </NavigationMotionProvider>
+        </PageLoadAnimationProvider>
       </body>
     </html>
   );

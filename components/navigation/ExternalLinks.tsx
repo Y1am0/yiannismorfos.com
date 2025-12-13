@@ -8,8 +8,8 @@ import {
 } from "@/components/icons";
 import {
   PAGE_LOAD_ANIMATIONS,
-  usePageLoadAnimation,
-} from "@/lib/usePageLoadAnimation";
+  usePageLoadAnimationContext,
+} from "@/components/PageLoadAnimationProvider";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -17,9 +17,11 @@ import {
   EXTERNAL_LINK_ROTATION_INTERVAL,
   LAYOUT_CONSTANTS,
 } from "./constants";
+import { GlassPill } from "./GlassPill";
 import { getExternalLinks } from "./menu-items";
 import { useNavigationActions } from "./stores";
 import { ExternalLinkId } from "./types";
+import { useNavigationPill } from "./useNavigationPill";
 
 interface ExternalLinkItemProps {
   id: ExternalLinkId;
@@ -40,21 +42,15 @@ const ExternalLinkItem = ({
   label,
   onHoverChange,
 }: ExternalLinkItemProps) => {
-  const itemRef = useRef<HTMLAnchorElement>(null);
   const {
     handleHoverStart,
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    handleElementMount,
+    clearExitingItem,
   } = useNavigationActions();
 
-  // Register element on mount
-  useEffect(() => {
-    if (itemRef.current) {
-      handleElementMount(id, itemRef.current);
-    }
-  }, [id, handleElementMount]);
+  const pill = useNavigationPill(id, "fixed");
 
   // Memoized hover start handler
   const handleHoverStartCallback = useCallback(() => {
@@ -96,12 +92,11 @@ const ExternalLinkItem = ({
 
   return (
     <motion.a
-      ref={itemRef}
       {...ANIMATION_CONFIG.externalLink}
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`${LAYOUT_CONSTANTS.itemPadding} cursor-pointer select-none block`}
+      className={`${LAYOUT_CONSTANTS.itemPadding} cursor-pointer select-none block relative`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEndCallback}
       onTouchStart={handleHoverStartCallback}
@@ -109,6 +104,15 @@ const ExternalLinkItem = ({
       onMouseUp={handleMouseUp}
       aria-label={label}
     >
+      {pill.shouldRender && (
+        <GlassPill
+          variant={pill.variant}
+          circleSizePx={pill.circleSizePx}
+          isPressed={pill.isPressed}
+          isExiting={pill.isExiting}
+          onExitComplete={clearExitingItem}
+        />
+      )}
       {renderIcon()}
     </motion.a>
   );
@@ -126,7 +130,7 @@ const ExternalLinksComponent = () => {
   const allLinks = getExternalLinks();
 
   // Page load animation state
-  const { isExternalLinksVisible, shouldAnimate } = usePageLoadAnimation();
+  const { isExternalLinksVisible, shouldAnimate } = usePageLoadAnimationContext();
 
   // Define rotating sets by id order
   const linkSets = useMemo(

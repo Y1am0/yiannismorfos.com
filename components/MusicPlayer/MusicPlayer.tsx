@@ -2,8 +2,8 @@
 
 import {
   PAGE_LOAD_ANIMATIONS,
-  usePageLoadAnimation,
-} from "@/lib/usePageLoadAnimation";
+  usePageLoadAnimationContext,
+} from "@/components/PageLoadAnimationProvider";
 import { motion } from "motion/react";
 import React, { memo, useCallback, useEffect, useRef } from "react";
 import { MediaControls, SongInfo, VinylDisk } from "./components";
@@ -20,7 +20,7 @@ const MusicPlayerComponent: React.FC = () => {
   const vinylDiskRef = useRef<VinylDiskRef>(null);
 
   // Page load animation state
-  const { isMusicPlayerVisible, shouldAnimate } = usePageLoadAnimation();
+  const { isMusicPlayerVisible, shouldAnimate } = usePageLoadAnimationContext();
 
   // Initialize player state
   const { state, updatePlayerState, handleProgressUpdate } = usePlayerState();

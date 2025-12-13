@@ -10,6 +10,8 @@ interface NavigationState {
   pressedItem: NavigationItemId | null;
   activeItem: NavigationItemId | null;
   lastClickedItem: NavigationItemId | null; // Track what was clicked to validate route changes
+  lastDisplayedItem: NavigationItemId | null; // Last non-null displayed (hovered or active)
+  exitingItem: NavigationItemId | null; // Item that is currently animating pill exit
 
   // Timeout management for hover exit delays
   exitTimeoutId: TimeoutHandle | null;
@@ -19,6 +21,7 @@ interface NavigationState {
   setPressedItem: (item: NavigationItemId | null) => void;
   setActiveItem: (item: NavigationItemId | null) => void;
   setLastClickedItem: (item: NavigationItemId | null) => void;
+  clearExitingItem: () => void;
 
   // Route validation
   validateRouteChange: (expectedItemId: NavigationItemId | null) => void;
@@ -39,38 +42,92 @@ export const useNavigationState = create<NavigationState>()(
       pressedItem: null,
       activeItem: null,
       lastClickedItem: null,
+      lastDisplayedItem: null,
+      exitingItem: null,
       exitTimeoutId: null,
 
       // Actions
       setHoveredItem: (item) =>
-        set({ hoveredItem: item }, false, "setHoveredItem"),
+        set(
+          (state) => {
+            const nextHoveredItem = item;
+            const nextLastDisplayedItem =
+              nextHoveredItem ?? state.lastDisplayedItem;
+            const nextDisplayedItem = nextHoveredItem ?? state.activeItem;
+            const nextExitingItem = nextDisplayedItem
+              ? null
+              : state.exitingItem ?? nextLastDisplayedItem;
+
+            return {
+              hoveredItem: nextHoveredItem,
+              lastDisplayedItem: nextLastDisplayedItem,
+              exitingItem: nextExitingItem,
+            };
+          },
+          false,
+          "setHoveredItem"
+        ),
       setPressedItem: (item) =>
         set({ pressedItem: item }, false, "setPressedItem"),
       setActiveItem: (item) =>
-        set({ activeItem: item }, false, "setActiveItem"),
+        set(
+          (state) => {
+            const nextActiveItem = item;
+            const nextLastDisplayedItem =
+              nextActiveItem ?? state.lastDisplayedItem;
+            const nextDisplayedItem = state.hoveredItem ?? nextActiveItem;
+            const nextExitingItem = nextDisplayedItem
+              ? null
+              : state.exitingItem ?? nextLastDisplayedItem;
+
+            return {
+              activeItem: nextActiveItem,
+              lastDisplayedItem: nextLastDisplayedItem,
+              exitingItem: nextExitingItem,
+            };
+          },
+          false,
+          "setActiveItem"
+        ),
       setLastClickedItem: (item) =>
         set({ lastClickedItem: item }, false, "setLastClickedItem"),
+      clearExitingItem: () =>
+        set({ exitingItem: null }, false, "clearExitingItem"),
 
       // Route validation
       validateRouteChange: (actualRouteItemId) => {
-        const state = get();
-        if (state.lastClickedItem) {
-          // If we clicked an item but the route didn't change to match it, revert to actual route
-          if (actualRouteItemId !== state.lastClickedItem) {
-            // Route didn't change as expected (e.g., clicked same route), revert to actual route item
-            set(
-              { activeItem: actualRouteItemId },
-              false,
-              "revertToActualRoute"
-            );
-          }
-          // If route did change as expected, activeItem is already correct from the click
-        } else {
-          // No click happened, just a regular route change (e.g., browser back/forward)
-          set({ activeItem: actualRouteItemId }, false, "routeChangeOnly");
-        }
-        // Clear the last clicked item after validation
-        set({ lastClickedItem: null }, false, "clearLastClickedItem");
+        set(
+          (state) => {
+            let nextActiveItem = state.activeItem;
+
+            if (state.lastClickedItem) {
+              // If we clicked an item but the route didn't change to match it, revert to actual route
+              if (actualRouteItemId !== state.lastClickedItem) {
+                nextActiveItem = actualRouteItemId;
+              }
+              // If route did change as expected, activeItem is already correct from the click
+            } else {
+              // No click happened, just a regular route change (e.g., browser back/forward)
+              nextActiveItem = actualRouteItemId;
+            }
+
+            const nextLastDisplayedItem =
+              nextActiveItem ?? state.lastDisplayedItem;
+            const nextDisplayedItem = state.hoveredItem ?? nextActiveItem;
+            const nextExitingItem = nextDisplayedItem
+              ? null
+              : state.exitingItem ?? nextLastDisplayedItem;
+
+            return {
+              activeItem: nextActiveItem,
+              lastClickedItem: null,
+              lastDisplayedItem: nextLastDisplayedItem,
+              exitingItem: nextExitingItem,
+            };
+          },
+          false,
+          "validateRouteChange"
+        );
       },
 
       // Timeout management
