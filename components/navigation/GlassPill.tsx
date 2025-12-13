@@ -82,8 +82,8 @@ export const GlassPill = ({
         scale: isExiting
           ? ANIMATION_CONFIG.glassPill.exit.scale
           : isPressed
-            ? 1.1
-            : 1,
+          ? 1.1
+          : 1,
       }}
       transition={{
         opacity: { duration: 0.12 },
