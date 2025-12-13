@@ -77,8 +77,7 @@ components/navigation/
 
 ### 5. Dev-time utilities
 
-- **Console logs** are gated behind `process.env.NODE_ENV === "development"`.
-- Placeholder helpers (`createDevLogger`, `createPerfMonitor`) demonstrate how to subscribe to store changes if deeper debugging is desired.
+- Placeholder helper (`createPerfMonitor`) demonstrates how to subscribe to store changes if deeper debugging is desired.
 
 ---
 

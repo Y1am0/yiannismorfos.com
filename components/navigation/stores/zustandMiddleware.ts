@@ -1,18 +1,4 @@
 /**
- * Simple development logger for debugging state changes
- */
-export const createDevLogger = (storeName: string) => {
-  return (action: string, previousState: unknown, newState: unknown) => {
-    if (process.env.NODE_ENV === "development") {
-      console.group(`[${storeName}] ${action}`);
-      console.log("Previous:", previousState);
-      console.log("New:", newState);
-      console.groupEnd();
-    }
-  };
-};
-
-/**
  * Performance monitor for state updates
  */
 export const createPerfMonitor = (storeName: string) => {

@@ -36,10 +36,6 @@ export const useElementRegistryState = create<ElementRegistryState>()(
 
       // Actions
       registerDesktopElement: (item, element) => {
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[ElementRegistry] Registering desktop element: ${item}`);
-        }
-
         const state = get();
 
         const newDesktopElements = new Map(state.desktopElements);
@@ -59,10 +55,6 @@ export const useElementRegistryState = create<ElementRegistryState>()(
       },
 
       registerMobileElement: (item, element) => {
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[ElementRegistry] Registering mobile element: ${item}`);
-        }
-
         const state = get();
 
         const newMobileElements = new Map(state.mobileElements);
@@ -84,11 +76,7 @@ export const useElementRegistryState = create<ElementRegistryState>()(
       setParentElement: (element) =>
         set({ parentElement: element }, false, "setParentElement"),
 
-      clearMobileRegistry: () => {
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[ElementRegistry] Clearing mobile registry`);
-        }
-
+      clearMobileRegistry: () =>
         set(
           {
             mobileElements: new Map(),
@@ -96,8 +84,7 @@ export const useElementRegistryState = create<ElementRegistryState>()(
           },
           false,
           "clearMobileRegistry"
-        );
-      },
+        ),
 
       clearDesktopRegistry: () =>
         set(
@@ -129,17 +116,7 @@ export const useElementRegistryState = create<ElementRegistryState>()(
 
       getMobileElement: (item) => {
         const state = get();
-        const element = state.mobileElements.get(item) || null;
-
-        if (process.env.NODE_ENV === "development") {
-          console.log(
-            `[ElementRegistry] Getting mobile element for ${item}: ${
-              element ? "found" : "not found"
-            }`
-          );
-        }
-
-        return element;
+        return state.mobileElements.get(item) || null;
       },
 
       isDesktopElementRegistered: (item) => {

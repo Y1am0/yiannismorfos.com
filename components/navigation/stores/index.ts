@@ -90,14 +90,6 @@ export const useNavigationActions = () => {
           return;
         }
       }
-      if (process.env.NODE_ENV === "development") {
-        console.log(
-          `[Navigation] Hover START: ${item}, mobile: ${
-            getCurrentState().isMobile
-          }`
-        );
-      }
-
       // Cancel any pending exit timeouts - user is moving to another item
       clearAllTimeouts();
 
@@ -132,12 +124,6 @@ export const useNavigationActions = () => {
         window.matchMedia("(pointer: coarse)").matches;
       if (isTouch) return; // Skip hover end logic on touch devices
     }
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        `[Navigation] Hover END, mobile: ${getCurrentState().isMobile}`
-      );
-    }
-
     const {
       parentElement,
       activeItem,

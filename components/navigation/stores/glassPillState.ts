@@ -38,9 +38,6 @@ export const useGlassPillState = create<GlassPillState>()(
         set({ backgroundStyle: style }, false, "setBackgroundStyle"),
 
       setIsVisible: (visible) => {
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[GlassPill] Visibility changed to: ${visible}`);
-        }
         set({ isVisible: visible }, false, "setIsVisible");
       },
 
@@ -56,12 +53,6 @@ export const useGlassPillState = create<GlassPillState>()(
           ? positionModeOverride === "fixed"
           : Math.abs(elementRect.top - referenceRect.top) > 100 ||
             elementRect.top > window.innerHeight * 0.2; // Mobile menu items are typically in center/lower part of screen
-
-        if (process.env.NODE_ENV === "development") {
-          console.log(
-            `[GlassPill] Positioning element, isMobileMenu: ${isInMobileMenu}, elementTop: ${elementRect.top}, referenceTop: ${referenceRect.top}`
-          );
-        }
 
         let newStyle: BackgroundStyle;
         const positionMode: "absolute" | "fixed" = isInMobileMenu
@@ -85,11 +76,6 @@ export const useGlassPillState = create<GlassPillState>()(
             top: Math.round(elementRect.top - referenceRect.top),
           };
         }
-
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[GlassPill] New style:`, newStyle);
-        }
-
         set(
           {
             backgroundStyle: newStyle,
