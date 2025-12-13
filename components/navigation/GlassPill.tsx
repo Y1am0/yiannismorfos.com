@@ -8,27 +8,33 @@ import {
   Z_INDEX,
 } from "./constants";
 import { NAVIGATION_CATEGORIES } from "./navigationModel";
-import { isExternalLinkId, isMusicPlayerButtonId } from "./navigationPolicy";
+import {
+  getEffectiveDisplayedItem,
+  isExternalLinkId,
+  isMusicPlayerButtonId,
+} from "./navigationPolicy";
 import { useNavigationSelectors } from "./stores";
-import { useMobileMenuState } from "./stores/mobileMenuState";
 
 import { NavigationItemId } from "./types";
 
-interface GlassPillProps {
-  displayedItem?: NavigationItemId | null;
-}
-
-const GlassPillComponent = ({ displayedItem }: GlassPillProps) => {
+const GlassPillComponent = () => {
   const {
     glassPillStyle,
     glassPillVisible,
     pressedItem,
     glassPillPositionMode,
+    hoveredItem,
+    activeItem,
+    isMobile,
+    isMobileMenuOpen,
+    animationsComplete,
   } = useNavigationSelectors();
 
-  // Viewport gating: use global store isMobile to mirror Navigation.tsx logic
-  // Subscribe to mobile state for parity with Navigation.tsx; value unused here
-  useMobileMenuState((s) => s.isMobile);
+  const displayedItem = getEffectiveDisplayedItem(hoveredItem, activeItem, {
+    isMobileViewport: isMobile,
+    isMobileMenuOpen,
+    mobileMenuAnimationsComplete: animationsComplete,
+  });
 
   // Define which items should have circular glass pills
   const circularItems = useMemo(

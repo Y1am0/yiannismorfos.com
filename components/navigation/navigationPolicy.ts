@@ -9,6 +9,11 @@ export type NavigationViewportContext = {
   mobileMenuAnimationsComplete: boolean;
 };
 
+export type NavigationHoverContext = Pick<
+  NavigationViewportContext,
+  "isMobileViewport" | "isMobileMenuOpen"
+>;
+
 export type NavigationAnimationContext = {
   pageLoadComplete: boolean;
 };
@@ -35,7 +40,7 @@ export const isAlwaysVisibleHeaderId = (id: NavigationItemId) =>
 
 export const shouldAllowHover = (
   id: NavigationItemId,
-  ctx: NavigationViewportContext
+  ctx: NavigationHoverContext
 ) => {
   if (!ctx.isMobileViewport) return true;
   return isNavOrBlogId(id) && ctx.isMobileMenuOpen;

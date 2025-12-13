@@ -15,7 +15,6 @@ import { Logo } from "./Logo";
 import { getBlogItem, getLogoItem, getNavigationItems } from "./menu-items";
 import { MenuToggle } from "./MenuToggle";
 import { MobileMenu } from "./MobileMenu";
-import { getEffectiveDisplayedItem } from "./navigationPolicy";
 import { NavigationItemId } from "./types";
 
 import { NavigationItem } from "./NavigationItem";
@@ -38,10 +37,7 @@ const NavigationComponent = () => {
 
   const {
     isMobile,
-    activeItem,
     isMobileMenuOpen,
-    hoveredItem,
-    animationsComplete,
   } = useNavigationSelectors();
 
   const setIsMobile = useMobileMenuState((state) => state.setIsMobile);
@@ -202,13 +198,7 @@ const NavigationComponent = () => {
         </AbsoluteItem>
 
         {/* Glass pill effect */}
-        <GlassPill
-          displayedItem={getEffectiveDisplayedItem(hoveredItem, activeItem, {
-            isMobileViewport: isMobile,
-            isMobileMenuOpen,
-            mobileMenuAnimationsComplete: animationsComplete,
-          })}
-        />
+        <GlassPill />
       </motion.div>
 
       {/* Mobile Menu Modal */}

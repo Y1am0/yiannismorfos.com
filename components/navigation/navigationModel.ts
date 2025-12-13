@@ -1,5 +1,13 @@
-import { EXTERNAL_LINKS, MENU_ITEMS, MUSIC_PLAYER_BUTTON_IDS } from "./menu-items";
-import type { ExternalLinkId, NavigationItemId, MusicPlayerButtonId } from "./types";
+import {
+  EXTERNAL_LINKS,
+  MENU_ITEMS,
+  MUSIC_PLAYER_BUTTON_IDS,
+} from "./navigationConfig";
+import type {
+  ExternalLinkId,
+  NavigationItemId,
+  MusicPlayerButtonId,
+} from "./types";
 
 const NAVIGATION_ITEM_IDS: NavigationItemId[] = MENU_ITEMS.filter(
   (item) => item.type === "navigation"

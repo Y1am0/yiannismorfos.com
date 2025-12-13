@@ -87,8 +87,6 @@ export const useNavigationActions = () => {
           !shouldAllowHover(item, {
             isMobileViewport: isMobile,
             isMobileMenuOpen,
-            mobileMenuAnimationsComplete:
-              useMobileMenuState.getState().animationsComplete,
           })
         ) {
           return;
@@ -200,7 +198,6 @@ export const useNavigationSelectors = () => {
   const hoveredItem = useNavigationState((state) => state.hoveredItem);
   const pressedItem = useNavigationState((state) => state.pressedItem);
   const activeItem = useNavigationState((state) => state.activeItem);
-  const displayedItem = useNavigationState((state) => state.getDisplayedItem());
 
   const isMobileMenuOpen = useMobileMenuState((state) => state.isOpen);
   const isMobile = useMobileMenuState((state) => state.isMobile);
@@ -218,7 +215,6 @@ export const useNavigationSelectors = () => {
     hoveredItem,
     pressedItem,
     activeItem,
-    displayedItem,
     isMobileMenuOpen,
     isMobile,
     animationsComplete,
