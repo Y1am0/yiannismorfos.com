@@ -4,10 +4,12 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES,
+  GLASS_EFFECT_STYLES_OVERLAY,
   TIMING,
 } from "./constants";
 
 export type GlassPillVariant = "pill" | "circle";
+export type GlassPillTone = "default" | "overlay";
 
 type Props = {
   variant: GlassPillVariant;
@@ -16,6 +18,7 @@ type Props = {
   circleSizePx?: number;
   layoutId?: string;
   onExitComplete?: () => void;
+  tone?: GlassPillTone;
 };
 
 let mountedPillCount = 0;
@@ -28,11 +31,14 @@ export const GlassPill = ({
   circleSizePx,
   layoutId = "glass-pill",
   onExitComplete,
+  tone = "default",
 }: Props) => {
   const isCircle = variant === "circle";
   const shouldRunEnterAnimation =
     typeof window === "undefined" ? false : !wasPillPresentLastCommit;
   const didNotifyExitRef = useRef(false);
+  const glassStyles =
+    tone === "overlay" ? GLASS_EFFECT_STYLES_OVERLAY : GLASS_EFFECT_STYLES;
 
   const useIsomorphicLayoutEffect =
     typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -79,7 +85,7 @@ export const GlassPill = ({
         ...(isCircle && circleSizePx
           ? { width: circleSizePx, height: circleSizePx }
           : null),
-        ...GLASS_EFFECT_STYLES,
+        ...glassStyles,
       }}
       animate={{
         opacity: isExiting ? ANIMATION_CONFIG.glassPill.exit.opacity : 1,

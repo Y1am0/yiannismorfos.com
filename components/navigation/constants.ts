@@ -1,6 +1,4 @@
-export const GLASS_EFFECT_STYLES = {
-  backdropFilter: "brightness(110%) saturate(110%) contrast(115%)",
-  WebkitBackdropFilter: "brightness(110%) saturate(110%) contrast(115%)",
+const GLASS_EFFECT_BASE = {
   background:
     "radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.04) 80%, rgba(255,255,255,0.01) 100%)",
   border: "1px solid rgba(255, 255, 255, 0.25)",
@@ -9,6 +7,18 @@ export const GLASS_EFFECT_STYLES = {
     inset 0 -1px 0 rgba(255, 255, 255, 0.15),
     0 4px 12px rgba(0, 0, 0, 0.1)
   `,
+} as const;
+
+export const GLASS_EFFECT_STYLES = {
+  ...GLASS_EFFECT_BASE,
+  backdropFilter: "brightness(110%) saturate(110%) contrast(115%)",
+  WebkitBackdropFilter: "brightness(110%) saturate(110%) contrast(115%)",
+} as const;
+
+// Mobile overlay variant: avoid `backdrop-filter` entirely to prevent
+// flickering/darkening while the pill re-parents during shared-layout moves.
+export const GLASS_EFFECT_STYLES_OVERLAY = {
+  ...GLASS_EFFECT_BASE,
 } as const;
 
 // -------------------------------------------------------------------------------------

@@ -76,6 +76,7 @@ const NavigationItemComponent = ({
   const content = (
     <motion.div
       ref={itemRef}
+      data-nav-item-id={itemId}
       className={`text-2xl font-thin ${LAYOUT_CONSTANTS.itemPadding} cursor-pointer relative focus-visible:outline-none`}
       onHoverStart={isTouchDevice ? undefined : handleHoverStartCallback}
       onHoverEnd={isTouchDevice ? undefined : handleHoverEnd}
@@ -89,7 +90,7 @@ const NavigationItemComponent = ({
       {...ANIMATION_CONFIG.navigationItem}
       tabIndex={href ? undefined : 0}
     >
-      {pill.shouldRender && (
+      {!isMobile && pill.shouldRender && (
         <GlassPill
           variant={pill.variant}
           circleSizePx={pill.circleSizePx}
