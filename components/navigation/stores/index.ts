@@ -2,9 +2,6 @@
 export * from "./mobileMenuState";
 export * from "./navigationState";
 
-// Export middleware utilities
-export * from "./zustandMiddleware";
-
 // Convenience hooks that combine multiple stores
 import { useCallback } from "react";
 import { isCoarsePointerDevice } from "../pointer";

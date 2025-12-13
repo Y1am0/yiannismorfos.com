@@ -8,6 +8,7 @@ export const useRotatingLinkSet = <T extends string>(
 ) => {
   const [setIndex, setSetIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [timerKey, setTimerKey] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export const useRotatingLinkSet = <T extends string>(
         timerRef.current = null;
       }
     };
-  }, [intervalMs, isPaused, sets.length]);
+  }, [intervalMs, isPaused, sets.length, timerKey]);
 
   const next = useCallback(() => {
     setSetIndex((prev) => (prev + 1) % sets.length);
@@ -40,15 +41,14 @@ export const useRotatingLinkSet = <T extends string>(
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    // Force the interval effect to recreate the timer on the next render.
+    setTimerKey((k) => k + 1);
   }, []);
 
   return {
     setIndex,
-    setSetIndex,
-    isPaused,
     setIsPaused,
     next,
     resetTimer,
   };
 };
-
