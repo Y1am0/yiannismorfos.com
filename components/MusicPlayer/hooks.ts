@@ -2,7 +2,7 @@
  * Custom hooks for the Music Player system
  */
 
-import { NavigationItemId } from "@/components/navigation/model/types";
+import type { NavigationItemId } from "@/components/navigation/config/navigationConfig";
 import { useNavigationActions } from "@/components/navigation/stores";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CURRENT_SONG, PLAYER_CONFIG, YOUTUBE_PLAYER_VARS } from "./config";

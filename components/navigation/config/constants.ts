@@ -16,7 +16,7 @@ export const GLASS_EFFECT_STYLES = {
 } as const;
 
 // Mobile overlay variant: avoid `backdrop-filter` entirely to prevent
-// flickering/darkening while the pill re-parents during shared-layout moves.
+// filter stacking/darkening against the mobile menu backdrop blur.
 export const GLASS_EFFECT_STYLES_OVERLAY = {
   ...GLASS_EFFECT_BASE,
 } as const;
@@ -42,7 +42,6 @@ export const SPRING_PRESETS = {
 export const ANIMATION_CONFIG = {
   glassPill: {
     initial: { opacity: 0, scale: 0.6 },
-    animate: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.6 },
     transition: {
       ...SPRING_PRESETS.glass,
@@ -64,35 +63,6 @@ export const ANIMATION_CONFIG = {
       opacity: { duration: 0.2 },
     },
   },
-  stretchingLine: {
-    initial: { scaleY: 1 },
-    animate: {
-      scaleY: [1, 1.2, 1] as number[],
-    },
-    transition: {
-      duration: 0.8,
-      times: [0, 0.5, 1] as number[], // Extend during first half, retract during second half
-      ease: "easeInOut" as const,
-    },
-  },
-  indicatorLine: {
-    initial: {
-      y: 0,
-      scaleY: 1,
-    },
-    transition: {
-      y: {
-        duration: 0.4,
-        ease: "easeInOut" as const,
-        delay: 0.2, // Slight delay to sync with icon transitions
-      },
-      scaleY: {
-        duration: 0.8,
-        times: [0, 0.5, 1] as number[],
-        ease: "easeInOut" as const,
-      },
-    },
-  },
   externalLinksContainer: {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -111,17 +81,16 @@ export const LAYOUT_CONSTANTS = {
   absolutePositioning: "absolute top-1/2 -translate-y-1/2",
   responsiveDesktopPadding: "left-4 lg:left-12",
   responsiveMobilePadding: "right-4 lg:right-12",
-  // External links specific constants
-  externalLinksLineHeight: "h-24", // Main line height
-  externalLinksIndicatorHeight: "h-12", // Indicator line height (50% of main)
-  externalLinksContainerHeight: "h-[92px]", // Fixed container height
-  externalLinksLineContainer: "h-26", // Line container height
+  externalLinksContainerHeight: "h-[92px]",
+} as const;
+
+export const BUTTON_STYLES = {
+  base: "text-white/70 transition-colors duration-300 hover:text-white",
 } as const;
 
 export const Z_INDEX = {
   mobileMenu: 30,
   navigationOverlay: 40,
-  glassPill: 10,
 } as const;
 
 // Animation timing constants
@@ -129,17 +98,4 @@ export const TIMING = {
   glassPillExitDuration: 400, // Duration to wait for glass pill exit animation
 } as const;
 
-// External links constants
-export const EXTERNAL_LINKS = {
-  rotationInterval: 7500, // ms, rotation interval
-  indicatorPositions: {
-    top: 0, // Top half position (pixels)
-    bottom: 48, // Bottom half position (pixels) - half of main line height
-  },
-  stretchScale: {
-    main: 1.2, // Main line stretch scale
-    indicator: 1.4, // Indicator line stretch scale (more pronounced for visibility)
-  },
-} as const;
-
-export const EXTERNAL_LINK_ROTATION_INTERVAL = EXTERNAL_LINKS.rotationInterval;
+export const EXTERNAL_LINK_ROTATION_INTERVAL = 7500;

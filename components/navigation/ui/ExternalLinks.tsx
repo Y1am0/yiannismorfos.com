@@ -8,12 +8,13 @@ import {
 } from "@/components/icons";
 import {
   ANIMATION_CONFIG,
+  BUTTON_STYLES,
   EXTERNAL_LINK_ROTATION_INTERVAL,
   LAYOUT_CONSTANTS,
 } from "@/components/navigation/config/constants";
+import type { ExternalLinkId } from "@/components/navigation/config/navigationConfig";
 import { useNavigationPill } from "@/components/navigation/hooks/useNavigationPill";
 import { useRotatingLinkSet } from "@/components/navigation/hooks/useRotatingLinkSet";
-import { ExternalLinkId } from "@/components/navigation/model/types";
 import { useNavigationActions } from "@/components/navigation/stores";
 import { GlassPill } from "@/components/navigation/ui/GlassPill";
 import { getExternalLinks } from "@/components/navigation/utils/menu-items";
@@ -73,7 +74,7 @@ const ExternalLinkItem = ({
   const renderIcon = useCallback(() => {
     const iconProps = {
       size: 20,
-      className: "text-white/70 transition-colors",
+      className: `${BUTTON_STYLES.base}`,
     };
 
     switch (iconType) {
@@ -96,10 +97,9 @@ const ExternalLinkItem = ({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`${LAYOUT_CONSTANTS.itemPadding} cursor-pointer select-none block relative`}
+      className={`${LAYOUT_CONSTANTS.itemPadding} select-none block relative`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEndCallback}
-      onTouchStart={handleHoverStartCallback}
       onMouseDown={handleMouseDownCallback}
       onMouseUp={handleMouseUp}
       aria-label={label}
@@ -153,9 +153,6 @@ const ExternalLinksComponent = () => {
     },
     [resetTimer, setIsPaused]
   );
-
-  // Handle line hover to pause timer and animate width
-  // Hover handlers removed; no hover UI for the indicator
 
   // Handle line click to manually change set and reset timer
   const handleLineClick = useCallback(() => {

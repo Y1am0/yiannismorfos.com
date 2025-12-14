@@ -1,15 +1,4 @@
-export {
-  EXTERNAL_LINKS,
-  MENU_ITEMS,
-  MUSIC_PLAYER_BUTTON_IDS,
-  type ExternalLink,
-  type ExternalLinkId,
-  type MenuItem,
-  type MenuItemId,
-  type MenuItemType,
-} from "../config/navigationConfig";
-
-import type { MenuItem, MenuItemId } from "../config/navigationConfig";
+import type { MenuItem } from "../config/navigationConfig";
 import { EXTERNAL_LINKS, MENU_ITEMS } from "../config/navigationConfig";
 
 type NavigationMenuItem = Extract<MenuItem, { type: "navigation" }>;
@@ -31,6 +20,3 @@ export const getLogoItem = (): LogoMenuItem | null =>
 export const getBlogItem = (): BlogMenuItem | null =>
   MENU_ITEMS.find(isBlogItem) ?? null;
 export const getExternalLinks = () => EXTERNAL_LINKS;
-
-export const getMenuItemById = (id: MenuItemId) =>
-  MENU_ITEMS.find((item) => item.id === id) ?? null;

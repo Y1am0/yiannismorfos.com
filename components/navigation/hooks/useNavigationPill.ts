@@ -2,32 +2,30 @@
 
 import { usePageLoadAnimationContext } from "@/components/PageLoadAnimationProvider";
 import { LAYOUT_CONSTANTS } from "../config/constants";
-import { NAVIGATION_CATEGORIES } from "../model/navigationModel";
 import {
-  isExternalLinkId,
-  isMusicPlayerButtonId,
-  isNavOrBlogId,
-} from "../model/navigationPolicy";
-import type { NavigationItemId } from "../model/types";
-import { useMobileMenuState } from "../stores/mobileMenuState";
+  EXTERNAL_LINKS,
+  MUSIC_PLAYER_BUTTON_IDS,
+  type NavigationItemId,
+} from "../config/navigationConfig";
+import { useNavigationViewport } from "../providers/NavigationViewportProvider";
 import { useNavigationState } from "../stores/navigationState";
 
-export type PillHostContext = "header" | "overlay" | "fixed";
+export type PillHostContext = "header" | "fixed";
+
+const EXTERNAL_LINK_ID_SET = new Set<NavigationItemId>(
+  EXTERNAL_LINKS.map((l) => l.id)
+);
+const MUSIC_BUTTON_ID_SET = new Set<NavigationItemId>(MUSIC_PLAYER_BUTTON_IDS);
 
 export const useNavigationPill = (
   id: NavigationItemId,
   host: PillHostContext
 ) => {
+  const { isDesktopViewport } = useNavigationViewport();
   const hoveredItem = useNavigationState((s) => s.hoveredItem);
   const activeItem = useNavigationState((s) => s.activeItem);
   const pressedItem = useNavigationState((s) => s.pressedItem);
   const exitingItem = useNavigationState((s) => s.exitingItem);
-
-  const isMobileViewport = useMobileMenuState((s) => s.isMobile);
-  const isMobileMenuOpen = useMobileMenuState((s) => s.isOpen);
-  const mobileMenuAnimationsComplete = useMobileMenuState(
-    (s) => s.animationsComplete
-  );
 
   const { animationsComplete: pageLoadComplete } =
     usePageLoadAnimationContext();
@@ -40,24 +38,21 @@ export const useNavigationPill = (
   // Hide pill during initial page-load animation unless actively hovering.
   const pageLoadGated = !pageLoadComplete && !hoveredItem;
 
-  // Mobile menu: avoid showing pill until menu stagger finishes.
-  const overlayAnimationGated =
-    host === "overlay" && !mobileMenuAnimationsComplete;
-
   const shouldRender =
-    (isDisplayed || isExiting) && !pageLoadGated && !overlayAnimationGated;
+    (isDisplayed || isExiting) && !pageLoadGated && isDesktopViewport;
 
-  const isExternal = isExternalLinkId(id);
-  const isMusic = isMusicPlayerButtonId(id);
+  const isExternal = EXTERNAL_LINK_ID_SET.has(id);
+  const isMusic = MUSIC_BUTTON_ID_SET.has(id);
 
   // Determine shape/size:
   // - External links + music buttons: small circle
   // - Logo + menu: large circle
-  // - Blog: circle in header, pill in overlay
+  // - Blog: circle in header
   // - Navigation items: pill
   const isAlwaysCircle =
-    NAVIGATION_CATEGORIES.alwaysVisible.includes(id) ||
-    (NAVIGATION_CATEGORIES.blogItem.includes(id) && host !== "overlay") ||
+    id === "logo" ||
+    id === "menu" ||
+    id === "blog" ||
     isExternal ||
     isMusic;
 
@@ -68,8 +63,7 @@ export const useNavigationPill = (
 
   // Sanity: nav/blog items should never render in fixed footer host.
   // We don't throw; we just avoid showing the pill.
-  const hostMismatch =
-    host === "fixed" && (isNavOrBlogId(id) || id === "logo" || id === "menu");
+  const hostMismatch = host === "fixed" && !isExternal && !isMusic;
 
   return {
     shouldRender: shouldRender && !hostMismatch,
@@ -77,7 +71,5 @@ export const useNavigationPill = (
     circleSizePx: isAlwaysCircle ? circleSizePx : undefined,
     isPressed,
     isExiting,
-    isMobileViewport,
-    isMobileMenuOpen,
   };
 };

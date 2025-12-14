@@ -1,7 +1,7 @@
 "use client";
 
 import { useNavigationPill } from "@/components/navigation/hooks/useNavigationPill";
-import { NavigationItemId } from "@/components/navigation/model/types";
+import type { NavigationItemId } from "@/components/navigation/config/navigationConfig";
 import { useNavigationState } from "@/components/navigation/stores/navigationState";
 import { GlassPill } from "@/components/navigation/ui/GlassPill";
 import React, { useRef } from "react";

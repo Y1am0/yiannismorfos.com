@@ -2,6 +2,7 @@
 import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES,
+  GLASS_EFFECT_STYLES_OVERLAY,
   TIMING,
 } from "@/components/navigation/config/constants";
 import { usePillPresence } from "@/components/navigation/providers/PillPresenceProvider";
@@ -16,6 +17,7 @@ type Props = {
   isExiting?: boolean;
   circleSizePx?: number;
   layoutId?: string;
+  glassEffect?: "default" | "overlay";
   onExitComplete?: () => void;
 };
 
@@ -25,6 +27,7 @@ export const GlassPill = ({
   isExiting = false,
   circleSizePx,
   layoutId = "glass-pill",
+  glassEffect = "default",
   onExitComplete,
 }: Props) => {
   const isCircle = variant === "circle";
@@ -76,7 +79,9 @@ export const GlassPill = ({
         ...(isCircle && circleSizePx
           ? { width: circleSizePx, height: circleSizePx }
           : null),
-        ...GLASS_EFFECT_STYLES,
+        ...(glassEffect === "overlay"
+          ? GLASS_EFFECT_STYLES_OVERLAY
+          : GLASS_EFFECT_STYLES),
       }}
       animate={{
         opacity: isExiting ? ANIMATION_CONFIG.glassPill.exit.opacity : 1,

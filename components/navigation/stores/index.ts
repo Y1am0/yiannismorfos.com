@@ -1,13 +1,10 @@
 // Export all stores
-export * from "./mobileMenuState";
 export * from "./navigationState";
 
 // Convenience hooks that combine multiple stores
 import { useCallback } from "react";
-import { shouldAllowHover } from "../model/navigationPolicy";
-import { NavigationItemId } from "../model/types";
+import type { NavigationItemId } from "../config/navigationConfig";
 import { isCoarsePointerDevice } from "../utils/pointer";
-import { useMobileMenuState } from "./mobileMenuState";
 import { useNavigationState } from "./navigationState";
 
 /**
@@ -34,32 +31,11 @@ export const useNavigationActions = () => {
     (state) => state.clearAllTimeouts
   );
 
-  const closeMenu = useMobileMenuState((state) => state.closeMenu);
-  const toggleMenu = useMobileMenuState((state) => state.toggleMenu);
-
-  // Get current state values without subscribing
-  const getCurrentState = () => ({
-    isMobile: useMobileMenuState.getState().isMobile,
-    isMobileMenuOpen: useMobileMenuState.getState().isOpen,
-  });
-
   // Combined handlers that coordinate multiple stores
   const handleHoverStart = useCallback(
     (item: NavigationItemId) => {
       if (isCoarsePointerDevice()) return; // Skip hover logic on coarse pointers/touch
 
-      // Small-viewport gating: ignore hover unless it's a nav/blog item while mobile menu is open
-      const { isMobile, isMobileMenuOpen } = getCurrentState();
-      if (isMobile) {
-        if (
-          !shouldAllowHover(item, {
-            isMobileViewport: isMobile,
-            isMobileMenuOpen,
-          })
-        ) {
-          return;
-        }
-      }
       // Cancel any pending exit timeouts - user is moving to another item
       clearAllTimeouts();
 
@@ -100,10 +76,6 @@ export const useNavigationActions = () => {
     handleMouseDown,
     handleMouseUp,
 
-    // Menu actions
-    toggleMenu,
-    closeMenu,
-
     // State setters
     setActiveItem,
     setLastClickedItem,
@@ -125,18 +97,9 @@ export const useNavigationSelectors = () => {
   const pressedItem = useNavigationState((state) => state.pressedItem);
   const activeItem = useNavigationState((state) => state.activeItem);
 
-  const isMobileMenuOpen = useMobileMenuState((state) => state.isOpen);
-  const isMobile = useMobileMenuState((state) => state.isMobile);
-  const animationsComplete = useMobileMenuState(
-    (state) => state.animationsComplete
-  );
-
   return {
     hoveredItem,
     pressedItem,
     activeItem,
-    isMobileMenuOpen,
-    isMobile,
-    animationsComplete,
   };
 };

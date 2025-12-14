@@ -2,7 +2,7 @@
 
 import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { useNavigationPill } from "../hooks/useNavigationPill";
 import { useNavigationActions } from "../stores";
 import { GlassPill } from "./GlassPill";
@@ -10,13 +10,16 @@ import { GlassPill } from "./GlassPill";
 interface LogoProps {
   className?: string;
   href?: string;
+  closeMobileMenu?: () => void;
 }
 
-const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
-  const logoRef = useRef<HTMLDivElement>(null);
+const LogoComponent = ({
+  className = "text-white/90",
+  href,
+  closeMobileMenu,
+}: LogoProps) => {
   const startExit = useRouteTransitionStore((s) => s.startExit);
   const {
-    closeMenu,
     handleHoverStart,
     handleHoverEnd,
     handleMouseDown,
@@ -40,11 +43,9 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
 
   const content = (
     <div
-      ref={logoRef}
       className={`px-2 sm:px-6 py-2 cursor-pointer select-none relative`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEnd}
-      onTouchStart={handleHoverStartCallback}
       onMouseDown={handleMouseDownCallback}
       onMouseUp={handleMouseUp}
     >
@@ -72,15 +73,13 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
     </div>
   );
 
-  // Track a small timer to hide the pill after mouseup when navigating home
-  const [hideTimer, setHideTimer] = useState<ReturnType<
-    typeof setTimeout
-  > | null>(null);
+  // Track a small timer to hide the pill after mouseup when navigating home.
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     return () => {
-      if (hideTimer) clearTimeout(hideTimer);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
-  }, [hideTimer]);
+  }, []);
 
   // Always wrap in Link-compatible component for consistent DOM structure
   return href ? (
@@ -88,14 +87,14 @@ const LogoComponent = ({ className = "text-white/90", href }: LogoProps) => {
       href={href}
       // Always close menu on click, even for same-route clicks
       onClick={() => {
-        closeMenu();
+        closeMobileMenu?.();
         // Immediately clear active item so hoverEnd won't jump back to previous
         setActiveItem(null);
         // Schedule pill exit shortly after mouseup animation (even if cursor stays over logo)
-        const t = setTimeout(() => {
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = setTimeout(() => {
           setHoveredItem(null);
         }, 160);
-        setHideTimer(t);
       }}
       // Only start exit when a real navigation will occur
       beforeNavigate={() => {
