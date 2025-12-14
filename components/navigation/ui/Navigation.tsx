@@ -10,7 +10,6 @@ import { usePathname } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Z_INDEX } from "../config/constants";
 import type { NavigationItemId } from "../config/navigationConfig";
-import { useNavigationViewport } from "../providers/NavigationViewportProvider";
 import {
   getBlogItem,
   getLogoItem,
@@ -23,6 +22,7 @@ import { MobileMenu } from "./MobileMenu";
 
 import { useNavigationActions } from "../stores/index";
 import { NavigationItem } from "./NavigationItem";
+import { useNavigationViewport } from "../providers/NavigationProvider";
 
 const NavigationComponent = () => {
   const pathname = usePathname();

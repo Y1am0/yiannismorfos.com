@@ -7,7 +7,7 @@ import {
   MUSIC_PLAYER_BUTTON_IDS,
   type NavigationItemId,
 } from "../config/navigationConfig";
-import { useNavigationViewport } from "../providers/NavigationViewportProvider";
+import { useNavigationViewport } from "../providers/NavigationProvider";
 import { useNavigationState } from "../stores/navigationState";
 
 export type PillHostContext = "header" | "fixed";

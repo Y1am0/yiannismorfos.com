@@ -5,7 +5,7 @@ import {
   GLASS_EFFECT_STYLES_OVERLAY,
   TIMING,
 } from "@/components/navigation/config/constants";
-import { usePillPresence } from "@/components/navigation/providers/PillPresenceProvider";
+import { usePillPresence } from "@/components/navigation/providers/NavigationProvider";
 import { motion } from "motion/react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 
