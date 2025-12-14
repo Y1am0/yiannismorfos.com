@@ -28,7 +28,7 @@ export const LAYOUT = {
 
 // Button styling constants
 export const BUTTON_STYLES = {
-  base: "text-white/70 hover:text-white transition-colors p-2 rounded-full hover:cursor-pointer",
+  base: "text-white/70 hover:text-white transition-colors duration-300 p-2 rounded-full hover:cursor-pointer",
   controlSpacing: "space-x-2",
 } as const;
 

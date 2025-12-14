@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { NavigationItemId } from "../types";
+import type { NavigationItemId } from "../config/navigationConfig";
 
 type TimeoutHandle = ReturnType<typeof setTimeout>;
 
@@ -56,9 +56,6 @@ interface NavigationState {
   // Timeout management
   setExitTimeout: (timeoutId: TimeoutHandle) => void;
   clearAllTimeouts: () => void;
-
-  // Computed values with selectors
-  getDisplayedItem: () => NavigationItemId | null;
 }
 
 export const useNavigationState = create<NavigationState>()(
@@ -154,17 +151,7 @@ export const useNavigationState = create<NavigationState>()(
           clearTimeout(state.exitTimeoutId);
         }
 
-        set(
-          { exitTimeoutId: null },
-          false,
-          "clearAllTimeouts"
-        );
-      },
-
-      // Computed values
-      getDisplayedItem: () => {
-        const state = get();
-        return state.hoveredItem || state.activeItem;
+        set({ exitTimeoutId: null }, false, "clearAllTimeouts");
       },
     }),
     {
@@ -172,10 +159,3 @@ export const useNavigationState = create<NavigationState>()(
     }
   )
 );
-
-// Selectors for performance optimization
-export const selectHoveredItem = (state: NavigationState) => state.hoveredItem;
-export const selectPressedItem = (state: NavigationState) => state.pressedItem;
-export const selectActiveItem = (state: NavigationState) => state.activeItem;
-export const selectDisplayedItem = (state: NavigationState) =>
-  state.getDisplayedItem();

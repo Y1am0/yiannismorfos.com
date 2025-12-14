@@ -1,12 +1,13 @@
 "use client";
-import { motion } from "motion/react";
-import { useEffect, useLayoutEffect, useRef } from "react";
 import {
   ANIMATION_CONFIG,
   GLASS_EFFECT_STYLES,
+  GLASS_EFFECT_STYLES_OVERLAY,
   TIMING,
-} from "./constants";
-import { usePillPresence } from "./PillPresenceProvider";
+} from "@/components/navigation/config/constants";
+import { usePillPresence } from "@/components/navigation/providers/NavigationProvider";
+import { motion } from "motion/react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 export type GlassPillVariant = "pill" | "circle";
 
@@ -16,6 +17,7 @@ type Props = {
   isExiting?: boolean;
   circleSizePx?: number;
   layoutId?: string;
+  glassEffect?: "default" | "overlay";
   onExitComplete?: () => void;
 };
 
@@ -25,14 +27,13 @@ export const GlassPill = ({
   isExiting = false,
   circleSizePx,
   layoutId = "glass-pill",
+  glassEffect = "default",
   onExitComplete,
 }: Props) => {
   const isCircle = variant === "circle";
   const presence = usePillPresence();
   const shouldRunEnterAnimation =
-    typeof window === "undefined"
-      ? false
-      : !presence.getWasPresentLastCommit();
+    typeof window === "undefined" ? false : !presence.getWasPresentLastCommit();
   const didNotifyExitRef = useRef(false);
 
   const useIsomorphicLayoutEffect =
@@ -78,7 +79,9 @@ export const GlassPill = ({
         ...(isCircle && circleSizePx
           ? { width: circleSizePx, height: circleSizePx }
           : null),
-        ...GLASS_EFFECT_STYLES,
+        ...(glassEffect === "overlay"
+          ? GLASS_EFFECT_STYLES_OVERLAY
+          : GLASS_EFFECT_STYLES),
       }}
       animate={{
         opacity: isExiting ? ANIMATION_CONFIG.glassPill.exit.opacity : 1,

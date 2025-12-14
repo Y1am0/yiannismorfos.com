@@ -1,21 +1,25 @@
 "use client";
 
+import { Z_INDEX } from "@/components/navigation/config/constants";
+import {
+  useNavigationSelectors,
+} from "@/components/navigation/stores";
+import { NavigationItem } from "@/components/navigation/ui/NavigationItem";
+import {
+  getBlogItem,
+  getNavigationItems,
+} from "@/components/navigation/utils/menu-items";
 import { AnimatePresence, motion } from "motion/react";
-import { memo, useCallback, useMemo, useRef } from "react";
-import { Z_INDEX } from "./constants";
-import { getBlogItem, getNavigationItems } from "./menu-items";
-import { MobileMenuPill } from "./MobileMenuPill";
-import { MobileNavigationItem } from "./NavigationItem";
-import { useNavigationActions, useNavigationSelectors } from "./stores";
-import { useMobileMenuState } from "./stores/mobileMenuState";
+import { memo, useCallback, useMemo } from "react";
+import { GlassPill } from "./GlassPill";
 
-const MobileMenuComponent = () => {
-  const { isMobileMenuOpen } = useNavigationSelectors();
-  const { closeMenu, clearExitingItem } = useNavigationActions();
-  const mobileMenuAnimationsComplete = useMobileMenuState(
-    (s) => s.animationsComplete
-  );
-  const setAnimationsComplete = useMobileMenuState((s) => s.setAnimationsComplete);
+type Props = {
+  isOpen: boolean;
+  closeMenu: () => void;
+};
+
+const MobileMenuComponent = ({ isOpen, closeMenu }: Props) => {
+  const { activeItem, pressedItem } = useNavigationSelectors();
 
   // Memoized menu items to prevent recreation on each render
   const menuItems = useMemo(() => {
@@ -23,7 +27,6 @@ const MobileMenuComponent = () => {
     const blogItem = getBlogItem();
     return [...navigationItems, ...(blogItem ? [blogItem] : [])];
   }, []);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   // Memoized backdrop click handler
   const handleBackdropClick = useCallback(() => {
@@ -37,7 +40,7 @@ const MobileMenuComponent = () => {
 
   return (
     <AnimatePresence>
-      {isMobileMenuOpen && (
+      {isOpen && (
         <motion.div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center"
           style={{ zIndex: Z_INDEX.mobileMenu }}
@@ -47,14 +50,7 @@ const MobileMenuComponent = () => {
           transition={{ duration: 0.3 }}
           onClick={handleBackdropClick}
         >
-          <MobileMenuPill
-            containerRef={contentRef}
-            isOpen={isMobileMenuOpen}
-            animationsComplete={mobileMenuAnimationsComplete}
-            onExitComplete={clearExitingItem}
-          />
           <motion.div
-            ref={contentRef}
             className="text-white flex flex-col items-center space-y-4 relative z-10"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -76,22 +72,27 @@ const MobileMenuComponent = () => {
                 transition={{
                   delay: 0.2 + index * 0.1,
                 }}
-                onAnimationComplete={() => {
-                  const isLast = index === menuItems.length - 1;
-                  if (!isLast) return;
-                  if (!useMobileMenuState.getState().isOpen) return;
-                  setAnimationsComplete(true);
-                }}
               >
-                <MobileNavigationItem
+                <NavigationItem
+                  mode="mobileMenu"
                   itemId={item.id}
                   href={item.href}
                   onClick={closeMenu}
+                  renderPill={
+                    activeItem === item.id ? (
+                      <GlassPill
+                        variant="pill"
+                        glassEffect="overlay"
+                        layoutId="glass-pill-mobile-menu"
+                        isPressed={pressedItem === item.id}
+                      />
+                    ) : null
+                  }
                 >
                   <span className="text-4xl font-thin text-center">
                     {item.label}
                   </span>
-                </MobileNavigationItem>
+                </NavigationItem>
               </motion.div>
             ))}
           </motion.div>

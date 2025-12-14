@@ -1,22 +1,24 @@
 "use client";
 
 import { motion } from "motion/react";
-import { memo, useCallback, useRef, useState } from "react";
+import { memo, useCallback, useState } from "react";
+import { useNavigationPill } from "../hooks/useNavigationPill";
+import { useNavigationActions } from "../stores";
 import { GlassPill } from "./GlassPill";
-import { useNavigationActions, useNavigationSelectors } from "./stores";
-import { useNavigationPill } from "./useNavigationPill";
 
-const MenuToggleComponent = () => {
+type Props = {
+  isOpen: boolean;
+  toggleMenu: () => void;
+};
+
+const MenuToggleComponent = ({ isOpen, toggleMenu }: Props) => {
   const [isHovered, setIsHovered] = useState(false);
-  const iconRef = useRef<HTMLDivElement>(null);
 
-  const { isMobileMenuOpen } = useNavigationSelectors();
   const {
     handleHoverStart,
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    toggleMenu,
     clearExitingItem,
   } = useNavigationActions();
 
@@ -41,16 +43,14 @@ const MenuToggleComponent = () => {
 
   return (
     <div
-      ref={iconRef}
       className={`px-2 sm:px-6 py-2 cursor-pointer select-none relative`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEndCallback}
-      onTouchStart={handleHoverStartCallback}
       onMouseDown={handleMouseDownCallback}
       onMouseUp={handleMouseUp}
       onClick={toggleMenu}
       role="button"
-      aria-label={isMobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
+      aria-label={isOpen ? "Close mobile menu" : "Open mobile menu"}
     >
       {pill.shouldRender && (
         <GlassPill
@@ -66,8 +66,8 @@ const MenuToggleComponent = () => {
         <motion.div
           className="w-full h-0.5 bg-current absolute"
           animate={{
-            rotate: isMobileMenuOpen ? 45 : 0,
-            y: isMobileMenuOpen ? 0 : isHovered ? -4 : -6,
+            rotate: isOpen ? 45 : 0,
+            y: isOpen ? 0 : isHovered ? -4 : -6,
           }}
           transition={{
             duration: 0.3,
@@ -79,8 +79,8 @@ const MenuToggleComponent = () => {
         <motion.div
           className="w-full h-0.5 bg-current absolute"
           animate={{
-            opacity: isMobileMenuOpen ? 0 : 1,
-            scale: isMobileMenuOpen ? 0 : 1,
+            opacity: isOpen ? 0 : 1,
+            scale: isOpen ? 0 : 1,
           }}
           transition={{
             duration: 0.2,
@@ -92,8 +92,8 @@ const MenuToggleComponent = () => {
         <motion.div
           className="w-full h-0.5 bg-current absolute"
           animate={{
-            rotate: isMobileMenuOpen ? -45 : 0,
-            y: isMobileMenuOpen ? 0 : isHovered ? 4 : 6,
+            rotate: isOpen ? -45 : 0,
+            y: isOpen ? 0 : isHovered ? 4 : 6,
           }}
           transition={{
             duration: 0.3,

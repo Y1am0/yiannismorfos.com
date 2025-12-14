@@ -5,7 +5,7 @@
  * - Define the data (menu items, external links, music button IDs)
  * - Derive the literal union ID types from that data
  *
- * Interaction rules live in `navigationModel.ts` / `navigationPolicy.ts`.
+ * Interaction rules live close to the UI/hook code (e.g. `useNavigationPill.ts`).
  */
 
 // ---------------------------------------------

@@ -1,43 +1,48 @@
 "use client";
 
-import { PAGE_LOAD_ANIMATIONS } from "@/components/PageLoadAnimationProvider";
-import { usePageLoadAnimationContext } from "@/components/PageLoadAnimationProvider";
+import {
+  PAGE_LOAD_ANIMATIONS,
+  usePageLoadAnimationContext,
+} from "@/components/PageLoadAnimationProvider";
 import { Quote } from "lucide-react";
 import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
-import { memo, useEffect, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { Z_INDEX } from "../config/constants";
+import type { NavigationItemId } from "../config/navigationConfig";
+import {
+  getBlogItem,
+  getLogoItem,
+  getNavigationItems,
+} from "../utils/menu-items";
 import { AbsoluteItem } from "./AbsoluteItem";
-import { Z_INDEX } from "./constants";
 import { Logo } from "./Logo";
-import { getBlogItem, getLogoItem, getNavigationItems } from "./menu-items";
 import { MenuToggle } from "./MenuToggle";
 import { MobileMenu } from "./MobileMenu";
-import { NavigationItemId } from "./types";
 
+import { useNavigationActions } from "../stores/index";
 import { NavigationItem } from "./NavigationItem";
-import { useNavigationActions, useNavigationSelectors } from "./stores/index";
-import { useMobileMenuState } from "./stores/mobileMenuState";
+import { useNavigationViewport } from "../providers/NavigationProvider";
 
 const NavigationComponent = () => {
   const pathname = usePathname();
 
   // Page load animation state
-  const {
-    isNavigationVisible,
-    shouldAnimate,
-  } = usePageLoadAnimationContext();
+  const { isNavigationVisible, shouldAnimate } = usePageLoadAnimationContext();
 
-  const {
-    isMobile,
-    isMobileMenuOpen,
-  } = useNavigationSelectors();
+  const { isDesktopViewport } = useNavigationViewport();
+  const isMobileViewport = !isDesktopViewport;
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const setIsMobile = useMobileMenuState((state) => state.setIsMobile);
-  const {
-    validateRouteChange,
-    handleMouseUp,
-    setHoveredItem,
-  } = useNavigationActions();
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen((prev) => !prev);
+  }, []);
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
+
+  const { validateRouteChange, handleMouseUp, setHoveredItem } =
+    useNavigationActions();
 
   // Memoized menu items to prevent recreation
   const menuItems = useMemo(
@@ -68,49 +73,19 @@ const NavigationComponent = () => {
     validateRouteChange(actualRouteItemId);
   }, [pathname, validateRouteChange, menuItems.navigation, menuItems.blog]);
 
-  // ---- Responsive breakpoint detection -------------------------------------------------
-  // Guards against SSR and debounces the expensive resize handler.
+  // Auto-close mobile menu when moving from mobile → desktop.
   useEffect(() => {
-    if (typeof window === "undefined") return; // SSR guard
+    if (!isDesktopViewport) return;
+    if (!isMobileMenuOpen) return;
+    closeMobileMenu();
+  }, [closeMobileMenu, isDesktopViewport, isMobileMenuOpen]);
 
-    // Detect <768px viewport as mobile
-    const checkMobile = () => {
-      const wasMobile = useMobileMenuState.getState().isMobile;
-      const isNowMobile = window.innerWidth < 768;
-
-      setIsMobile(isNowMobile);
-
-      // Auto-close mobile menu when moving from mobile → desktop
-      if (wasMobile && !isNowMobile && isMobileMenuOpen) {
-        const { closeMenu } = useMobileMenuState.getState();
-        closeMenu();
-      }
-    };
-
-    // Debounce via setTimeout (50 ms) to avoid firing on every pixel change
-    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
-    const debounced = () => {
-      if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(checkMobile, 50);
-    };
-
-    // Initial run
-    checkMobile();
-    window.addEventListener("resize", debounced);
-
-    return () => {
-      if (resizeTimer) clearTimeout(resizeTimer);
-      window.removeEventListener("resize", debounced);
-    };
-  }, [setIsMobile, isMobileMenuOpen]);
-
-  // Clear mobile registry when mobile menu closes
+  // Clear hover state when the mobile menu closes
   useEffect(() => {
     if (!isMobileMenuOpen) {
-      // Clear hover state when the mobile menu closes to avoid "stuck" highlights.
-      if (isMobile) setHoveredItem(null);
+      if (isMobileViewport) setHoveredItem(null);
     }
-  }, [isMobileMenuOpen, isMobile, setHoveredItem]);
+  }, [isMobileMenuOpen, isMobileViewport, setHoveredItem]);
 
   // Global mouse up listener to reset pressed state
   useEffect(() => {
@@ -147,7 +122,7 @@ const NavigationComponent = () => {
       >
         {/* Logo - Always visible on left with high z-index */}
         <AbsoluteItem position="left">
-          <Logo href={menuItems.logo?.href} />
+          <Logo href={menuItems.logo?.href} closeMobileMenu={closeMobileMenu} />
         </AbsoluteItem>
 
         {/* Centered navigation - Responsive visibility */}
@@ -170,12 +145,15 @@ const NavigationComponent = () => {
 
         {/* Mobile: Menu toggle icon */}
         <AbsoluteItem position="right" className="md:hidden">
-          <MenuToggle />
+          <MenuToggle isOpen={isMobileMenuOpen} toggleMenu={toggleMobileMenu} />
         </AbsoluteItem>
       </motion.div>
 
       {/* Mobile Menu Modal */}
-      <MobileMenu />
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        closeMenu={closeMobileMenu}
+      />
     </>
   );
 };

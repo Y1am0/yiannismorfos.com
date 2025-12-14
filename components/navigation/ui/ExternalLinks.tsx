@@ -7,22 +7,23 @@ import {
   TikTokIcon,
 } from "@/components/icons";
 import {
+  ANIMATION_CONFIG,
+  BUTTON_STYLES,
+  EXTERNAL_LINK_ROTATION_INTERVAL,
+  LAYOUT_CONSTANTS,
+} from "@/components/navigation/config/constants";
+import type { ExternalLinkId } from "@/components/navigation/config/navigationConfig";
+import { useNavigationPill } from "@/components/navigation/hooks/useNavigationPill";
+import { useRotatingLinkSet } from "@/components/navigation/hooks/useRotatingLinkSet";
+import { useNavigationActions } from "@/components/navigation/stores";
+import { GlassPill } from "@/components/navigation/ui/GlassPill";
+import { getExternalLinks } from "@/components/navigation/utils/menu-items";
+import {
   PAGE_LOAD_ANIMATIONS,
   usePageLoadAnimationContext,
 } from "@/components/PageLoadAnimationProvider";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useMemo } from "react";
-import {
-  ANIMATION_CONFIG,
-  EXTERNAL_LINK_ROTATION_INTERVAL,
-  LAYOUT_CONSTANTS,
-} from "./constants";
-import { GlassPill } from "./GlassPill";
-import { getExternalLinks } from "./menu-items";
-import { useRotatingLinkSet } from "./useRotatingLinkSet";
-import { useNavigationActions } from "./stores";
-import { ExternalLinkId } from "./types";
-import { useNavigationPill } from "./useNavigationPill";
 
 interface ExternalLinkItemProps {
   id: ExternalLinkId;
@@ -73,7 +74,7 @@ const ExternalLinkItem = ({
   const renderIcon = useCallback(() => {
     const iconProps = {
       size: 20,
-      className: "text-white/70 transition-colors",
+      className: `${BUTTON_STYLES.base}`,
     };
 
     switch (iconType) {
@@ -96,10 +97,9 @@ const ExternalLinkItem = ({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`${LAYOUT_CONSTANTS.itemPadding} cursor-pointer select-none block relative`}
+      className={`${LAYOUT_CONSTANTS.itemPadding} select-none block relative`}
       onMouseEnter={handleHoverStartCallback}
       onMouseLeave={handleHoverEndCallback}
-      onTouchStart={handleHoverStartCallback}
       onMouseDown={handleMouseDownCallback}
       onMouseUp={handleMouseUp}
       aria-label={label}
@@ -130,7 +130,8 @@ const ExternalLinksComponent = () => {
   const allLinks = getExternalLinks();
 
   // Page load animation state
-  const { isExternalLinksVisible, shouldAnimate } = usePageLoadAnimationContext();
+  const { isExternalLinksVisible, shouldAnimate } =
+    usePageLoadAnimationContext();
 
   // Define rotating sets by id order
   const linkSets = useMemo(
@@ -152,9 +153,6 @@ const ExternalLinksComponent = () => {
     },
     [resetTimer, setIsPaused]
   );
-
-  // Handle line hover to pause timer and animate width
-  // Hover handlers removed; no hover UI for the indicator
 
   // Handle line click to manually change set and reset timer
   const handleLineClick = useCallback(() => {

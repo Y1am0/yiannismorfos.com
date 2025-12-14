@@ -8,7 +8,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import {
   ExternalLinks,
   Navigation,
-  NavigationMotionProvider,
+  NavigationProvider,
 } from "../components/navigation";
 import "./globals.css";
 
@@ -88,7 +88,7 @@ export default function RootLayout({
 
         {/* Main content container with max-width constraint */}
         <PageLoadAnimationProvider>
-          <NavigationMotionProvider>
+          <NavigationProvider>
             <main className="relative z-20 max-w-screen-2xl mx-auto h-dvh overflow-hidden flex flex-col">
               <div className="shrink-0">
                 <Navigation />
@@ -103,7 +103,7 @@ export default function RootLayout({
                 <ExternalLinks />
               </div>
             </main>
-          </NavigationMotionProvider>
+          </NavigationProvider>
         </PageLoadAnimationProvider>
       </body>
     </html>

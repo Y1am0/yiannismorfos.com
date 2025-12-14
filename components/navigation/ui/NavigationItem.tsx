@@ -4,12 +4,12 @@ import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
 import { motion } from "motion/react";
 import { memo, useCallback } from "react";
-import { ANIMATION_CONFIG, LAYOUT_CONSTANTS } from "./constants";
+import { ANIMATION_CONFIG, LAYOUT_CONSTANTS } from "../config/constants";
+import { useIsCoarsePointer } from "../hooks/useIsCoarsePointer";
+import { useNavigationPill } from "../hooks/useNavigationPill";
+import type { NavigationItemId } from "../config/navigationConfig";
+import { useNavigationActions } from "../stores";
 import { GlassPill } from "./GlassPill";
-import { useIsCoarsePointer } from "./useIsCoarsePointer";
-import { useNavigationActions } from "./stores";
-import type { NavigationItemId } from "./types";
-import { useNavigationPill } from "./useNavigationPill";
 
 type BaseProps = {
   children: React.ReactNode;
@@ -17,6 +17,7 @@ type BaseProps = {
   href?: string;
   onClick?: () => void;
   className?: string;
+  renderPill?: React.ReactNode;
 };
 
 const BaseNavigationItem = ({
@@ -27,17 +28,13 @@ const BaseNavigationItem = ({
   className,
   enableHover,
   renderPill,
-}: BaseProps & {
-  enableHover: boolean;
-  renderPill?: React.ReactNode;
-}) => {
+}: BaseProps & { enableHover: boolean }) => {
   const startExit = useRouteTransitionStore((s) => s.startExit);
   const {
     handleHoverStart,
     handleHoverEnd,
     handleMouseDown,
     handleMouseUp,
-    closeMenu,
     setActiveItem,
     setLastClickedItem,
   } = useNavigationActions();
@@ -56,8 +53,9 @@ const BaseNavigationItem = ({
 
   const content = (
     <motion.div
-      data-nav-item-id={itemId}
-      className={`text-2xl font-thin ${LAYOUT_CONSTANTS.itemPadding} cursor-pointer relative focus-visible:outline-none ${className ?? ""}`}
+      className={`text-2xl font-thin ${
+        LAYOUT_CONSTANTS.itemPadding
+      } cursor-pointer relative focus-visible:outline-none ${className ?? ""}`}
       onHoverStart={enableHover ? handleHoverStartCallback : undefined}
       onHoverEnd={enableHover ? handleHoverEnd : undefined}
       onTouchStart={enableHover ? handleHoverStartCallback : undefined}
@@ -80,7 +78,6 @@ const BaseNavigationItem = ({
       delay={300}
       onClick={() => {
         onClick?.();
-        closeMenu();
       }}
       beforeNavigate={() => {
         startExit();
@@ -95,7 +92,17 @@ const BaseNavigationItem = ({
   );
 };
 
-const DesktopNavigationItemComponent = (props: BaseProps) => {
+type HeaderNavigationItemProps = Omit<BaseProps, "renderPill"> & {
+  mode?: "header";
+};
+
+type MobileMenuNavigationItemProps = BaseProps & {
+  mode: "mobileMenu";
+};
+
+type Props = HeaderNavigationItemProps | MobileMenuNavigationItemProps;
+
+const HeaderNavigationItem = (props: HeaderNavigationItemProps) => {
   const isCoarsePointer = useIsCoarsePointer();
   const { clearExitingItem } = useNavigationActions();
 
@@ -119,13 +126,17 @@ const DesktopNavigationItemComponent = (props: BaseProps) => {
   );
 };
 
-export const NavigationItem = memo(DesktopNavigationItemComponent);
-NavigationItem.displayName = "NavigationItem";
-
-const MobileNavigationItemComponent = (props: BaseProps) => {
-  const isCoarsePointer = useIsCoarsePointer();
-  return <BaseNavigationItem {...props} enableHover={!isCoarsePointer} />;
+const MobileMenuNavigationItem = (props: MobileMenuNavigationItemProps) => {
+  return <BaseNavigationItem {...props} enableHover={false} />;
 };
 
-export const MobileNavigationItem = memo(MobileNavigationItemComponent);
-MobileNavigationItem.displayName = "MobileNavigationItem";
+const NavigationItemComponent = (props: Props) => {
+  return props.mode === "mobileMenu" ? (
+    <MobileMenuNavigationItem {...props} />
+  ) : (
+    <HeaderNavigationItem {...props} />
+  );
+};
+
+export const NavigationItem = memo(NavigationItemComponent);
+NavigationItem.displayName = "NavigationItem";

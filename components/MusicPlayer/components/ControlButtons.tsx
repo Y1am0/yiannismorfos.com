@@ -1,12 +1,12 @@
 "use client";
 
-import { NavigationItemId } from "@/components/navigation/types";
+import { useNavigationPill } from "@/components/navigation/hooks/useNavigationPill";
+import type { NavigationItemId } from "@/components/navigation/config/navigationConfig";
+import { useNavigationState } from "@/components/navigation/stores/navigationState";
+import { GlassPill } from "@/components/navigation/ui/GlassPill";
 import React, { useRef } from "react";
 import { BUTTON_STYLES, ICONS } from "../constants";
 import { useMusicPlayerButton } from "../hooks";
-import { GlassPill } from "@/components/navigation/GlassPill";
-import { useNavigationPill } from "@/components/navigation/useNavigationPill";
-import { useNavigationState } from "@/components/navigation/stores/navigationState";
 
 interface IconButtonProps {
   onClick: () => void;
