@@ -2,7 +2,7 @@
 
 import { DelayedLink } from "@/components/DelayedLink";
 import { useRouteTransitionStore } from "@/lib/routeTransitionStore";
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo, useCallback } from "react";
 import { useNavigationPill } from "../hooks/useNavigationPill";
 import { useNavigationActions } from "../stores";
 import { GlassPill } from "./GlassPill";
@@ -73,14 +73,6 @@ const LogoComponent = ({
     </div>
   );
 
-  // Track a small timer to hide the pill after mouseup when navigating home.
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    return () => {
-      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    };
-  }, []);
-
   // Always wrap in Link-compatible component for consistent DOM structure
   return href ? (
     <DelayedLink
@@ -90,11 +82,8 @@ const LogoComponent = ({
         closeMobileMenu?.();
         // Immediately clear active item so hoverEnd won't jump back to previous
         setActiveItem(null);
-        // Schedule pill exit shortly after mouseup animation (even if cursor stays over logo)
-        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-        hideTimerRef.current = setTimeout(() => {
-          setHoveredItem(null);
-        }, 160);
+        // Force pill exit even if mouseleave never fires (e.g. same-route click).
+        setHoveredItem(null);
       }}
       // Only start exit when a real navigation will occur
       beforeNavigate={() => {
